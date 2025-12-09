@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-}
+  output: 'export',
+  basePath: '/Projeto',      // nome EXATO do repositório
+  assetPrefix: '/Projeto/'   // mesmo nome
+};
 
-module.exports = nextConfig
-
+module.exports = nextConfig;
