@@ -40,15 +40,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Criar cliente Supabase apenas se as variáveis estiverem configuradas
 let supabase: ReturnType<typeof createClient> | null = null
 
-if (supabaseUrl && supabaseAnonKey) {
+if (supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://placeholder.supabase.co') {
   try {
     supabase = createClient(supabaseUrl, supabaseAnonKey)
   } catch (error) {
     console.error('Erro ao criar cliente Supabase:', error)
+    supabase = createClient('https://placeholder.supabase.co', 'placeholder-key') as any
   }
 } else {
-  // Criar um cliente vazio para evitar erros em tempo de execução
-  supabase = createClient('https://placeholder.supabase.co', 'placeholder-key')
+  // Criar um cliente placeholder para evitar erros em tempo de execução
+  supabase = createClient('https://placeholder.supabase.co', 'placeholder-key') as any
 }
 
 export { supabase }
@@ -96,7 +97,7 @@ export async function getAllWeeklyData(): Promise<WeeklyData[]> {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('weekly_data')
       .select('*')
       .order('period', { ascending: true })
@@ -148,7 +149,7 @@ export async function insertWeeklyData(data: WeeklyData[]): Promise<{ success: b
       conversao_ois: item.conversaoOIs,
     }))
 
-    const { data: insertedData, error } = await supabase
+    const { data: insertedData, error } = await (supabase as any)
       .from('weekly_data')
       .insert(dataToInsert)
       .select()
@@ -171,7 +172,7 @@ export async function periodExists(period: string): Promise<boolean> {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('weekly_data')
       .select('id')
       .eq('period', period)
