@@ -1,25 +1,5 @@
 // Estrutura de dados baseada na planilha do Google Sheets
-
-export interface WeeklyData {
-  period: string;
-  paSemanal: number;
-  paAcumuladoMes: number;
-  paAcumuladoAno: number;
-  metaPASemanal: number;
-  percentualMetaPASemana: number;
-  percentualMetaPAAno: number;
-  paEmitido: number;
-  apolicesEmitidas: number;
-  metaNSemanal: number;
-  nSemana: number;
-  nAcumuladoMes: number;
-  nAcumuladoAno: number;
-  percentualMetaNSemana: number;
-  percentualMetaNAno: number;
-  metaOIsAgendadas: number;
-  oIsAgendadas: number;
-  oIsRealizadas: number;
-}
+import { WeeklyData } from './types'
 
 export const weeklyData: WeeklyData[] = [
   {
@@ -343,7 +323,8 @@ export function getDataByPeriod(period: string): WeeklyData | undefined {
 }
 
 // Função para obter todos os períodos
-export function getAllPeriods(): string[] {
-  return weeklyData.map(d => d.period);
+export function getAllPeriods(data?: WeeklyData[]): string[] {
+  const dataToUse = data || weeklyData
+  return dataToUse.map(d => d.period);
 }
 

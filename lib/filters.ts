@@ -1,5 +1,4 @@
-import { WeeklyData } from './data'
-import { FilterState } from './types'
+import { WeeklyData, FilterState } from './types'
 
 // Função para extrair mês de um período
 export function getMonthFromPeriod(period: string): string {

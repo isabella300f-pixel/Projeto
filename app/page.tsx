@@ -1,18 +1,22 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { weeklyData, formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
+import { useState, useMemo, useEffect } from 'react'
+import { weeklyData as fallbackData, formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
+import { getAllWeeklyData } from '@/lib/supabase'
 import { filterData, getFilterStats } from '@/lib/filters'
-import { FilterState } from '@/lib/types'
+import { FilterState, WeeklyData } from '@/lib/types'
 import KPICard from '@/components/KPICard'
 import LineChart from '@/components/LineChart'
 import BarChart from '@/components/BarChart'
 import SearchBar from '@/components/SearchBar'
 import FilterPanel from '@/components/FilterPanel'
 import QuickFilters from '@/components/QuickFilters'
-import { DollarSign, Target, TrendingUp, CheckCircle, Search, Filter as FilterIcon } from 'lucide-react'
+import { DollarSign, Target, TrendingUp, CheckCircle, Search, Filter as FilterIcon, Upload } from 'lucide-react'
+import Link from 'next/link'
 
 export default function Dashboard() {
+  const [weeklyDataState, setWeeklyDataState] = useState<WeeklyData[]>(fallbackData)
+  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<FilterState>({
     period: 'all',
     month: 'all',
@@ -23,12 +27,29 @@ export default function Dashboard() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   
-  const periods = getAllPeriods()
+  // Buscar dados do Supabase
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getAllWeeklyData()
+        if (data.length > 0) {
+          setWeeklyDataState(data)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+  
+  const periods = getAllPeriods(weeklyDataState)
   
   // Aplicar filtros aos dados
   const filteredData = useMemo(() => {
-    return filterData(weeklyData, filters)
-  }, [filters])
+    return filterData(weeklyDataState, filters)
+  }, [weeklyDataState, filters])
   
   // Estatísticas dos dados filtrados
   const stats = useMemo(() => {
@@ -37,19 +58,19 @@ export default function Dashboard() {
   
   // Dados atuais para cards principais (usar dados totais ou filtrados)
   const currentData = filters.period === 'all' 
-    ? weeklyData[weeklyData.length - 1]
+    ? weeklyDataState[weeklyDataState.length - 1]
     : filteredData.length > 0 
       ? filteredData[filteredData.length - 1]
-      : weeklyData[weeklyData.length - 1]
+      : weeklyDataState[weeklyDataState.length - 1]
   
   // Calcular totais e médias (sempre dos dados completos para os cards principais)
-  const totalPAAno = weeklyData.length > 0 ? weeklyData[weeklyData.length - 1]?.paAcumuladoAno || 0 : 0
-  const totalNAno = weeklyData.length > 0 ? weeklyData[weeklyData.length - 1]?.nAcumuladoAno || 0 : 0
-  const mediaPASemanal = weeklyData.length > 0 
-    ? weeklyData.reduce((sum, d) => sum + d.paSemanal, 0) / weeklyData.length 
+  const totalPAAno = weeklyDataState.length > 0 ? weeklyDataState[weeklyDataState.length - 1]?.paAcumuladoAno || 0 : 0
+  const totalNAno = weeklyDataState.length > 0 ? weeklyDataState[weeklyDataState.length - 1]?.nAcumuladoAno || 0 : 0
+  const mediaPASemanal = weeklyDataState.length > 0 
+    ? weeklyDataState.reduce((sum, d) => sum + d.paSemanal, 0) / weeklyDataState.length 
     : 0
-  const mediaNSemanal = weeklyData.length > 0
-    ? weeklyData.reduce((sum, d) => sum + d.nSemana, 0) / weeklyData.length
+  const mediaNSemanal = weeklyDataState.length > 0
+    ? weeklyDataState.reduce((sum, d) => sum + d.nSemana, 0) / weeklyDataState.length
     : 0
 
   // Preparar dados para gráficos (usar dados filtrados)
@@ -108,6 +129,13 @@ export default function Dashboard() {
               >
                 <Search className="w-5 h-5" />
               </button>
+              <Link
+                href="/import"
+                className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                title="Importar dados"
+              >
+                <Upload className="w-5 h-5" />
+              </Link>
               <FilterPanel
                 filters={filters}
                 onFilterChange={handleFilterChange}
@@ -155,7 +183,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <FilterIcon className="w-5 h-5 text-blue-600" />
                 <p className="text-sm font-medium text-blue-900">
-                  Mostrando {filteredData.length} de {weeklyData.length} períodos
+                  Mostrando {filteredData.length} de {weeklyDataState.length} períodos
                 </p>
               </div>
               <button
