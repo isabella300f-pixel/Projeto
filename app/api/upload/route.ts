@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Combinar todas as duplicatas encontradas
-    const allDuplicates = [...new Set([...duplicatesInFile, ...duplicatesInDatabase])]
+    // Combinar todas as duplicatas encontradas (removendo duplicatas)
+    const allDuplicates = Array.from(new Set([...duplicatesInFile, ...duplicatesInDatabase]))
 
     if (newData.length === 0) {
       let message = 'Nenhum registro novo para inserir. '
