@@ -262,7 +262,7 @@ export default function Dashboard() {
         {currentData && filters.period !== 'all' && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Indicadores do Período: {filters.period}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-600">PA Semanal</p>
                 <p className="text-lg font-bold text-gray-900">{formatCurrency(currentData.paSemanal)}</p>
@@ -276,6 +276,9 @@ export default function Dashboard() {
               <div className="p-4 bg-purple-50 rounded-lg">
                 <p className="text-sm text-gray-600">Apólices Emitidas</p>
                 <p className="text-lg font-bold text-gray-900">{currentData.apolicesEmitidas}</p>
+                {currentData.ticketMedio && (
+                  <p className="text-xs text-gray-500 mt-1">Ticket Médio: {formatCurrency(currentData.ticketMedio)}</p>
+                )}
               </div>
               <div className="p-4 bg-orange-50 rounded-lg">
                 <p className="text-sm text-gray-600">OIs Agendadas</p>
@@ -285,6 +288,28 @@ export default function Dashboard() {
               <div className="p-4 bg-red-50 rounded-lg">
                 <p className="text-sm text-gray-600">OIs Realizadas</p>
                 <p className="text-lg font-bold text-gray-900">{currentData.oIsRealizadas}</p>
+                {currentData.percentualOIsRealizadas && (
+                  <p className="text-xs text-gray-500 mt-1">{formatPercent(currentData.percentualOIsRealizadas)} realizadas</p>
+                )}
+              </div>
+            </div>
+            {/* Indicadores Adicionais */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+              <div className="p-4 bg-indigo-50 rounded-lg">
+                <p className="text-sm text-gray-600">PA Emitido</p>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(currentData.paEmitido)}</p>
+              </div>
+              <div className="p-4 bg-teal-50 rounded-lg">
+                <p className="text-sm text-gray-600">PA Acumulado Mês</p>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(currentData.paAcumuladoMes)}</p>
+              </div>
+              <div className="p-4 bg-cyan-50 rounded-lg">
+                <p className="text-sm text-gray-600">N Acumulado Mês</p>
+                <p className="text-lg font-bold text-gray-900">{currentData.nAcumuladoMes}</p>
+              </div>
+              <div className="p-4 bg-pink-50 rounded-lg">
+                <p className="text-sm text-gray-600">% Meta PA Ano</p>
+                <p className="text-lg font-bold text-gray-900">{formatPercent(currentData.percentualMetaPAAno)}</p>
               </div>
             </div>
           </div>
@@ -429,12 +454,14 @@ export default function Dashboard() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Semanal</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Emitido</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta PA</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N Semanal</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta N</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apólices</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Agend.</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Real.</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% OIs Real.</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -442,6 +469,7 @@ export default function Dashboard() {
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.period}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paSemanal)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paEmitido)}</td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
                         row.percentualMetaPASemana >= 100 ? 'text-green-600' : 'text-red-600'
                       }`}>
@@ -456,6 +484,9 @@ export default function Dashboard() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.apolicesEmitidas}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsAgendadas}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsRealizadas}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.percentualOIsRealizadas ? formatPercent(row.percentualOIsRealizadas) : '-'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
