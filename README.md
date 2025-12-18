@@ -1,6 +1,6 @@
-# KPI Dashboard - Legatum
+# KPI Dashboard - Legathon
 
-Dashboard interativo e navegável para visualização de indicadores e KPIs da Legatum.
+Dashboard interativo e navegável para visualização de indicadores e KPIs da Legathon.
 
 ## Funcionalidades
 

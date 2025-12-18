@@ -1,11 +1,11 @@
-# ✅ Instruções Finais - KPI Dashboard Legatum
+# ✅ Instruções Finais - KPI Dashboard Legathon
 
 ## 🎯 Checklist Final
 
-### 1. ✅ Nome "Legatum" está correto
+### 1. ✅ Nome "Legathon" está correto
 - ✅ Verificado em todos os arquivos
-- ✅ Dashboard principal: "KPI Dashboard - Legatum"
-- ✅ Subtitle: "Legatum - Indicadores e Métricas"
+- ✅ Dashboard principal: "KPI Dashboard - Legathon"
+- ✅ Subtitle: "Legathon - Indicadores e Métricas"
 
 ### 2. ✅ Todos os Indicadores Incluídos
 
@@ -100,13 +100,13 @@ Execute os seguintes comandos:
 
 ```bash
 git add .
-git commit -m "feat: sistema completo KPI Dashboard Legatum com Supabase
+git commit -m "feat: sistema completo KPI Dashboard Legathon com Supabase
 
 - Todos os indicadores incluídos e exibidos
 - Sistema de upload de planilhas funcionando
 - Integração completa com Supabase
 - Filtros avançados e estratégicos
-- Nome Legatum correto em toda aplicação"
+- Nome Legathon correto em toda aplicação"
 
 git push
 ```
@@ -144,5 +144,5 @@ A planilha Excel deve ter estas colunas:
 
 ## ✅ Tudo Pronto!
 
-O sistema está completo e pronto para uso. Todos os indicadores estão incluídos, o nome Legatum está correto, e o banco de dados está configurado.
+O sistema está completo e pronto para uso. Todos os indicadores estão incluídos, o nome Legathon está correto, e o banco de dados está configurado.
 

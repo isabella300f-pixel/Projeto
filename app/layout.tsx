@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'KPI Dashboard - Legatum',
+  title: 'KPI Dashboard - Legathon',
   description: 'Dashboard de Indicadores e KPIs',
 }
 

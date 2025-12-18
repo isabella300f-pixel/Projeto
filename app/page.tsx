@@ -115,7 +115,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">KPI Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">Legatum - Indicadores e Métricas</p>
+              <p className="text-sm text-gray-500 mt-1">Legathon - Indicadores e Métricas</p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -294,7 +294,7 @@ export default function Dashboard() {
               </div>
             </div>
             {/* Indicadores Adicionais */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
               <div className="p-4 bg-indigo-50 rounded-lg">
                 <p className="text-sm text-gray-600">PA Emitido</p>
                 <p className="text-lg font-bold text-gray-900">{formatCurrency(currentData.paEmitido)}</p>
@@ -310,6 +310,10 @@ export default function Dashboard() {
               <div className="p-4 bg-pink-50 rounded-lg">
                 <p className="text-sm text-gray-600">% Meta PA Ano</p>
                 <p className="text-lg font-bold text-gray-900">{formatPercent(currentData.percentualMetaPAAno)}</p>
+              </div>
+              <div className="p-4 bg-yellow-50 rounded-lg">
+                <p className="text-sm text-gray-600">% Meta N Ano</p>
+                <p className="text-lg font-bold text-gray-900">{formatPercent(currentData.percentualMetaNAno)}</p>
               </div>
             </div>
           </div>
@@ -504,7 +508,7 @@ export default function Dashboard() {
       <footer className="bg-white border-t mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <p className="text-center text-sm text-gray-500">
-            Dashboard KPI - Legatum © {new Date().getFullYear()}
+            Dashboard KPI - Legathon © {new Date().getFullYear()}
           </p>
         </div>
       </footer>
