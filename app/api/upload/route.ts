@@ -37,6 +37,15 @@ export async function POST(request: NextRequest) {
     const normalizeKey = (key: string) => 
       key.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[%]/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
+    // Função para normalizar período (remove espaços extras, padroniza formato)
+    const normalizePeriod = (period: string): string => {
+      return period
+        .trim()
+        .replace(/\s+/g, ' ') // Remove múltiplos espaços
+        .replace(/\s*a\s*/g, ' a ') // Normaliza "a" entre datas
+        .replace(/\//g, '/') // Garante formato consistente
+    }
+
     const mappedData: WeeklyData[] = jsonData
       .map((row: any) => {
         const rowMap: any = {}
@@ -49,8 +58,11 @@ export async function POST(request: NextRequest) {
         const oIsAgendadas = parseFloat(rowMap['ois agendadas'] || rowMap['oisagendadas'] || 0)
         const oIsRealizadas = parseFloat(rowMap['ois realizadas'] || rowMap['oisrealizadas'] || 0)
 
+        const periodRaw = rowMap['periodo'] || rowMap['period'] || ''
+        const periodNormalized = normalizePeriod(periodRaw)
+
         const data: WeeklyData = {
-          period: rowMap['periodo'] || rowMap['period'] || '',
+          period: periodNormalized,
           paSemanal: paSemanal,
           paAcumuladoMes: parseFloat(rowMap['pa acumulado mes'] || rowMap['paacumuladomes'] || 0),
           paAcumuladoAno: parseFloat(rowMap['pa acumulado ano'] || rowMap['paacumuladoano'] || 0),
@@ -90,24 +102,58 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar duplicatas
-    const newData: WeeklyData[] = []
-    const duplicates: string[] = []
+    // Verificar duplicatas dentro da própria planilha primeiro
+    const seenPeriods = new Map<string, number>()
+    const duplicatesInFile: string[] = []
+    const uniqueMappedData: WeeklyData[] = []
 
     for (const data of mappedData) {
+      const periodKey = data.period.toLowerCase().trim()
+      if (seenPeriods.has(periodKey)) {
+        // Período duplicado dentro da planilha
+        const firstIndex = seenPeriods.get(periodKey)!
+        if (!duplicatesInFile.includes(data.period)) {
+          duplicatesInFile.push(data.period)
+        }
+        // Manter apenas o primeiro registro encontrado
+        continue
+      }
+      seenPeriods.set(periodKey, uniqueMappedData.length)
+      uniqueMappedData.push(data)
+    }
+
+    // Verificar duplicatas no banco de dados
+    const newData: WeeklyData[] = []
+    const duplicatesInDatabase: string[] = []
+
+    for (const data of uniqueMappedData) {
       const exists = await periodExists(data.period)
       if (exists) {
-        duplicates.push(data.period)
+        duplicatesInDatabase.push(data.period)
       } else {
         newData.push(data)
       }
     }
 
+    // Combinar todas as duplicatas encontradas
+    const allDuplicates = [...new Set([...duplicatesInFile, ...duplicatesInDatabase])]
+
     if (newData.length === 0) {
+      let message = 'Nenhum registro novo para inserir. '
+      if (duplicatesInFile.length > 0 && duplicatesInDatabase.length > 0) {
+        message += `${duplicatesInFile.length} período(s) duplicado(s) na planilha e ${duplicatesInDatabase.length} período(s) já existem no banco de dados.`
+      } else if (duplicatesInFile.length > 0) {
+        message += `${duplicatesInFile.length} período(s) duplicado(s) encontrado(s) na planilha.`
+      } else {
+        message += 'Todos os períodos já existem no banco de dados.'
+      }
+      
       return NextResponse.json({
         success: false,
-        message: 'Todos os períodos já existem no banco de dados',
-        duplicates: duplicates
+        message: message,
+        duplicates: allDuplicates,
+        duplicatesInFile: duplicatesInFile.length > 0 ? duplicatesInFile : undefined,
+        duplicatesInDatabase: duplicatesInDatabase.length > 0 ? duplicatesInDatabase : undefined
       }, { status: 400 })
     }
 
@@ -121,11 +167,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Montar mensagem detalhada
+    let message = `${result.count} registro(s) inserido(s) com sucesso.`
+    if (duplicatesInFile.length > 0 || duplicatesInDatabase.length > 0) {
+      message += ' '
+      const parts: string[] = []
+      if (duplicatesInFile.length > 0) {
+        parts.push(`${duplicatesInFile.length} período(s) duplicado(s) na planilha ignorado(s)`)
+      }
+      if (duplicatesInDatabase.length > 0) {
+        parts.push(`${duplicatesInDatabase.length} período(s) já existente(s) no banco ignorado(s)`)
+      }
+      message += parts.join(' e ') + '.'
+    }
+
     return NextResponse.json({
       success: true,
       inserted: result.count,
-      duplicates: duplicates.length > 0 ? duplicates : undefined,
-      message: `${result.count} registro(s) inserido(s) com sucesso${duplicates.length > 0 ? `. ${duplicates.length} período(s) duplicado(s) ignorado(s).` : ''}`
+      duplicates: allDuplicates.length > 0 ? allDuplicates : undefined,
+      duplicatesInFile: duplicatesInFile.length > 0 ? duplicatesInFile : undefined,
+      duplicatesInDatabase: duplicatesInDatabase.length > 0 ? duplicatesInDatabase : undefined,
+      message: message
     })
 
   } catch (error: any) {

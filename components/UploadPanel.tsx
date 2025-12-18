@@ -10,6 +10,8 @@ interface UploadResult {
   message?: string
   inserted?: number
   duplicates?: string[]
+  duplicatesInFile?: string[]
+  duplicatesInDatabase?: string[]
   error?: string
 }
 
@@ -251,18 +253,37 @@ export default function UploadPanel() {
                     </p>
                   )}
                   {result.duplicates && result.duplicates.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs font-medium text-yellow-800">
-                        Períodos duplicados ignorados:
-                      </p>
-                      <ul className="text-xs text-yellow-700 list-disc list-inside">
-                        {result.duplicates.slice(0, 5).map((dup, idx) => (
-                          <li key={idx}>{dup}</li>
-                        ))}
-                        {result.duplicates.length > 5 && (
-                          <li>... e mais {result.duplicates.length - 5}</li>
-                        )}
-                      </ul>
+                    <div className="mt-2 space-y-2">
+                      {result.duplicatesInFile && result.duplicatesInFile.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-orange-800">
+                            Duplicados na planilha ({result.duplicatesInFile.length}):
+                          </p>
+                          <ul className="text-xs text-orange-700 list-disc list-inside">
+                            {result.duplicatesInFile.slice(0, 3).map((dup, idx) => (
+                              <li key={idx}>{dup}</li>
+                            ))}
+                            {result.duplicatesInFile.length > 3 && (
+                              <li>... e mais {result.duplicatesInFile.length - 3}</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                      {result.duplicatesInDatabase && result.duplicatesInDatabase.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-yellow-800">
+                            Já existem no banco ({result.duplicatesInDatabase.length}):
+                          </p>
+                          <ul className="text-xs text-yellow-700 list-disc list-inside">
+                            {result.duplicatesInDatabase.slice(0, 3).map((dup, idx) => (
+                              <li key={idx}>{dup}</li>
+                            ))}
+                            {result.duplicatesInDatabase.length > 3 && (
+                              <li>... e mais {result.duplicatesInDatabase.length - 3}</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
