@@ -1236,7 +1236,7 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Tabela de Dados */}
+        {/* Tabela de Dados - Layout Melhorado */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">Dados Detalhados</h2>
@@ -1249,61 +1249,203 @@ export default function Dashboard() {
           <div className="overflow-x-auto">
             {filteredData.length > 0 ? (
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">Período</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Semanal</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Emitido</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta PA</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N Semanal</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta N</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apólices</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Agend.</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Real.</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RECS</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PCs</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">C2</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atrasos</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inadimpl.</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revisitas</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider sticky left-0 bg-gray-100 z-20 border-r border-gray-300 min-w-[120px]">
+                      <div className="flex flex-col">
+                        <span>Período</span>
+                      </div>
+                    </th>
+                    {/* PA - Grupo */}
+                    <th colSpan={4} className="px-3 py-2 text-center text-xs font-bold text-blue-700 uppercase bg-blue-50 border-x border-blue-200">
+                      PA (Prêmio Anual)
+                    </th>
+                    {/* N - Grupo */}
+                    <th colSpan={4} className="px-3 py-2 text-center text-xs font-bold text-green-700 uppercase bg-green-50 border-x border-green-200">
+                      N (Apólices)
+                    </th>
+                    {/* OIs - Grupo */}
+                    <th colSpan={3} className="px-3 py-2 text-center text-xs font-bold text-purple-700 uppercase bg-purple-50 border-x border-purple-200">
+                      OIs
+                    </th>
+                    {/* Outros - Grupo */}
+                    <th colSpan={6} className="px-3 py-2 text-center text-xs font-bold text-gray-700 uppercase bg-gray-50 border-x border-gray-200">
+                      Outros Indicadores
+                    </th>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 sticky left-0 bg-gray-50 z-20 border-r border-gray-300">
+                      <div className="flex flex-col">
+                        <span className="font-semibold">Período</span>
+                      </div>
+                    </th>
+                    {/* PA - Colunas */}
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="PA Semanal Realizado">
+                      <div className="flex flex-col">
+                        <span>PA Sem.</span>
+                        <span className="text-[10px] text-gray-500 font-normal">Realizado</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="PA Emitido na Semana">
+                      <div className="flex flex-col">
+                        <span>PA Emit.</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="% Meta de PA Realizada da Semana">
+                      <div className="flex flex-col">
+                        <span>% Meta</span>
+                        <span className="text-[10px] text-gray-500 font-normal">PA Sem.</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="% Meta de PA Realizada do Ano">
+                      <div className="flex flex-col">
+                        <span>% Meta</span>
+                        <span className="text-[10px] text-gray-500 font-normal">PA Ano</span>
+                      </div>
+                    </th>
+                    {/* N - Colunas */}
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="N da Semana">
+                      <div className="flex flex-col">
+                        <span>N Sem.</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="Apólices Emitidas">
+                      <div className="flex flex-col">
+                        <span>Apólices</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="% Meta de N Realizada da Semana">
+                      <div className="flex flex-col">
+                        <span>% Meta</span>
+                        <span className="text-[10px] text-gray-500 font-normal">N Sem.</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="% Meta de N Realizada do Ano">
+                      <div className="flex flex-col">
+                        <span>% Meta</span>
+                        <span className="text-[10px] text-gray-500 font-normal">N Ano</span>
+                      </div>
+                    </th>
+                    {/* OIs - Colunas */}
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="OIs Agendadas">
+                      <div className="flex flex-col">
+                        <span>OIs Agend.</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="OIs Realizadas na Semana">
+                      <div className="flex flex-col">
+                        <span>OIs Real.</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="% OIs Realizadas">
+                      <div className="flex flex-col">
+                        <span>% OIs</span>
+                        <span className="text-[10px] text-gray-500 font-normal">Real.</span>
+                      </div>
+                    </th>
+                    {/* Outros - Colunas */}
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="Novas RECS">
+                      <div className="flex flex-col">
+                        <span>RECS</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="PCs Realizados na Semana">
+                      <div className="flex flex-col">
+                        <span>PCs</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="C2 Realizados na Semana">
+                      <div className="flex flex-col">
+                        <span>C2</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="Apólice em Atraso">
+                      <div className="flex flex-col">
+                        <span>Atrasos</span>
+                        <span className="text-[10px] text-gray-500 font-normal">(nº)</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="Taxa de Inadimplência (%) Geral">
+                      <div className="flex flex-col">
+                        <span>Inadimpl.</span>
+                        <span className="text-[10px] text-gray-500 font-normal">(%)</span>
+                      </div>
+                    </th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-600" title="Revisitas Realizadas na Semana">
+                      <div className="flex flex-col">
+                        <span>Revisitas</span>
+                        <span className="text-[10px] text-gray-500 font-normal">Real.</span>
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredData.map((row, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">{row.period}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paSemanal)}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paEmitido)}</td>
-                      <td className={`px-4 py-4 whitespace-nowrap text-sm font-medium ${
+                    <tr key={index} className="hover:bg-blue-50 transition-colors">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 sticky left-0 bg-white z-10 border-r border-gray-200">
+                        {row.period}
+                      </td>
+                      {/* PA - Valores */}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                        {formatCurrency(row.paSemanal)}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {formatCurrency(row.paEmitido)}
+                      </td>
+                      <td className={`px-3 py-3 whitespace-nowrap text-sm font-semibold text-right ${
                         row.percentualMetaPASemana >= 100 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatPercent(row.percentualMetaPASemana)}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.nSemana}</td>
-                      <td className={`px-4 py-4 whitespace-nowrap text-sm font-medium ${
+                      <td className={`px-3 py-3 whitespace-nowrap text-sm font-semibold text-right ${
+                        row.percentualMetaPAAno >= 100 ? 'text-green-600' : 'text-orange-600'
+                      }`}>
+                        {formatPercent(row.percentualMetaPAAno)}
+                      </td>
+                      {/* N - Valores */}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                        {row.nSemana}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {row.apolicesEmitidas}
+                      </td>
+                      <td className={`px-3 py-3 whitespace-nowrap text-sm font-semibold text-right ${
                         row.percentualMetaNSemana >= 100 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatPercent(row.percentualMetaNSemana)}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.apolicesEmitidas}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsAgendadas}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsRealizadas}</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className={`px-3 py-3 whitespace-nowrap text-sm font-semibold text-right ${
+                        row.percentualMetaNAno >= 100 ? 'text-green-600' : 'text-orange-600'
+                      }`}>
+                        {formatPercent(row.percentualMetaNAno)}
+                      </td>
+                      {/* OIs - Valores */}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {row.oIsAgendadas}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {row.oIsRealizadas}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {row.percentualOIsRealizadas ? formatPercent(row.percentualOIsRealizadas) : '-'}
+                      </td>
+                      {/* Outros - Valores */}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
                         {row.novasRECS !== undefined ? row.novasRECS : '-'}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
                         {row.pcsRealizados !== undefined ? row.pcsRealizados : '-'}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
                         {row.c2Realizados !== undefined ? row.c2Realizados : '-'}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
                         {row.apoliceEmAtraso !== undefined ? row.apoliceEmAtraso : '-'}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
                         {row.taxaInadimplenciaGeral !== undefined ? formatPercent(row.taxaInadimplenciaGeral) : '-'}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
                         {row.revisitasRealizadas !== undefined ? row.revisitasRealizadas : '-'}
                       </td>
                     </tr>
