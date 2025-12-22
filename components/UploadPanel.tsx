@@ -96,10 +96,19 @@ export default function UploadPanel() {
           window.location.href = '/'
         }, 3000)
       } else {
+        let errorMessage = data.error || data.message || 'Erro ao fazer upload'
+        
+        // Adicionar detalhes se disponíveis
+        if (data.details) {
+          errorMessage += `\n\nDetalhes: ${data.details}`
+        }
+        
         setResult({
           success: false,
-          error: data.error || data.message || 'Erro ao fazer upload',
+          error: errorMessage,
           duplicates: data.duplicates,
+          duplicatesInFile: data.duplicatesInFile,
+          duplicatesInDatabase: data.duplicatesInDatabase,
         })
       }
     } catch (error: any) {
