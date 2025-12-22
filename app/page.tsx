@@ -32,11 +32,19 @@ export default function Dashboard() {
     async function loadData() {
       try {
         const data = await getAllWeeklyData()
+        console.log('Dados carregados do Supabase:', data.length, 'registros')
+        // Sempre atualizar o estado, mesmo se vazio (para manter sincronizado)
         if (data.length > 0) {
+          console.log('Atualizando estado com dados do Supabase')
           setWeeklyDataState(data)
+        } else {
+          console.log('Nenhum dado do Supabase, mantendo dados locais como fallback')
+          // Se não há dados no Supabase, manter fallbackData
+          // Não resetar para array vazio
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
+        // Em caso de erro, manter dados locais (fallbackData)
       } finally {
         setLoading(false)
       }
