@@ -85,10 +85,41 @@ export async function POST(request: NextRequest) {
           rowMap[normalizeKey(key)] = row[key]
         })
 
-        // Buscar período com múltiplas variações
-        const periodRaw = getTextValue(rowMap, [
-          'período', 'periodo', 'period', 'semana', 'data'
+        // Buscar período com múltiplas variações (mais flexível)
+        let periodRaw = getTextValue(rowMap, [
+          'período', 'periodo', 'period', 'semana', 'data',
+          'periodo semanal', 'periodo da semana', 'semana de',
+          'data inicial', 'data final', 'range', 'intervalo'
         ]) || ''
+        
+        // Se não encontrou, tentar buscar em qualquer coluna que contenha "period", "semana" ou "data"
+        if (!periodRaw) {
+          for (const key in rowMap) {
+            const normalizedKey = normalizeKey(key)
+            if (normalizedKey.includes('period') || normalizedKey.includes('semana') || normalizedKey.includes('data')) {
+              const value = String(rowMap[key] || '').trim()
+              if (value && value.length > 0 && value !== 'undefined' && value !== 'null') {
+                periodRaw = value
+                break
+              }
+            }
+          }
+        }
+        
+        // Se ainda não encontrou, usar a primeira coluna que tenha valor de texto
+        if (!periodRaw) {
+          for (const key in rowMap) {
+            const value = String(rowMap[key] || '').trim()
+            if (value && value.length > 0 && value !== 'undefined' && value !== 'null') {
+              // Verificar se parece com um período (contém "/" ou "a" ou números)
+              if (value.match(/\d+\/\d+/) || value.includes('a') || value.match(/\d{2}\/\d{2}/)) {
+                periodRaw = value
+                break
+              }
+            }
+          }
+        }
+        
         const periodNormalized = normalizePeriod(periodRaw)
 
         // Mapear todos os indicadores com suas variações possíveis
@@ -403,10 +434,34 @@ export async function POST(request: NextRequest) {
       .filter(data => data.period) // Filtrar linhas sem período
 
     if (mappedData.length === 0) {
+      // Tentar identificar quais colunas existem na planilha para ajudar no debug
+      const firstRow = jsonData[0] || {}
+      const availableColumns = Object.keys(firstRow).map(key => {
+        const value = firstRow[key]
+        return `"${key}" (valor exemplo: ${value !== undefined && value !== null ? String(value).substring(0, 30) : 'vazio'})`
+      }).join(', ')
+      
+      // Verificar se há alguma coluna que pode ser período
+      const possiblePeriodColumns = Object.keys(firstRow).filter(key => {
+        const normalized = normalizeKey(key)
+        const value = String(firstRow[key] || '').trim()
+        return (normalized.includes('period') || normalized.includes('semana') || normalized.includes('data')) && value.length > 0
+      })
+      
+      let detailsMessage = `Verifique se a planilha contém uma coluna "Período" ou "Period" com valores válidos.\n\n`
+      detailsMessage += `Colunas encontradas na planilha:\n${availableColumns || 'Nenhuma coluna encontrada'}\n\n`
+      
+      if (possiblePeriodColumns.length > 0) {
+        detailsMessage += `Colunas que podem ser período: ${possiblePeriodColumns.join(', ')}\n`
+        detailsMessage += `Mas não foram encontrados valores válidos nessas colunas.`
+      } else {
+        detailsMessage += `Nenhuma coluna com nome similar a "Período" foi encontrada.`
+      }
+      
       return NextResponse.json(
         { 
           error: 'Nenhum dado válido encontrado na planilha',
-          details: 'Verifique se a planilha contém uma coluna "Período" ou "Period" com valores válidos'
+          details: detailsMessage
         },
         { status: 400 }
       )
