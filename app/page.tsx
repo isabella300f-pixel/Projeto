@@ -497,111 +497,474 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Gráficos - só mostrar se houver dados */}
+        {/* GRÁFICOS - TODOS OS INDICADORES VISUALIZADOS */}
         {filteredData.length > 0 && (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Gráfico de PA Semanal vs Meta */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">PA Semanal vs Meta</h2>
-                {chartData.length > 0 ? (
-                  <BarChart
-                    data={chartData}
-                    dataKey="paSemanal"
-                    name="PA Semanal"
-                    color="#0ea5e9"
-                    secondDataKey="metaPASemanal"
-                    secondName="Meta"
-                    secondColor="#10b981"
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
-                )}
-              </div>
-
-              {/* Gráfico de % Meta PA */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">% Meta PA Realizada</h2>
-                {chartData.length > 0 ? (
-                  <LineChart
-                    data={chartData}
-                    dataKey="percentualMeta"
-                    name="% Meta PA"
-                    color="#8b5cf6"
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Gráfico de N Semanal vs Meta */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">N Semanal vs Meta</h2>
-                {chartData.length > 0 ? (
-                  <BarChart
-                    data={chartData}
-                    dataKey="nSemana"
-                    name="N Semanal"
-                    color="#f59e0b"
-                    secondDataKey="metaNSemanal"
-                    secondName="Meta"
-                    secondColor="#10b981"
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
-                )}
-              </div>
-
-              {/* Gráfico de % Meta N */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">% Meta N Realizada</h2>
-                {chartData.length > 0 ? (
-                  <LineChart
-                    data={chartData}
-                    dataKey="percentualMetaN"
-                    name="% Meta N"
-                    color="#ec4899"
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
-                )}
+            {/* Seção 1: Indicadores de PA (Prêmio Anual) */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <DollarSign className="w-6 h-6 text-blue-600" />
+                Indicadores de PA (Prêmio Anual)
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">PA Semanal vs Meta</h3>
+                  {chartData.length > 0 ? (
+                    <BarChart
+                      data={chartData}
+                      dataKey="paSemanal"
+                      name="PA Semanal"
+                      color="#0ea5e9"
+                      secondDataKey="metaPASemanal"
+                      secondName="Meta"
+                      secondColor="#10b981"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">% Meta PA Realizada (Semana)</h3>
+                  {chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      dataKey="percentualMeta"
+                      name="% Meta PA"
+                      color="#8b5cf6"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">PA Acumulado no Mês</h3>
+                  {chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      dataKey="paAcumuladoMes"
+                      name="PA Acumulado Mês"
+                      color="#06b6d4"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">PA Emitido na Semana</h3>
+                  {chartData.length > 0 ? (
+                    <BarChart
+                      data={chartData}
+                      dataKey="paEmitido"
+                      name="PA Emitido"
+                      color="#f59e0b"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Gráfico de Apólices Emitidas */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Apólices Emitidas por Semana</h2>
-                {chartData.length > 0 ? (
-                  <BarChart
-                    data={chartData}
-                    dataKey="apolicesEmitidas"
-                    name="Apólices Emitidas"
-                    color="#06b6d4"
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
-                )}
+            {/* Seção 2: Indicadores de N (Número de Apólices) */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Target className="w-6 h-6 text-green-600" />
+                Indicadores de N (Número de Apólices)
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">N da Semana vs Meta</h3>
+                  {chartData.length > 0 ? (
+                    <BarChart
+                      data={chartData}
+                      dataKey="nSemana"
+                      name="N Semanal"
+                      color="#10b981"
+                      secondDataKey="metaNSemanal"
+                      secondName="Meta"
+                      secondColor="#059669"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">% Meta N Realizada</h3>
+                  {chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      dataKey="percentualMetaN"
+                      name="% Meta N"
+                      color="#22c55e"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Apólices Emitidas</h3>
+                  {chartData.length > 0 ? (
+                    <BarChart
+                      data={chartData}
+                      dataKey="apolicesEmitidas"
+                      name="Apólices Emitidas"
+                      color="#06b6d4"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">N Acumulado no Mês</h3>
+                  {chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      dataKey="nAcumuladoMes"
+                      name="N Acumulado Mês"
+                      color="#14b8a6"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
               </div>
+            </div>
 
-              {/* Gráfico de OIs */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">OIs Agendadas vs Realizadas</h2>
-                {chartData.length > 0 ? (
-                  <BarChart
-                    data={chartData}
-                    dataKey="oIsAgendadas"
-                    name="OIs Agendadas"
-                    color="#6366f1"
-                    secondDataKey="oIsRealizadas"
-                    secondName="OIs Realizadas"
-                    secondColor="#14b8a6"
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
-                )}
+            {/* Seção 3: Indicadores de OIs */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <CheckCircle className="w-6 h-6 text-purple-600" />
+                Indicadores de OIs (Oportunidades de Inovação)
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">OIs Agendadas vs Realizadas</h3>
+                  {chartData.length > 0 ? (
+                    <BarChart
+                      data={chartData}
+                      dataKey="oIsAgendadas"
+                      name="OIs Agendadas"
+                      color="#6366f1"
+                      secondDataKey="oIsRealizadas"
+                      secondName="OIs Realizadas"
+                      secondColor="#14b8a6"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">% OIs Realizadas</h3>
+                  {chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      dataKey="percentualOIsRealizadas"
+                      name="% OIs Realizadas"
+                      color="#a855f7"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 4: Indicadores de RECS */}
+            {chartData.some(d => d.metaRECS > 0 || d.novasRECS > 0) && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-emerald-600" />
+                  Indicadores de RECS
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Meta RECS vs Novas RECS</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="metaRECS"
+                        name="Meta RECS"
+                        color="#10b981"
+                        secondDataKey="novasRECS"
+                        secondName="Novas RECS"
+                        secondColor="#34d399"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Novas RECS</h3>
+                    {chartData.length > 0 ? (
+                      <LineChart
+                        data={chartData}
+                        dataKey="novasRECS"
+                        name="Novas RECS"
+                        color="#34d399"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seção 5: Indicadores de PCs/C2 */}
+            {chartData.some(d => d.metaPCsC2Agendados > 0 || d.pcsRealizados > 0 || d.c2Realizados > 0) && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Target className="w-6 h-6 text-violet-600" />
+                  Indicadores de PCs/C2
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">PCs Realizados vs Meta</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="pcsRealizados"
+                        name="PCs Realizados"
+                        color="#8b5cf6"
+                        secondDataKey="metaPCsC2Agendados"
+                        secondName="Meta PCs/C2"
+                        secondColor="#a78bfa"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">C2 Realizados</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="c2Realizados"
+                        name="C2 Realizados"
+                        color="#c084fc"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seção 6: Indicadores de Atrasos */}
+            {chartData.some(d => d.apoliceEmAtraso > 0 || d.premioEmAtraso > 0) && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                  Indicadores de Atrasos
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Apólices em Atraso</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="apoliceEmAtraso"
+                        name="Apólices em Atraso"
+                        color="#ef4444"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Prêmio em Atraso (R$)</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="premioEmAtraso"
+                        name="Prêmio em Atraso"
+                        color="#f87171"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seção 7: Indicadores de Inadimplência */}
+            {chartData.some(d => d.taxaInadimplenciaGeral > 0 || d.taxaInadimplenciaAssistente > 0) && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-6 h-6 text-amber-600" />
+                  Taxa de Inadimplência
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Taxa de Inadimplência (%) Geral</h3>
+                    {chartData.length > 0 ? (
+                      <LineChart
+                        data={chartData}
+                        dataKey="taxaInadimplenciaGeral"
+                        name="Taxa Inadimplência Geral"
+                        color="#f59e0b"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Taxa de Inadimplência (%) Assistente</h3>
+                    {chartData.length > 0 ? (
+                      <LineChart
+                        data={chartData}
+                        dataKey="taxaInadimplenciaAssistente"
+                        name="Taxa Inadimplência Assistente"
+                        color="#fbbf24"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seção 8: Indicadores de Revisitas */}
+            {chartData.some(d => d.metaRevisitasAgendadas > 0 || d.revisitasAgendadas > 0 || d.revisitasRealizadas > 0) && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6 text-sky-600" />
+                  Indicadores de Revisitas
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Revisitas Agendadas vs Realizadas</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="revisitasAgendadas"
+                        name="Revisitas Agendadas"
+                        color="#0ea5e9"
+                        secondDataKey="revisitasRealizadas"
+                        secondName="Revisitas Realizadas"
+                        secondColor="#38bdf8"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Revisitas Realizadas</h3>
+                    {chartData.length > 0 ? (
+                      <LineChart
+                        data={chartData}
+                        dataKey="revisitasRealizadas"
+                        name="Revisitas Realizadas"
+                        color="#38bdf8"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seção 9: Indicadores de Produtividade */}
+            {chartData.some(d => d.volumeTarefasTrello > 0 || d.videosTreinamentoGravados > 0 || d.deliveryApolices > 0 || d.totalReunioes > 0) && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-lime-600" />
+                  Indicadores de Produtividade
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Volume de Tarefas Trello</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="volumeTarefasTrello"
+                        name="Tarefas Trello"
+                        color="#84cc16"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Vídeos de Treinamento Gravados</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="videosTreinamentoGravados"
+                        name="Vídeos Gravados"
+                        color="#a3e635"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Delivery Apólices</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="deliveryApolices"
+                        name="Delivery Apólices"
+                        color="#bef264"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Total de Reuniões Realizadas</h3>
+                    {chartData.length > 0 ? (
+                      <BarChart
+                        data={chartData}
+                        dataKey="totalReunioes"
+                        name="Total Reuniões"
+                        color="#d9f99d"
+                      />
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Seção 10: Indicadores Adicionais */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-6 h-6 text-indigo-600" />
+                Indicadores Adicionais
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ticket Médio</h3>
+                  {chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      dataKey="ticketMedio"
+                      name="Ticket Médio (R$)"
+                      color="#6366f1"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">% Meta PA Realizada do Ano</h3>
+                  {chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      dataKey="percentualMetaPAAno"
+                      name="% Meta PA Ano"
+                      color="#8b5cf6"
+                    />
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
+                  )}
+                </div>
               </div>
             </div>
           </>
