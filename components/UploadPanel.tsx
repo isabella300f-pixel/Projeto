@@ -12,6 +12,8 @@ interface UploadResult {
   duplicates?: string[]
   duplicatesInFile?: string[]
   duplicatesInDatabase?: string[]
+  deleted?: number
+  deletedPeriods?: string[]
   error?: string
 }
 
