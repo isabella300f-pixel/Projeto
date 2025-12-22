@@ -33,18 +33,25 @@ export default function Dashboard() {
       try {
         const data = await getAllWeeklyData()
         console.log('Dados carregados do Supabase:', data.length, 'registros')
-        // Sempre atualizar o estado, mesmo se vazio (para manter sincronizado)
-        if (data.length > 0) {
-          console.log('Atualizando estado com dados do Supabase')
+        
+        // Verificar se os dados do Supabase são válidos (não todos zerados)
+        const hasValidData = data.length > 0 && data.some(d => 
+          d.paSemanal > 0 || d.nSemana > 0 || d.paAcumuladoAno > 0
+        )
+        
+        if (hasValidData) {
+          console.log('Atualizando estado com dados válidos do Supabase')
           setWeeklyDataState(data)
+        } else if (data.length > 0) {
+          console.warn('Dados do Supabase encontrados mas todos zerados, mantendo dados locais')
+          // Dados existem mas estão zerados, manter fallback
         } else {
           console.log('Nenhum dado do Supabase, mantendo dados locais como fallback')
           // Se não há dados no Supabase, manter fallbackData
-          // Não resetar para array vazio
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
-        // Em caso de erro, manter dados locais (fallbackData)
+        // Em caso de erro, manter dados locais (fallbackData já está no estado inicial)
       } finally {
         setLoading(false)
       }
