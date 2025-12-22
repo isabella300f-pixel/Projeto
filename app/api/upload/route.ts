@@ -54,6 +54,98 @@ export async function POST(request: NextRequest) {
         .replace(/\//g, '/') // Garante formato consistente
     }
 
+    // Função para validar se um valor parece ser um período válido
+    const isValidPeriod = (value: string): boolean => {
+      if (!value || typeof value !== 'string') return false
+      
+      const normalized = value.trim().toLowerCase()
+      
+      // Ignorar valores muito curtos ou muito longos
+      if (normalized.length < 5 || normalized.length > 50) return false
+      
+      // Ignorar textos descritivos conhecidos
+      const invalidPatterns = [
+        'simples nacional',
+        'anexo',
+        'indica',
+        'célula',
+        'celula',
+        'output',
+        'input',
+        'informação',
+        'informacao',
+        'permit',
+        'alterar',
+        'conteúdo',
+        'conteudo',
+        'fórmula',
+        'formula',
+        'perdida',
+        'atalho',
+        'simulação',
+        'simulacao',
+        'hipótese',
+        'hipotese',
+        'cartão',
+        'cartao',
+        'crédito',
+        'credito',
+        'débito',
+        'debito',
+        'vista',
+        'dinheiro',
+        'caixa',
+        'capital',
+        'giro',
+        'ciclo',
+        'diária',
+        'diaria',
+        'franqueado',
+        'gerenciamento',
+        'regime',
+        'tributário',
+        'tributario',
+        'saco',
+        'unidade',
+        'medida',
+        'taxa',
+        'retorno',
+        'irr',
+        'tir',
+        'prazo',
+        'médio',
+        'medio',
+        'estoque',
+        'pagto',
+        'recebimento',
+        'percentual',
+        'índice',
+        'indice',
+        'financeiro'
+      ]
+      
+      // Se contém algum padrão inválido, não é um período válido
+      for (const pattern of invalidPatterns) {
+        if (normalized.includes(pattern)) {
+          return false
+        }
+      }
+      
+      // Deve conter pelo menos um número
+      if (!/\d/.test(normalized)) return false
+      
+      // Deve ter formato de data/período:
+      // - Contém "/" (ex: "18/08", "18/08/2024")
+      // - OU contém "a" com números e "/" (ex: "18/08 a 24/08")
+      // - OU formato de semana (ex: "2023-W34")
+      const hasDatePattern = /\d{1,2}\/\d{1,2}/.test(normalized) // DD/MM ou DD/MM/YYYY
+      const hasPeriodPattern = /\d{1,2}\/\d{1,2}\s+a\s+\d{1,2}\/\d{1,2}/.test(normalized) // "DD/MM a DD/MM"
+      const hasWeekPattern = /\d{4}-w\d{1,2}/i.test(normalized) // "2023-W34"
+      const hasDateRange = normalized.includes('a') && /\d/.test(normalized) && normalized.includes('/')
+      
+      return hasDatePattern || hasPeriodPattern || hasWeekPattern || hasDateRange
+    }
+
     // Função auxiliar para buscar valor com múltiplas variações de nome
     const getValue = (rowMap: any, variations: string[]): number | undefined => {
       for (const variation of variations) {
@@ -78,7 +170,7 @@ export async function POST(request: NextRequest) {
       return undefined
     }
 
-    const mappedData: WeeklyData[] = jsonData
+    const mappedData: (WeeklyData | null)[] = jsonData
       .map((row: any) => {
         const rowMap: any = {}
         Object.keys(row).forEach(key => {
@@ -99,6 +191,23 @@ export async function POST(request: NextRequest) {
             if (normalizedKey.includes('period') || normalizedKey.includes('semana') || normalizedKey.includes('data')) {
               const value = String(rowMap[key] || '').trim()
               if (value && value.length > 0 && value !== 'undefined' && value !== 'null') {
+                // Validar antes de usar
+                if (isValidPeriod(value)) {
+                  periodRaw = value
+                  break
+                }
+              }
+            }
+          }
+        }
+        
+        // Se ainda não encontrou, usar a primeira coluna que tenha valor de texto válido
+        if (!periodRaw) {
+          for (const key in rowMap) {
+            const value = String(rowMap[key] || '').trim()
+            if (value && value.length > 0 && value !== 'undefined' && value !== 'null') {
+              // Validar se parece com um período válido
+              if (isValidPeriod(value)) {
                 periodRaw = value
                 break
               }
@@ -106,18 +215,10 @@ export async function POST(request: NextRequest) {
           }
         }
         
-        // Se ainda não encontrou, usar a primeira coluna que tenha valor de texto
-        if (!periodRaw) {
-          for (const key in rowMap) {
-            const value = String(rowMap[key] || '').trim()
-            if (value && value.length > 0 && value !== 'undefined' && value !== 'null') {
-              // Verificar se parece com um período (contém "/" ou "a" ou números)
-              if (value.match(/\d+\/\d+/) || value.includes('a') || value.match(/\d{2}\/\d{2}/)) {
-                periodRaw = value
-                break
-              }
-            }
-          }
+        // Validar o período encontrado antes de normalizar
+        if (!periodRaw || !isValidPeriod(periodRaw)) {
+          // Se não for um período válido, pular esta linha
+          return null
         }
         
         const periodNormalized = normalizePeriod(periodRaw)
@@ -429,9 +530,13 @@ export async function POST(request: NextRequest) {
           data.conversaoOIs = (data.oIsRealizadas / data.oIsAgendadas) * 100
         }
 
-        return data
-      })
-      .filter(data => data.period) // Filtrar linhas sem período
+            return data
+          })
+          .filter((data): data is WeeklyData => {
+            if (!data || !data.period) return false
+            const isValid = isValidPeriod(data.period)
+            return typeof isValid === 'boolean' ? isValid : false
+          }) // Filtrar linhas sem período
 
     if (mappedData.length === 0) {
       // Tentar identificar quais colunas existem na planilha para ajudar no debug
@@ -473,6 +578,7 @@ export async function POST(request: NextRequest) {
     const uniqueMappedData: WeeklyData[] = []
 
     for (const data of mappedData) {
+      if (!data || !data.period) continue
       const periodKey = data.period.toLowerCase().trim()
       if (seenPeriods.has(periodKey)) {
         // Período duplicado dentro da planilha
