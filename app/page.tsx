@@ -294,6 +294,272 @@ export default function Dashboard() {
           />
         </div>
 
+        {/* TODOS OS 34 INDICADORES - SEMPRE VISÍVEIS */}
+        {currentData && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <Target className="w-6 h-6 text-indigo-600" />
+              Todos os Indicadores - Período Mais Recente: {currentData.period}
+            </h2>
+
+            {/* Seção 1: Indicadores de PA (7 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-blue-600" />
+                PA (Prêmio Anual) - 7 Indicadores
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-gray-600 mb-1">PA Semanal Realizado</p>
+                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paSemanal)}</p>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-lg border border-blue-300">
+                  <p className="text-xs text-gray-600 mb-1">PA Acumulado no Mês</p>
+                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paAcumuladoMes)}</p>
+                </div>
+                <div className="p-3 bg-blue-200 rounded-lg border border-blue-400">
+                  <p className="text-xs text-gray-600 mb-1">PA Acumulado no Ano</p>
+                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paAcumuladoAno)}</p>
+                </div>
+                <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <p className="text-xs text-gray-600 mb-1">Meta de PA Semanal</p>
+                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.metaPASemanal)}</p>
+                </div>
+                <div className="p-3 bg-indigo-100 rounded-lg border border-indigo-300">
+                  <p className="text-xs text-gray-600 mb-1">% Meta PA Semana</p>
+                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.percentualMetaPASemana)}</p>
+                </div>
+                <div className="p-3 bg-indigo-200 rounded-lg border border-indigo-400">
+                  <p className="text-xs text-gray-600 mb-1">% Meta PA Ano</p>
+                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.percentualMetaPAAno)}</p>
+                </div>
+                <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
+                  <p className="text-xs text-gray-600 mb-1">PA Emitido na Semana</p>
+                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paEmitido)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 2: Indicadores de N (7 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-green-600" />
+                N (Número de Apólices) - 7 Indicadores
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-xs text-gray-600 mb-1">Apólices Emitidas</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.apolicesEmitidas}</p>
+                </div>
+                <div className="p-3 bg-green-100 rounded-lg border border-green-300">
+                  <p className="text-xs text-gray-600 mb-1">Meta de N Semanal</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaNSemanal}</p>
+                </div>
+                <div className="p-3 bg-green-200 rounded-lg border border-green-400">
+                  <p className="text-xs text-gray-600 mb-1">N da Semana</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.nSemana}</p>
+                </div>
+                <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <p className="text-xs text-gray-600 mb-1">N Acumulados do Mês</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.nAcumuladoMes}</p>
+                </div>
+                <div className="p-3 bg-emerald-100 rounded-lg border border-emerald-300">
+                  <p className="text-xs text-gray-600 mb-1">N Acumulados do Ano</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.nAcumuladoAno}</p>
+                </div>
+                <div className="p-3 bg-emerald-200 rounded-lg border border-emerald-400">
+                  <p className="text-xs text-gray-600 mb-1">% Meta N Semana</p>
+                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.percentualMetaNSemana)}</p>
+                </div>
+                <div className="p-3 bg-lime-50 rounded-lg border border-lime-200">
+                  <p className="text-xs text-gray-600 mb-1">% Meta N Ano</p>
+                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.percentualMetaNAno)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 3: Indicadores de OIs (3 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-purple-600" />
+                OIs (Oportunidades de Inovação) - 3 Indicadores
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <p className="text-xs text-gray-600 mb-1">Meta OIs Agendadas</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaOIsAgendadas}</p>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-lg border border-purple-300">
+                  <p className="text-xs text-gray-600 mb-1">OIs Agendadas</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.oIsAgendadas}</p>
+                </div>
+                <div className="p-3 bg-purple-200 rounded-lg border border-purple-400">
+                  <p className="text-xs text-gray-600 mb-1">OIs Realizadas na Semana</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.oIsRealizadas}</p>
+                  {currentData.percentualOIsRealizadas && (
+                    <p className="text-xs text-gray-500 mt-1">{formatPercent(currentData.percentualOIsRealizadas)} realizadas</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 4: Indicadores de RECS (2 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-emerald-600" />
+                RECS - 2 Indicadores
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <p className="text-xs text-gray-600 mb-1">Meta RECS</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaRECS !== undefined ? currentData.metaRECS : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-emerald-100 rounded-lg border border-emerald-300">
+                  <p className="text-xs text-gray-600 mb-1">Novas RECS</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.novasRECS !== undefined ? currentData.novasRECS : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 5: Indicadores de PCs/C2 (3 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-violet-600" />
+                PCs/C2 - 3 Indicadores
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-violet-50 rounded-lg border border-violet-200">
+                  <p className="text-xs text-gray-600 mb-1">Meta de PCs/C2 Agendados</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaPCsC2Agendados !== undefined ? currentData.metaPCsC2Agendados : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-violet-100 rounded-lg border border-violet-300">
+                  <p className="text-xs text-gray-600 mb-1">PCs Realizados na Semana</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.pcsRealizados !== undefined ? currentData.pcsRealizados : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-violet-200 rounded-lg border border-violet-400">
+                  <p className="text-xs text-gray-600 mb-1">C2 Realizados na Semana</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.c2Realizados !== undefined ? currentData.c2Realizados : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 6: Indicadores de Atrasos (2 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                Atrasos - 2 Indicadores
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                  <p className="text-xs text-gray-600 mb-1">Apólice em Atraso (nº)</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.apoliceEmAtraso !== undefined ? currentData.apoliceEmAtraso : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-red-100 rounded-lg border border-red-300">
+                  <p className="text-xs text-gray-600 mb-1">Prêmio em Atraso (R$)</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.premioEmAtraso !== undefined ? formatCurrency(currentData.premioEmAtraso) : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 7: Taxa de Inadimplência (2 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                Taxa de Inadimplência - 2 Indicadores
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-xs text-gray-600 mb-1">Taxa de Inadimplência (%) Geral</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.taxaInadimplenciaGeral !== undefined ? formatPercent(currentData.taxaInadimplenciaGeral) : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-amber-100 rounded-lg border border-amber-300">
+                  <p className="text-xs text-gray-600 mb-1">Taxa de Inadimplência (%) Assistente</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.taxaInadimplenciaAssistente !== undefined ? formatPercent(currentData.taxaInadimplenciaAssistente) : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 8: Indicadores de Revisitas (3 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-sky-600" />
+                Revisitas - 3 Indicadores
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
+                  <p className="text-xs text-gray-600 mb-1">Meta Revisitas Agendadas</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaRevisitasAgendadas !== undefined ? currentData.metaRevisitasAgendadas : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-sky-100 rounded-lg border border-sky-300">
+                  <p className="text-xs text-gray-600 mb-1">Revisitas Agendadas na Semana</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.revisitasAgendadas !== undefined ? currentData.revisitasAgendadas : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-sky-200 rounded-lg border border-sky-400">
+                  <p className="text-xs text-gray-600 mb-1">Revisitas Realizadas na Semana</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.revisitasRealizadas !== undefined ? currentData.revisitasRealizadas : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 9: Indicadores de Produtividade (4 indicadores) */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-lime-600" />
+                Produtividade - 4 Indicadores
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-3 bg-lime-50 rounded-lg border border-lime-200">
+                  <p className="text-xs text-gray-600 mb-1">Volume de Tarefas Trello</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.volumeTarefasTrello !== undefined ? currentData.volumeTarefasTrello : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-lime-100 rounded-lg border border-lime-300">
+                  <p className="text-xs text-gray-600 mb-1">Vídeos de Treinamento Gravados</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.videosTreinamentoGravados !== undefined ? currentData.videosTreinamentoGravados : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-lime-200 rounded-lg border border-lime-400">
+                  <p className="text-xs text-gray-600 mb-1">Delivery Apólices</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.deliveryApolices !== undefined ? currentData.deliveryApolices : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-lime-300 rounded-lg border border-lime-500">
+                  <p className="text-xs text-gray-600 mb-1">Total de Reuniões Realizadas</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.totalReunioes !== undefined ? currentData.totalReunioes : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 10: Lista de Atrasos Raiza */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-rose-600" />
+                Lista de Atrasos - Raiza
+              </h3>
+              <div className="p-4 bg-rose-50 rounded-lg border border-rose-200">
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                  {currentData.listaAtrasosRaiza || 'N/A'}
+                </p>
+              </div>
+            </div>
+
+            {/* Indicadores Calculados */}
+            <div className="mb-6 border-t border-gray-300 pt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-indigo-600" />
+                Indicadores Calculados
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.ticketMedio ? formatCurrency(currentData.ticketMedio) : 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-indigo-100 rounded-lg border border-indigo-300">
+                  <p className="text-xs text-gray-600 mb-1">% OIs Realizadas</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.percentualOIsRealizadas ? formatPercent(currentData.percentualOIsRealizadas) : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Indicadores do Período Selecionado */}
         {currentData && filters.period !== 'all' && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
