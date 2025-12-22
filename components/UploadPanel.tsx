@@ -123,6 +123,44 @@ export default function UploadPanel() {
     }
   }
 
+  const handleCleanup = async () => {
+    if (!confirm('Tem certeza que deseja limpar os dados inválidos do banco? Isso irá deletar todos os registros com períodos inválidos (como "Simples Nacional", "Indica células", etc.).')) {
+      return
+    }
+
+    setUploading(true)
+    setResult(null)
+
+    try {
+      const response = await fetch('/api/cleanup', {
+        method: 'POST',
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setResult({
+          success: true,
+          message: data.message || 'Limpeza concluída com sucesso!',
+          deleted: data.deleted,
+          deletedPeriods: data.deletedPeriods,
+        })
+      } else {
+        setResult({
+          success: false,
+          error: data.error || 'Erro ao limpar dados',
+        })
+      }
+    } catch (error: any) {
+      setResult({
+        success: false,
+        error: 'Erro ao conectar com o servidor: ' + error.message,
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -222,26 +260,36 @@ export default function UploadPanel() {
             )}
           </div>
 
-          {/* Botão de upload */}
-          {file && (
+          {/* Botões de ação */}
+          <div className="mt-4 flex gap-3">
+            {file && (
+              <button
+                onClick={handleUpload}
+                disabled={uploading}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    Fazer Upload
+                  </>
+                )}
+              </button>
+            )}
             <button
-              onClick={handleUpload}
+              onClick={handleCleanup}
               disabled={uploading}
-              className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              title="Limpar registros inválidos do banco de dados (períodos como 'Simples Nacional', 'Indica células', etc.)"
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5" />
-                  Fazer Upload
-                </>
-              )}
+              🗑️ Limpar Inválidos
             </button>
-          )}
+          </div>
 
           {/* Resultado do upload */}
           {result && (
@@ -273,10 +321,31 @@ export default function UploadPanel() {
                   >
                     {result.message || result.error}
                   </p>
-                  {result.inserted !== undefined && (
-                    <p className="text-xs text-green-600 mt-1">
-                      {result.inserted} registro(s) inserido(s)
-                    </p>
+                  {result.deleted !== undefined ? (
+                    <>
+                      <p className="text-xs text-green-600 mt-1">
+                        <strong>{result.deleted}</strong> registro(s) inválido(s) deletado(s).
+                      </p>
+                      {result.deletedPeriods && result.deletedPeriods.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-green-800 mb-1">Períodos deletados:</p>
+                          <ul className="text-xs text-green-700 list-disc list-inside max-h-32 overflow-y-auto">
+                            {result.deletedPeriods.slice(0, 10).map((period, idx) => (
+                              <li key={idx}>{period}</li>
+                            ))}
+                            {result.deletedPeriods.length > 10 && (
+                              <li>... e mais {result.deletedPeriods.length - 10} período(s)</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    result.inserted !== undefined && (
+                      <p className="text-xs text-green-600 mt-1">
+                        {result.inserted} registro(s) inserido(s)
+                      </p>
+                    )
                   )}
                   {result.duplicates && result.duplicates.length > 0 && (
                     <div className="mt-2 space-y-2">
