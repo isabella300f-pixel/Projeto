@@ -141,11 +141,26 @@ export default function UploadPanel() {
 
           <div className="mb-4">
             <p className="text-sm text-gray-600 mb-2">
-              Faça upload de uma planilha Excel (.xlsx ou .xls) com os dados semanais.
+              Faça upload da planilha <strong>MODELAGEM_FINANCEIRA - LIMPEZACA HOME OFFICE V01.1 - Lages SC - Franqueado</strong> (.xlsx ou .xls) com os dados semanais.
             </p>
-            <p className="text-xs text-gray-500">
-              A planilha deve conter as colunas: Período, PA Semanal, PA Acumulado Mês, PA Acumulado Ano, etc.
+            <p className="text-xs text-gray-500 mb-3">
+              A planilha deve conter todos os indicadores listados abaixo. O sistema reconhece variações nos nomes das colunas.
             </p>
+            <details className="text-xs text-gray-600 bg-gray-50 p-3 rounded border">
+              <summary className="cursor-pointer font-semibold mb-2">Ver todos os indicadores esperados</summary>
+              <div className="mt-2 space-y-1">
+                <p><strong>Indicadores de PA:</strong> PA Semanal Realizado, PA Acumulado no Mês, PA Acumulado no Ano, Meta de PA Semanal Necessária, % Meta de PA Realizada da Semana, % Meta de PA Realizada do Ano, PA Emitido na Semana</p>
+                <p><strong>Indicadores de N:</strong> Apólices Emitidas (por semana), Meta de N Semanal, N da Semana, N Acumulados do Mês, N Acumulados do Ano, % Meta de N Realizada da Semana, % Meta de N Realizada do Ano</p>
+                <p><strong>Indicadores de OIs:</strong> Meta OIs Agendadas, OIs Agendadas, OIs Realizadas na Semana</p>
+                <p><strong>Indicadores de RECS:</strong> Meta RECS, Novas RECS</p>
+                <p><strong>Indicadores de PCs/C2:</strong> Meta de PCs/C2 Agendados, PCs Realizados na Semana, Quantidade de C2 Realizados na Semana</p>
+                <p><strong>Indicadores de Atrasos:</strong> Apólice em Atraso (nº), Prêmio em Atraso de Clientes (R$)</p>
+                <p><strong>Indicadores de Inadimplência:</strong> Taxa de Inadimplência (%) Geral, Taxa de Inadimplência (%) Assistente</p>
+                <p><strong>Indicadores de Revisitas:</strong> Meta Revisitas Agendadas, Revisitas Agendadas na Semana, Revisitas Realizadas na Semana</p>
+                <p><strong>Indicadores de Produtividade:</strong> Volume de Tarefas Concluídas no Trello, Número de Vídeos de Treinamento Gravados, Delivery Apólices, Total de Reuniões Realizadas na Semana</p>
+                <p><strong>Outros:</strong> Lista de Atrasos - Atribuídos Raiza</p>
+              </div>
+            </details>
           </div>
 
           {/* Área de upload */}
@@ -302,7 +317,9 @@ export default function UploadPanel() {
               <strong>Formato suportado:</strong> Excel (.xlsx, .xls)
             </p>
             <p>
-              <strong>Colunas esperadas:</strong>
+              <strong>Planilha esperada:</strong> MODELAGEM_FINANCEIRA - LIMPEZACA HOME OFFICE V01.1 - Lages SC - Franqueado
+              <br />
+              <strong>Colunas principais:</strong>
             </p>
             <ul className="list-disc list-inside ml-4 space-y-1">
               <li>Período (ex: "18/08 a 24/08")</li>

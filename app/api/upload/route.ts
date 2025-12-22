@@ -33,9 +33,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Função para normalizar nomes de colunas
+    // Função para normalizar nomes de colunas (remove acentos, espaços, caracteres especiais)
     const normalizeKey = (key: string) => 
-      key.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[%]/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      key.toLowerCase()
+        .trim()
+        .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
+        .replace(/[%()]/g, '') // Remove % e parênteses
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^\w\s]/g, ' ') // Remove caracteres especiais, mantém apenas letras, números e espaços
+        .replace(/\s+/g, ' ') // Normaliza espaços novamente
+        .trim()
 
     // Função para normalizar período (remove espaços extras, padroniza formato)
     const normalizePeriod = (period: string): string => {
@@ -46,6 +54,30 @@ export async function POST(request: NextRequest) {
         .replace(/\//g, '/') // Garante formato consistente
     }
 
+    // Função auxiliar para buscar valor com múltiplas variações de nome
+    const getValue = (rowMap: any, variations: string[]): number | undefined => {
+      for (const variation of variations) {
+        const normalized = normalizeKey(variation)
+        if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
+          const value = parseFloat(rowMap[normalized])
+          if (!isNaN(value)) return value
+        }
+      }
+      return undefined
+    }
+
+    // Função auxiliar para buscar texto
+    const getTextValue = (rowMap: any, variations: string[]): string | undefined => {
+      for (const variation of variations) {
+        const normalized = normalizeKey(variation)
+        if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
+          const value = String(rowMap[normalized]).trim()
+          if (value) return value
+        }
+      }
+      return undefined
+    }
+
     const mappedData: WeeklyData[] = jsonData
       .map((row: any) => {
         const rowMap: any = {}
@@ -53,60 +85,317 @@ export async function POST(request: NextRequest) {
           rowMap[normalizeKey(key)] = row[key]
         })
 
-        const paSemanal = parseFloat(rowMap['pa semanal'] || rowMap['pasemanal'] || 0)
-        const apolicesEmitidas = parseFloat(rowMap['apolices emitidas'] || rowMap['apolicesemitidas'] || 0)
-        const oIsAgendadas = parseFloat(rowMap['ois agendadas'] || rowMap['oisagendadas'] || 0)
-        const oIsRealizadas = parseFloat(rowMap['ois realizadas'] || rowMap['oisrealizadas'] || 0)
-
-        const periodRaw = rowMap['periodo'] || rowMap['period'] || ''
+        // Buscar período com múltiplas variações
+        const periodRaw = getTextValue(rowMap, [
+          'período', 'periodo', 'period', 'semana', 'data'
+        ]) || ''
         const periodNormalized = normalizePeriod(periodRaw)
 
+        // Mapear todos os indicadores com suas variações possíveis
         const data: WeeklyData = {
           period: periodNormalized,
-          paSemanal: paSemanal,
-          paAcumuladoMes: parseFloat(rowMap['pa acumulado mes'] || rowMap['paacumuladomes'] || 0),
-          paAcumuladoAno: parseFloat(rowMap['pa acumulado ano'] || rowMap['paacumuladoano'] || 0),
-          metaPASemanal: parseFloat(rowMap['meta pa semanal'] || rowMap['metapasemanal'] || 82000),
-          percentualMetaPASemana: parseFloat(rowMap['meta pa semana'] || rowMap['metapasemana'] || rowMap['% meta pa semana'] || 0),
-          percentualMetaPAAno: parseFloat(rowMap['meta pa ano'] || rowMap['metapaano'] || rowMap['% meta pa ano'] || 0),
-          paEmitido: parseFloat(rowMap['pa emitido'] || rowMap['paemitido'] || 0),
-          apolicesEmitidas: apolicesEmitidas,
-          metaNSemanal: parseFloat(rowMap['meta n semanal'] || rowMap['metansemanal'] || 5),
-          nSemana: parseFloat(rowMap['n semana'] || rowMap['nsemana'] || 0),
-          nAcumuladoMes: parseFloat(rowMap['n acumulado mes'] || rowMap['nacumuladomes'] || 0),
-          nAcumuladoAno: parseFloat(rowMap['n acumulado ano'] || rowMap['nacumuladoano'] || 0),
-          percentualMetaNSemana: parseFloat(rowMap['meta n semana'] || rowMap['metansemana'] || rowMap['% meta n semana'] || 0),
-          percentualMetaNAno: parseFloat(rowMap['meta n ano'] || rowMap['metano'] || rowMap['% meta n ano'] || 0),
-          metaOIsAgendadas: parseFloat(rowMap['meta ois agendadas'] || rowMap['metaoisagendadas'] || 8),
-          oIsAgendadas: oIsAgendadas,
-          oIsRealizadas: oIsRealizadas,
-          // Novos indicadores
-          metaRECS: parseFloat(rowMap['meta recs'] || rowMap['metarecs'] || 0) || undefined,
-          novasRECS: parseFloat(rowMap['novas recs'] || rowMap['novasrecs'] || 0) || undefined,
-          metaPCsC2Agendados: parseFloat(rowMap['meta pcs c2 agendados'] || rowMap['meta pcs/c2 agendados'] || rowMap['metapcsc2agendados'] || 0) || undefined,
-          pcsRealizados: parseFloat(rowMap['pcs realizados'] || rowMap['pcsrealizados'] || 0) || undefined,
-          c2Realizados: parseFloat(rowMap['c2 realizados'] || rowMap['quantidade c2 realizados'] || rowMap['c2realizados'] || 0) || undefined,
-          apoliceEmAtraso: parseFloat(rowMap['apólice em atraso'] || rowMap['apolice em atraso'] || rowMap['apoliceematraso'] || 0) || undefined,
-          premioEmAtraso: parseFloat(rowMap['prêmio em atraso'] || rowMap['premio em atraso'] || rowMap['premioematraso'] || 0) || undefined,
-          taxaInadimplenciaGeral: parseFloat(rowMap['taxa inadimplência geral'] || rowMap['taxa inadimplencia geral'] || rowMap['taxainadimplenciageral'] || 0) || undefined,
-          taxaInadimplenciaAssistente: parseFloat(rowMap['taxa inadimplência assistente'] || rowMap['taxa inadimplencia assistente'] || rowMap['taxainadimplenciaassistente'] || 0) || undefined,
-          metaRevisitasAgendadas: parseFloat(rowMap['meta revisitas agendadas'] || rowMap['metarevisitasagendadas'] || 0) || undefined,
-          revisitasAgendadas: parseFloat(rowMap['revisitas agendadas'] || rowMap['revisitasagendadas'] || 0) || undefined,
-          revisitasRealizadas: parseFloat(rowMap['revisitas realizadas'] || rowMap['revisitasrealizadas'] || 0) || undefined,
-          volumeTarefasTrello: parseFloat(rowMap['volume tarefas trello'] || rowMap['volumetarefastrello'] || 0) || undefined,
-          videosTreinamentoGravados: parseFloat(rowMap['vídeos treinamento gravados'] || rowMap['videos treinamento gravados'] || rowMap['videostreinamentogravados'] || 0) || undefined,
-          deliveryApolices: parseFloat(rowMap['delivery apólices'] || rowMap['delivery apolices'] || rowMap['deliveryapolices'] || 0) || undefined,
-          totalReunioes: parseFloat(rowMap['total reuniões'] || rowMap['total reunioes'] || rowMap['totalreunioes'] || 0) || undefined,
-          listaAtrasosRaiza: rowMap['lista atrasos raiza'] || rowMap['listaatrasosraiza'] || undefined,
+          
+          // PA Semanal Realizado
+          paSemanal: getValue(rowMap, [
+            'pa semanal realizado',
+            'pa semanal',
+            'pasemanal',
+            'premio anual semanal',
+            'pa realizado'
+          ]) || 0,
+          
+          // PA Acumulado no Mês
+          paAcumuladoMes: getValue(rowMap, [
+            'pa acumulado no mes',
+            'pa acumulado mes',
+            'paacumuladomes',
+            'premio anual acumulado mes'
+          ]) || 0,
+          
+          // PA Acumulado no Ano
+          paAcumuladoAno: getValue(rowMap, [
+            'pa acumulado no ano',
+            'pa acumulado ano',
+            'paacumuladoano',
+            'premio anual acumulado ano'
+          ]) || 0,
+          
+          // Meta de PA Semanal Necessária
+          metaPASemanal: getValue(rowMap, [
+            'meta de pa semanal necessaria',
+            'meta pa semanal',
+            'metapasemanal',
+            'meta pa semanal necessaria'
+          ]) || 82000,
+          
+          // % Meta de PA Realizada da Semana
+          percentualMetaPASemana: getValue(rowMap, [
+            'meta de pa realizada da semana',
+            '% meta pa semana',
+            'meta pa semana',
+            'percentual meta pa semana',
+            '% meta de pa realizada da semana'
+          ]) || 0,
+          
+          // % Meta de PA Realizada do Ano
+          percentualMetaPAAno: getValue(rowMap, [
+            'meta de pa realizada do ano',
+            '% meta pa ano',
+            'meta pa ano',
+            'percentual meta pa ano',
+            '% meta de pa realizada do ano'
+          ]) || 0,
+          
+          // PA Emitido na Semana
+          paEmitido: getValue(rowMap, [
+            'pa emitido na semana',
+            'pa emitido',
+            'paemitido',
+            'premio anual emitido'
+          ]) || 0,
+          
+          // Apólices Emitidas (por semana)
+          apolicesEmitidas: getValue(rowMap, [
+            'apolices emitidas por semana',
+            'apolices emitidas',
+            'apolicesemitidas',
+            'apolices',
+            'numero de apolices'
+          ]) || 0,
+          
+          // Meta de N Semanal
+          metaNSemanal: getValue(rowMap, [
+            'meta de n semanal',
+            'meta n semanal',
+            'metansemanal',
+            'meta n'
+          ]) || 5,
+          
+          // N da Semana
+          nSemana: getValue(rowMap, [
+            'n da semana',
+            'n semana',
+            'nsemana',
+            'n semanal'
+          ]) || 0,
+          
+          // N Acumulados do Mês
+          nAcumuladoMes: getValue(rowMap, [
+            'n acumulados do mes',
+            'n acumulado mes',
+            'nacumuladomes',
+            'n acumulado mes'
+          ]) || 0,
+          
+          // N Acumulados do Ano
+          nAcumuladoAno: getValue(rowMap, [
+            'n acumulados do ano',
+            'n acumulado ano',
+            'nacumuladoano',
+            'n acumulado ano'
+          ]) || 0,
+          
+          // % Meta de N Realizada da Semana
+          percentualMetaNSemana: getValue(rowMap, [
+            'meta de n realizada da semana',
+            '% meta n semana',
+            'meta n semana',
+            'percentual meta n semana',
+            '% meta de n realizada da semana'
+          ]) || 0,
+          
+          // % Meta de N Realizada do Ano
+          percentualMetaNAno: getValue(rowMap, [
+            'meta de n realizada do ano',
+            '% meta n ano',
+            'meta n ano',
+            'percentual meta n ano',
+            '% meta de n realizada do ano'
+          ]) || 0,
+          
+          // Meta OIs Agendadas
+          metaOIsAgendadas: getValue(rowMap, [
+            'meta ois agendadas',
+            'metaoisagendadas',
+            'meta ois',
+            'meta oportunidades de inovacao agendadas'
+          ]) || 8,
+          
+          // OIs Agendadas
+          oIsAgendadas: getValue(rowMap, [
+            'ois agendadas',
+            'oisagendadas',
+            'oportunidades de inovacao agendadas',
+            'ois agend'
+          ]) || 0,
+          
+          // OIs Realizadas na Semana
+          oIsRealizadas: getValue(rowMap, [
+            'ois realizadas na semana',
+            'ois realizadas',
+            'oisrealizadas',
+            'oportunidades de inovacao realizadas'
+          ]) || 0,
+          
+          // Meta RECS
+          metaRECS: getValue(rowMap, [
+            'meta recs',
+            'metarecs',
+            'meta rec',
+            'meta revisao de carteira'
+          ]),
+          
+          // Novas RECS
+          novasRECS: getValue(rowMap, [
+            'novas recs',
+            'novasrecs',
+            'novas rec',
+            'novas revisoes de carteira'
+          ]),
+          
+          // Meta de PCs/C2 Agendados
+          metaPCsC2Agendados: getValue(rowMap, [
+            'meta de pcs c2 agendados',
+            'meta pcs c2 agendados',
+            'meta pcs/c2 agendados',
+            'metapcsc2agendados',
+            'meta pcs agendados'
+          ]),
+          
+          // PCs Realizados na Semana
+          pcsRealizados: getValue(rowMap, [
+            'pcs realizados na semana',
+            'pcs realizados',
+            'pcsrealizados',
+            'pcs'
+          ]),
+          
+          // Quantidade de C2 Realizados na Semana
+          c2Realizados: getValue(rowMap, [
+            'quantidade de c2 realizados na semana',
+            'c2 realizados na semana',
+            'c2 realizados',
+            'c2realizados',
+            'quantidade c2 realizados'
+          ]),
+          
+          // Apólice em Atraso (nº)
+          apoliceEmAtraso: getValue(rowMap, [
+            'apolice em atraso',
+            'apolice em atraso no',
+            'apoliceematraso',
+            'apolices em atraso',
+            'numero de apolices em atraso'
+          ]),
+          
+          // Prêmio em Atraso de Clientes (R$)
+          premioEmAtraso: getValue(rowMap, [
+            'premio em atraso de clientes',
+            'premio em atraso',
+            'premioematraso',
+            'premios em atraso',
+            'valor premio em atraso'
+          ]),
+          
+          // Taxa de Inadimplência (%) Geral
+          taxaInadimplenciaGeral: getValue(rowMap, [
+            'taxa de inadimplencia geral',
+            'taxa inadimplencia geral',
+            'taxainadimplenciageral',
+            'inadimplencia geral',
+            '% inadimplencia geral'
+          ]),
+          
+          // Taxa de Inadimplência (%) Assistente
+          taxaInadimplenciaAssistente: getValue(rowMap, [
+            'taxa de inadimplencia assistente',
+            'taxa inadimplencia assistente',
+            'taxainadimplenciaassistente',
+            'inadimplencia assistente',
+            '% inadimplencia assistente'
+          ]),
+          
+          // Meta Revisitas Agendadas
+          metaRevisitasAgendadas: getValue(rowMap, [
+            'meta revisitas agendadas',
+            'metarevisitasagendadas',
+            'meta revisita',
+            'meta revisitas'
+          ]),
+          
+          // Revisitas Agendadas na Semana
+          revisitasAgendadas: getValue(rowMap, [
+            'revisitas agendadas na semana',
+            'revisitas agendadas',
+            'revisitasagendadas',
+            'revisita agendada'
+          ]),
+          
+          // Revisitas Realizadas na Semana
+          revisitasRealizadas: getValue(rowMap, [
+            'revisitas realizadas na semana',
+            'revisitas realizadas',
+            'revisitasrealizadas',
+            'revisita realizada'
+          ]),
+          
+          // Volume de Tarefas Concluídas no Trello
+          volumeTarefasTrello: getValue(rowMap, [
+            'volume de tarefas concluidas no trello',
+            'volume tarefas trello',
+            'volumetarefastrello',
+            'tarefas trello',
+            'tarefas concluidas trello'
+          ]),
+          
+          // Número de Vídeos de Treinamento Gravados
+          videosTreinamentoGravados: getValue(rowMap, [
+            'numero de videos de treinamento gravados',
+            'videos treinamento gravados',
+            'videostreinamentogravados',
+            'videos treinamento',
+            'videos gravados'
+          ]),
+          
+          // Delivery Apólices
+          deliveryApolices: getValue(rowMap, [
+            'delivery apolices',
+            'deliveryapolices',
+            'delivery apolices',
+            'delivery',
+            'entrega apolices'
+          ]),
+          
+          // Total de Reuniões Realizadas na Semana
+          totalReunioes: getValue(rowMap, [
+            'total de reunioes realizadas na semana',
+            'total reunioes',
+            'totalreunioes',
+            'reunioes realizadas',
+            'total reunioes semana'
+          ]),
+          
+          // Lista de Atrasos - Atribuídos Raiza
+          listaAtrasosRaiza: getTextValue(rowMap, [
+            'lista de atrasos atribuidos raiza',
+            'lista atrasos raiza',
+            'listaatrasosraiza',
+            'atrasos raiza',
+            'lista de atrasos raiza'
+          ]),
         }
 
         // Calcular campos derivados
-        if (oIsAgendadas > 0) {
-          data.percentualOIsRealizadas = (oIsRealizadas / oIsAgendadas) * 100
+        if (data.oIsAgendadas > 0 && data.oIsRealizadas !== undefined) {
+          data.percentualOIsRealizadas = (data.oIsRealizadas / data.oIsAgendadas) * 100
         }
         
-        if (apolicesEmitidas > 0 && paSemanal > 0) {
-          data.ticketMedio = paSemanal / apolicesEmitidas
+        if (data.apolicesEmitidas > 0 && data.paSemanal > 0) {
+          data.ticketMedio = data.paSemanal / data.apolicesEmitidas
+        }
+        
+        if (data.oIsAgendadas > 0 && data.oIsRealizadas !== undefined) {
+          data.conversaoOIs = (data.oIsRealizadas / data.oIsAgendadas) * 100
         }
 
         return data
