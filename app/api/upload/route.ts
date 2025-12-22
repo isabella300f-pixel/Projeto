@@ -404,7 +404,10 @@ export async function POST(request: NextRequest) {
 
     if (mappedData.length === 0) {
       return NextResponse.json(
-        { error: 'Nenhum dado válido encontrado na planilha' },
+        { 
+          error: 'Nenhum dado válido encontrado na planilha',
+          details: 'Verifique se a planilha contém uma coluna "Período" ou "Period" com valores válidos'
+        },
         { status: 400 }
       )
     }
@@ -499,8 +502,28 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Erro ao processar upload:', error)
+    console.error('Detalhes do erro:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    
+    // Mensagens de erro mais específicas
+    let errorMessage = 'Erro ao processar arquivo'
+    
+    if (error.message?.includes('Cannot read')) {
+      errorMessage = 'Erro ao ler o arquivo. Verifique se o formato está correto (.xlsx ou .xls)'
+    } else if (error.message?.includes('Supabase')) {
+      errorMessage = 'Erro ao conectar com o banco de dados. Verifique as variáveis de ambiente.'
+    } else if (error.message) {
+      errorMessage = `Erro: ${error.message}`
+    }
+    
     return NextResponse.json(
-      { error: 'Erro ao processar arquivo: ' + error.message },
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }
