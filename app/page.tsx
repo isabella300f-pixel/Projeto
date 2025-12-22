@@ -11,7 +11,7 @@ import BarChart from '@/components/BarChart'
 import SearchBar from '@/components/SearchBar'
 import FilterPanel from '@/components/FilterPanel'
 import QuickFilters from '@/components/QuickFilters'
-import { DollarSign, Target, TrendingUp, CheckCircle, Search, Filter as FilterIcon, Upload } from 'lucide-react'
+import { DollarSign, Target, TrendingUp, CheckCircle, Search, Filter as FilterIcon, Upload, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Dashboard() {
@@ -73,18 +73,54 @@ export default function Dashboard() {
     ? weeklyDataState.reduce((sum, d) => sum + d.nSemana, 0) / weeklyDataState.length
     : 0
 
-  // Preparar dados para gráficos (usar dados filtrados)
+  // Preparar dados para gráficos (usar dados filtrados) - TODOS OS INDICADORES
   const chartData = filteredData.map(d => ({
     period: d.period,
+    // PA
     paSemanal: d.paSemanal,
     metaPASemanal: d.metaPASemanal,
+    paAcumuladoMes: d.paAcumuladoMes,
+    paAcumuladoAno: d.paAcumuladoAno,
+    paEmitido: d.paEmitido,
     percentualMeta: d.percentualMetaPASemana,
+    percentualMetaPAAno: d.percentualMetaPAAno,
+    // N
     nSemana: d.nSemana,
     metaNSemanal: d.metaNSemanal,
+    nAcumuladoMes: d.nAcumuladoMes,
+    nAcumuladoAno: d.nAcumuladoAno,
     percentualMetaN: d.percentualMetaNSemana,
+    percentualMetaNAno: d.percentualMetaNAno,
+    // Apólices e OIs
     apolicesEmitidas: d.apolicesEmitidas,
     oIsAgendadas: d.oIsAgendadas,
     oIsRealizadas: d.oIsRealizadas,
+    metaOIsAgendadas: d.metaOIsAgendadas,
+    percentualOIsRealizadas: d.percentualOIsRealizadas || 0,
+    // RECS
+    metaRECS: d.metaRECS || 0,
+    novasRECS: d.novasRECS || 0,
+    // PCs/C2
+    metaPCsC2Agendados: d.metaPCsC2Agendados || 0,
+    pcsRealizados: d.pcsRealizados || 0,
+    c2Realizados: d.c2Realizados || 0,
+    // Atrasos
+    apoliceEmAtraso: d.apoliceEmAtraso || 0,
+    premioEmAtraso: d.premioEmAtraso || 0,
+    // Inadimplência
+    taxaInadimplenciaGeral: d.taxaInadimplenciaGeral || 0,
+    taxaInadimplenciaAssistente: d.taxaInadimplenciaAssistente || 0,
+    // Revisitas
+    metaRevisitasAgendadas: d.metaRevisitasAgendadas || 0,
+    revisitasAgendadas: d.revisitasAgendadas || 0,
+    revisitasRealizadas: d.revisitasRealizadas || 0,
+    // Produtividade
+    volumeTarefasTrello: d.volumeTarefasTrello || 0,
+    videosTreinamentoGravados: d.videosTreinamentoGravados || 0,
+    deliveryApolices: d.deliveryApolices || 0,
+    totalReunioes: d.totalReunioes || 0,
+    // Calculados
+    ticketMedio: d.ticketMedio || 0,
   }))
 
   const handleSearch = (query: string) => {
