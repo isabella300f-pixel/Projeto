@@ -72,11 +72,19 @@ export default function Dashboard() {
   }, [filteredData])
   
   // Dados atuais para cards principais (usar dados totais ou filtrados)
-  const currentData = filters.period === 'all' 
-    ? weeklyDataState[weeklyDataState.length - 1]
-    : filteredData.length > 0 
-      ? filteredData[filteredData.length - 1]
-      : weeklyDataState[weeklyDataState.length - 1]
+  const currentData = useMemo(() => {
+    if (!weeklyDataState || weeklyDataState.length === 0) {
+      return null
+    }
+    
+    if (filters.period === 'all') {
+      return weeklyDataState[weeklyDataState.length - 1] || null
+    } else {
+      return filteredData.length > 0 
+        ? filteredData[filteredData.length - 1]
+        : (weeklyDataState[weeklyDataState.length - 1] || null)
+    }
+  }, [weeklyDataState, filteredData, filters.period])
   
   // Calcular totais e médias (sempre dos dados completos para os cards principais)
   const totalPAAno = weeklyDataState.length > 0 ? weeklyDataState[weeklyDataState.length - 1]?.paAcumuladoAno || 0 : 0
