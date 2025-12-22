@@ -68,3 +68,4 @@ git push
 3. Execute o SQL `criar-tabela-supabase.sql` no Supabase
 4. Acesse `/import` para fazer upload da planilha
 
+

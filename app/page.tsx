@@ -293,7 +293,7 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-            {/* Indicadores Adicionais */}
+            {/* Indicadores Adicionais - PA e N */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
               <div className="p-4 bg-indigo-50 rounded-lg">
                 <p className="text-sm text-gray-600">PA Emitido</p>
@@ -316,6 +316,136 @@ export default function Dashboard() {
                 <p className="text-lg font-bold text-gray-900">{formatPercent(currentData.percentualMetaNAno)}</p>
               </div>
             </div>
+
+            {/* Novos Indicadores - RECS, PCs/C2 */}
+            {(currentData.metaRECS !== undefined || currentData.novasRECS !== undefined || currentData.metaPCsC2Agendados !== undefined || currentData.pcsRealizados !== undefined || currentData.c2Realizados !== undefined) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
+                {currentData.metaRECS !== undefined && (
+                  <div className="p-4 bg-emerald-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Meta RECS</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.metaRECS}</p>
+                  </div>
+                )}
+                {currentData.novasRECS !== undefined && (
+                  <div className="p-4 bg-emerald-100 rounded-lg">
+                    <p className="text-sm text-gray-600">Novas RECS</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.novasRECS}</p>
+                  </div>
+                )}
+                {currentData.metaPCsC2Agendados !== undefined && (
+                  <div className="p-4 bg-violet-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Meta PCs/C2 Agendados</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.metaPCsC2Agendados}</p>
+                  </div>
+                )}
+                {currentData.pcsRealizados !== undefined && (
+                  <div className="p-4 bg-violet-100 rounded-lg">
+                    <p className="text-sm text-gray-600">PCs Realizados</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.pcsRealizados}</p>
+                  </div>
+                )}
+                {currentData.c2Realizados !== undefined && (
+                  <div className="p-4 bg-violet-200 rounded-lg">
+                    <p className="text-sm text-gray-600">C2 Realizados</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.c2Realizados}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Indicadores de Atrasos e Inadimplência */}
+            {(currentData.apoliceEmAtraso !== undefined || currentData.premioEmAtraso !== undefined || currentData.taxaInadimplenciaGeral !== undefined || currentData.taxaInadimplenciaAssistente !== undefined) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+                {currentData.apoliceEmAtraso !== undefined && (
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Apólice em Atraso</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.apoliceEmAtraso}</p>
+                  </div>
+                )}
+                {currentData.premioEmAtraso !== undefined && (
+                  <div className="p-4 bg-red-100 rounded-lg">
+                    <p className="text-sm text-gray-600">Prêmio em Atraso</p>
+                    <p className="text-lg font-bold text-gray-900">{formatCurrency(currentData.premioEmAtraso)}</p>
+                  </div>
+                )}
+                {currentData.taxaInadimplenciaGeral !== undefined && (
+                  <div className="p-4 bg-amber-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Taxa Inadimplência Geral</p>
+                    <p className="text-lg font-bold text-gray-900">{formatPercent(currentData.taxaInadimplenciaGeral)}</p>
+                  </div>
+                )}
+                {currentData.taxaInadimplenciaAssistente !== undefined && (
+                  <div className="p-4 bg-amber-100 rounded-lg">
+                    <p className="text-sm text-gray-600">Taxa Inadimplência Assistente</p>
+                    <p className="text-lg font-bold text-gray-900">{formatPercent(currentData.taxaInadimplenciaAssistente)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Indicadores de Revisitas */}
+            {(currentData.metaRevisitasAgendadas !== undefined || currentData.revisitasAgendadas !== undefined || currentData.revisitasRealizadas !== undefined) && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                {currentData.metaRevisitasAgendadas !== undefined && (
+                  <div className="p-4 bg-sky-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Meta Revisitas Agendadas</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.metaRevisitasAgendadas}</p>
+                  </div>
+                )}
+                {currentData.revisitasAgendadas !== undefined && (
+                  <div className="p-4 bg-sky-100 rounded-lg">
+                    <p className="text-sm text-gray-600">Revisitas Agendadas</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.revisitasAgendadas}</p>
+                  </div>
+                )}
+                {currentData.revisitasRealizadas !== undefined && (
+                  <div className="p-4 bg-sky-200 rounded-lg">
+                    <p className="text-sm text-gray-600">Revisitas Realizadas</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.revisitasRealizadas}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Indicadores de Produtividade */}
+            {(currentData.volumeTarefasTrello !== undefined || currentData.videosTreinamentoGravados !== undefined || currentData.deliveryApolices !== undefined || currentData.totalReunioes !== undefined) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+                {currentData.volumeTarefasTrello !== undefined && (
+                  <div className="p-4 bg-lime-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Tarefas Trello</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.volumeTarefasTrello}</p>
+                  </div>
+                )}
+                {currentData.videosTreinamentoGravados !== undefined && (
+                  <div className="p-4 bg-lime-100 rounded-lg">
+                    <p className="text-sm text-gray-600">Vídeos Treinamento</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.videosTreinamentoGravados}</p>
+                  </div>
+                )}
+                {currentData.deliveryApolices !== undefined && (
+                  <div className="p-4 bg-lime-200 rounded-lg">
+                    <p className="text-sm text-gray-600">Delivery Apólices</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.deliveryApolices}</p>
+                  </div>
+                )}
+                {currentData.totalReunioes !== undefined && (
+                  <div className="p-4 bg-lime-300 rounded-lg">
+                    <p className="text-sm text-gray-600">Total Reuniões</p>
+                    <p className="text-lg font-bold text-gray-900">{currentData.totalReunioes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Lista de Atrasos Raiza */}
+            {currentData.listaAtrasosRaiza && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="p-4 bg-rose-50 rounded-lg">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Lista de Atrasos - Raiza</p>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap">{currentData.listaAtrasosRaiza}</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -456,40 +586,60 @@ export default function Dashboard() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Semanal</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Emitido</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta PA</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N Semanal</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta N</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apólices</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Agend.</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Real.</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% OIs Real.</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">Período</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Semanal</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PA Emitido</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta PA</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N Semanal</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Meta N</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apólices</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Agend.</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OIs Real.</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RECS</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PCs</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">C2</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atrasos</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inadimpl.</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revisitas</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredData.map((row, index) => (
                     <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.period}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paSemanal)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paEmitido)}</td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">{row.period}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paSemanal)}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(row.paEmitido)}</td>
+                      <td className={`px-4 py-4 whitespace-nowrap text-sm font-medium ${
                         row.percentualMetaPASemana >= 100 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatPercent(row.percentualMetaPASemana)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.nSemana}</td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.nSemana}</td>
+                      <td className={`px-4 py-4 whitespace-nowrap text-sm font-medium ${
                         row.percentualMetaNSemana >= 100 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatPercent(row.percentualMetaNSemana)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.apolicesEmitidas}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsAgendadas}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsRealizadas}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {row.percentualOIsRealizadas ? formatPercent(row.percentualOIsRealizadas) : '-'}
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.apolicesEmitidas}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsAgendadas}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{row.oIsRealizadas}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.novasRECS !== undefined ? row.novasRECS : '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.pcsRealizados !== undefined ? row.pcsRealizados : '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.c2Realizados !== undefined ? row.c2Realizados : '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.apoliceEmAtraso !== undefined ? row.apoliceEmAtraso : '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.taxaInadimplenciaGeral !== undefined ? formatPercent(row.taxaInadimplenciaGeral) : '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {row.revisitasRealizadas !== undefined ? row.revisitasRealizadas : '-'}
                       </td>
                     </tr>
                   ))}

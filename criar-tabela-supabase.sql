@@ -32,6 +32,37 @@ CREATE TABLE IF NOT EXISTS weekly_data (
   ois_realizadas DECIMAL(10, 2),
   percentual_ois_realizadas DECIMAL(10, 2),
   
+  -- Indicadores de RECS
+  meta_recs DECIMAL(10, 2),
+  novas_recs DECIMAL(10, 2),
+  
+  -- Indicadores de PCs/C2
+  meta_pcs_c2_agendados DECIMAL(10, 2),
+  pcs_realizados DECIMAL(10, 2),
+  c2_realizados DECIMAL(10, 2),
+  
+  -- Indicadores de Atrasos
+  apolice_em_atraso DECIMAL(10, 2),
+  premio_em_atraso DECIMAL(15, 2),
+  
+  -- Indicadores de Inadimplência
+  taxa_inadimplencia_geral DECIMAL(10, 2),
+  taxa_inadimplencia_assistente DECIMAL(10, 2),
+  
+  -- Indicadores de Revisitas
+  meta_revisitas_agendadas DECIMAL(10, 2),
+  revisitas_agendadas DECIMAL(10, 2),
+  revisitas_realizadas DECIMAL(10, 2),
+  
+  -- Indicadores de Produtividade
+  volume_tarefas_trello DECIMAL(10, 2),
+  videos_treinamento_gravados DECIMAL(10, 2),
+  delivery_apolices DECIMAL(10, 2),
+  total_reunioes DECIMAL(10, 2),
+  
+  -- Lista de Atrasos
+  lista_atrasos_raiza TEXT,
+  
   -- Campos calculados
   ticket_medio DECIMAL(15, 2),
   conversao_ois DECIMAL(10, 2),
@@ -90,4 +121,5 @@ SELECT
 FROM information_schema.columns
 WHERE table_name = 'weekly_data'
 ORDER BY ordinal_position;
+
 

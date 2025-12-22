@@ -80,6 +80,24 @@ export async function POST(request: NextRequest) {
           metaOIsAgendadas: parseFloat(rowMap['meta ois agendadas'] || rowMap['metaoisagendadas'] || 8),
           oIsAgendadas: oIsAgendadas,
           oIsRealizadas: oIsRealizadas,
+          // Novos indicadores
+          metaRECS: parseFloat(rowMap['meta recs'] || rowMap['metarecs'] || 0) || undefined,
+          novasRECS: parseFloat(rowMap['novas recs'] || rowMap['novasrecs'] || 0) || undefined,
+          metaPCsC2Agendados: parseFloat(rowMap['meta pcs c2 agendados'] || rowMap['meta pcs/c2 agendados'] || rowMap['metapcsc2agendados'] || 0) || undefined,
+          pcsRealizados: parseFloat(rowMap['pcs realizados'] || rowMap['pcsrealizados'] || 0) || undefined,
+          c2Realizados: parseFloat(rowMap['c2 realizados'] || rowMap['quantidade c2 realizados'] || rowMap['c2realizados'] || 0) || undefined,
+          apoliceEmAtraso: parseFloat(rowMap['apólice em atraso'] || rowMap['apolice em atraso'] || rowMap['apoliceematraso'] || 0) || undefined,
+          premioEmAtraso: parseFloat(rowMap['prêmio em atraso'] || rowMap['premio em atraso'] || rowMap['premioematraso'] || 0) || undefined,
+          taxaInadimplenciaGeral: parseFloat(rowMap['taxa inadimplência geral'] || rowMap['taxa inadimplencia geral'] || rowMap['taxainadimplenciageral'] || 0) || undefined,
+          taxaInadimplenciaAssistente: parseFloat(rowMap['taxa inadimplência assistente'] || rowMap['taxa inadimplencia assistente'] || rowMap['taxainadimplenciaassistente'] || 0) || undefined,
+          metaRevisitasAgendadas: parseFloat(rowMap['meta revisitas agendadas'] || rowMap['metarevisitasagendadas'] || 0) || undefined,
+          revisitasAgendadas: parseFloat(rowMap['revisitas agendadas'] || rowMap['revisitasagendadas'] || 0) || undefined,
+          revisitasRealizadas: parseFloat(rowMap['revisitas realizadas'] || rowMap['revisitasrealizadas'] || 0) || undefined,
+          volumeTarefasTrello: parseFloat(rowMap['volume tarefas trello'] || rowMap['volumetarefastrello'] || 0) || undefined,
+          videosTreinamentoGravados: parseFloat(rowMap['vídeos treinamento gravados'] || rowMap['videos treinamento gravados'] || rowMap['videostreinamentogravados'] || 0) || undefined,
+          deliveryApolices: parseFloat(rowMap['delivery apólices'] || rowMap['delivery apolices'] || rowMap['deliveryapolices'] || 0) || undefined,
+          totalReunioes: parseFloat(rowMap['total reuniões'] || rowMap['total reunioes'] || rowMap['totalreunioes'] || 0) || undefined,
+          listaAtrasosRaiza: rowMap['lista atrasos raiza'] || rowMap['listaatrasosraiza'] || undefined,
         }
 
         // Calcular campos derivados

@@ -123,3 +123,4 @@ A planilha Excel deve conter as seguintes colunas:
 3. Os dados serão processados e inseridos no banco de dados
 4. Períodos duplicados serão automaticamente ignorados
 
+

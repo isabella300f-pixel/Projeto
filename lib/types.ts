@@ -39,6 +39,37 @@ export interface WeeklyData {
   oIsRealizadas: number
   percentualOIsRealizadas?: number
   
+  // Indicadores de RECS
+  metaRECS?: number
+  novasRECS?: number
+  
+  // Indicadores de PCs/C2
+  metaPCsC2Agendados?: number
+  pcsRealizados?: number
+  c2Realizados?: number
+  
+  // Indicadores de Atrasos
+  apoliceEmAtraso?: number
+  premioEmAtraso?: number
+  
+  // Indicadores de Inadimplência
+  taxaInadimplenciaGeral?: number
+  taxaInadimplenciaAssistente?: number
+  
+  // Indicadores de Revisitas
+  metaRevisitasAgendadas?: number
+  revisitasAgendadas?: number
+  revisitasRealizadas?: number
+  
+  // Indicadores de Produtividade
+  volumeTarefasTrello?: number
+  videosTreinamentoGravados?: number
+  deliveryApolices?: number
+  totalReunioes?: number
+  
+  // Lista de Atrasos
+  listaAtrasosRaiza?: string
+  
   // Campos calculados
   ticketMedio?: number
   conversaoOIs?: number
