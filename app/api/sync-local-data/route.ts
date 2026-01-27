@@ -244,7 +244,7 @@ export async function POST() {
       }
     }
 
-    // Ordenar por período (considerando ano corretamente)
+    // Ordenar por período (considerando ano corretamente - melhorado para dezembro/janeiro)
     uniqueData.sort((a, b) => {
       const parsePeriodToDate = (period: string): Date => {
         const match = period.match(/(\d{1,2})\/(\d{1,2})/)
@@ -256,16 +256,28 @@ export async function POST() {
         const currentYear = today.getFullYear()
         const currentMonth = today.getMonth()
         
-        // Determinar ano baseado no mês
+        // Determinar ano baseado no mês e contexto
         let year = currentYear
         
-        // Se o mês é dezembro (11) e estamos antes de dezembro, é do ano anterior
-        if (month === 11 && currentMonth < 11) {
-          year = currentYear - 1
+        // Se o mês é dezembro (11), pode ser do ano atual ou anterior
+        if (month === 11) {
+          // Se estamos em janeiro/fevereiro, dezembro é do ano anterior
+          if (currentMonth <= 1) {
+            year = currentYear - 1
+          } else {
+            // Caso contrário, é do ano atual
+            year = currentYear
+          }
         }
-        // Se o mês é janeiro (0) e estamos depois de janeiro, é do ano atual
-        else if (month === 0 && currentMonth > 0) {
-          year = currentYear
+        // Se o mês é janeiro (0), pode ser do ano atual ou próximo
+        else if (month === 0) {
+          // Se estamos em dezembro, janeiro é do próximo ano
+          if (currentMonth === 11) {
+            year = currentYear + 1
+          } else {
+            // Caso contrário, é do ano atual
+            year = currentYear
+          }
         }
         // Se o mês é maior que o mês atual, é do ano anterior
         else if (month > currentMonth) {

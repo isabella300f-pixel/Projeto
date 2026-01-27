@@ -114,16 +114,28 @@ function parsePeriodToDate(period: string): Date | null {
   const currentYear = today.getFullYear()
   const currentMonth = today.getMonth()
   
-  // Determinar ano baseado no mês do período
+  // Determinar ano baseado no mês do período (melhorado para dezembro/janeiro)
   let year = currentYear
   
-  // Se o mês do período é dezembro (11) e estamos antes de dezembro, é do ano anterior
-  if (month === 11 && currentMonth < 11) {
-    year = currentYear - 1
+  // Se o mês do período é dezembro (11)
+  if (month === 11) {
+    // Se estamos em janeiro/fevereiro, dezembro é do ano anterior
+    if (currentMonth <= 1) {
+      year = currentYear - 1
+    } else {
+      // Caso contrário, é do ano atual
+      year = currentYear
+    }
   }
-  // Se o mês do período é janeiro (0) e estamos depois de janeiro, pode ser do ano atual
-  else if (month === 0 && currentMonth > 0) {
-    year = currentYear
+  // Se o mês do período é janeiro (0)
+  else if (month === 0) {
+    // Se estamos em dezembro, janeiro é do próximo ano
+    if (currentMonth === 11) {
+      year = currentYear + 1
+    } else {
+      // Caso contrário, é do ano atual
+      year = currentYear
+    }
   }
   // Se o mês do período é maior que o mês atual, é do ano anterior
   else if (month > currentMonth) {
@@ -141,7 +153,7 @@ function parsePeriodToDate(period: string): Date | null {
   return new Date(year, month, day)
 }
 
-// Função para verificar se período está nos últimos 30 dias (melhorada)
+// Função para verificar se período está nos últimos 30 dias (melhorada para transição de ano)
 function isWithinLast30Days(period: string): boolean {
   const periodDate = parsePeriodToDate(period)
   if (!periodDate) return false
@@ -158,7 +170,18 @@ function isWithinLast30Days(period: string): boolean {
   if (periodEndMatch) {
     const endDay = parseInt(periodEndMatch[1])
     const endMonth = parseInt(periodEndMatch[2]) - 1
-    const periodEndDate = new Date(periodDate.getFullYear(), endMonth, endDay)
+    
+    // Determinar ano da data final (pode ser diferente se cruzar ano)
+    let endYear = periodDate.getFullYear()
+    if (endMonth < periodDate.getMonth()) {
+      // Se o mês final é menor que o inicial, está no próximo ano
+      endYear = periodDate.getFullYear() + 1
+    } else if (endMonth === 11 && periodDate.getMonth() === 0) {
+      // Se vai de janeiro para dezembro, está no mesmo ano
+      endYear = periodDate.getFullYear()
+    }
+    
+    const periodEndDate = new Date(endYear, endMonth, endDay)
     periodEndDate.setHours(23, 59, 59, 999)
     
     // Se a data final do período está dentro dos últimos 30 dias, incluir
