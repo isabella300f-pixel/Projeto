@@ -46,16 +46,11 @@ export default function Dashboard() {
           await new Promise(resolve => setTimeout(resolve, 1000))
           
           // Forçar reload completo do módulo
-          // Primeiro, limpar cache do módulo
-          if (typeof window !== 'undefined') {
-            // @ts-ignore
-            delete require?.cache[require.resolve('@/lib/data')]
-          }
           
           // Recarregar módulo para pegar dados atualizados (forçar reload com timestamp)
           const dataModule = await import('@/lib/data?t=' + Date.now())
           console.log('📊 Dados carregados:', dataModule.weeklyData.length, 'registros')
-          console.log('📅 Períodos carregados:', dataModule.weeklyData.map(d => d.period))
+          console.log('📅 Períodos carregados:', dataModule.weeklyData.map((d: WeeklyData) => d.period))
           
           // Verificar se há dados
           if (dataModule.weeklyData && dataModule.weeklyData.length > 0) {
