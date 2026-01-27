@@ -28,13 +28,16 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Variáveis de ambiente do Supabase não configuradas completamente')
-  if (databaseKey) {
-    console.warn('⚠️ DataBase_Key encontrada, mas é necessária também a chave anônima (NEXT_PUBLIC_SUPABASE_ANON_KEY)')
-  } else {
-    console.warn('⚠️ Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no Vercel')
+  if (typeof window === 'undefined') {
+    // Server-side logging
+    console.warn('⚠️ Variáveis de ambiente do Supabase não configuradas completamente')
+    if (databaseKey) {
+      console.warn('⚠️ DataBase_Key encontrada, mas é necessária também a chave anônima (NEXT_PUBLIC_SUPABASE_ANON_KEY)')
+    } else {
+      console.warn('⚠️ Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no Vercel')
+    }
+    console.warn('⚠️ Usando dados locais como fallback')
   }
-  console.warn('⚠️ Usando dados locais como fallback')
 }
 
 // Criar cliente Supabase apenas se as variáveis estiverem configuradas
@@ -104,12 +107,16 @@ function mapFromSupabase(row: any): WeeklyData {
 // Buscar todos os dados
 export async function getAllWeeklyData(): Promise<WeeklyData[]> {
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase não configurado, retornando array vazio')
+    if (typeof window === 'undefined') {
+      console.warn('Supabase não configurado, retornando array vazio')
+    }
     return []
   }
 
   if (!supabase) {
-    console.warn('Cliente Supabase não inicializado')
+    if (typeof window === 'undefined') {
+      console.warn('Cliente Supabase não inicializado')
+    }
     return []
   }
 
@@ -120,13 +127,28 @@ export async function getAllWeeklyData(): Promise<WeeklyData[]> {
       .order('period', { ascending: true })
 
     if (error) {
-      console.error('Erro ao buscar dados do Supabase:', error)
+      // Log detalhado apenas no servidor
+      if (typeof window === 'undefined') {
+        console.error('Erro ao buscar dados do Supabase:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
+      }
       return []
     }
 
     return (data || []).map(mapFromSupabase)
-  } catch (error) {
-    console.error('Erro ao conectar com Supabase:', error)
+  } catch (error: any) {
+    // Log detalhado apenas no servidor
+    if (typeof window === 'undefined') {
+      console.error('Erro ao conectar com Supabase:', {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack
+      })
+    }
     return []
   }
 }

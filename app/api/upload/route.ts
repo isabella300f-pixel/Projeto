@@ -5,6 +5,20 @@ import { WeeklyData } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
   try {
+    // Verificar se Supabase está configurado antes de processar
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { 
+          error: 'Supabase não configurado. Configure as variáveis de ambiente NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no Vercel.',
+          details: 'Acesse Settings > Environment Variables no Vercel e adicione as variáveis necessárias.'
+        },
+        { status: 500 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
 
