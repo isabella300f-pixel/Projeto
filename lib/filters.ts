@@ -102,7 +102,7 @@ export function matchesSearch(data: WeeklyData, query: string): boolean {
   return false
 }
 
-// Função para converter período em data
+// Função para converter período em data (melhorada para lidar com anos)
 function parsePeriodToDate(period: string): Date | null {
   // Formato: "DD/MM a DD/MM" ou "DD/MM"
   const match = period.match(/(\d{1,2})\/(\d{1,2})/)
@@ -110,30 +110,62 @@ function parsePeriodToDate(period: string): Date | null {
   
   const day = parseInt(match[1])
   const month = parseInt(match[2]) - 1 // JavaScript months are 0-indexed
-  const currentYear = new Date().getFullYear()
+  const today = new Date()
+  const currentYear = today.getFullYear()
+  const currentMonth = today.getMonth()
   
-  // Se o mês é dezembro ou janeiro, pode ser do ano anterior ou atual
+  // Determinar ano baseado no mês do período
   let year = currentYear
-  if (month === 11 && new Date().getMonth() < 11) {
-    // Dezembro do ano anterior
+  
+  // Se o mês do período é dezembro (11) e estamos antes de dezembro, é do ano anterior
+  if (month === 11 && currentMonth < 11) {
     year = currentYear - 1
-  } else if (month === 0 && new Date().getMonth() > 0) {
-    // Janeiro do ano atual
+  }
+  // Se o mês do período é janeiro (0) e estamos depois de janeiro, pode ser do ano atual
+  else if (month === 0 && currentMonth > 0) {
+    year = currentYear
+  }
+  // Se o mês do período é maior que o mês atual, é do ano anterior
+  else if (month > currentMonth) {
+    year = currentYear - 1
+  }
+  // Se o mês do período é menor que o mês atual, é do ano atual
+  else if (month < currentMonth) {
+    year = currentYear
+  }
+  // Se estamos no mesmo mês, é do ano atual
+  else {
     year = currentYear
   }
   
   return new Date(year, month, day)
 }
 
-// Função para verificar se período está nos últimos 30 dias
+// Função para verificar se período está nos últimos 30 dias (melhorada)
 function isWithinLast30Days(period: string): boolean {
   const periodDate = parsePeriodToDate(period)
   if (!periodDate) return false
   
   const today = new Date()
+  today.setHours(23, 59, 59, 999) // Fim do dia de hoje
   const thirtyDaysAgo = new Date(today)
   thirtyDaysAgo.setDate(today.getDate() - 30)
+  thirtyDaysAgo.setHours(0, 0, 0, 0) // Início do dia há 30 dias
   
+  // Verificar se a data do período está dentro da janela de 30 dias
+  // Considerar a data final do período (segunda data no formato "DD/MM a DD/MM")
+  const periodEndMatch = period.match(/a\s+(\d{1,2})\/(\d{1,2})/)
+  if (periodEndMatch) {
+    const endDay = parseInt(periodEndMatch[1])
+    const endMonth = parseInt(periodEndMatch[2]) - 1
+    const periodEndDate = new Date(periodDate.getFullYear(), endMonth, endDay)
+    periodEndDate.setHours(23, 59, 59, 999)
+    
+    // Se a data final do período está dentro dos últimos 30 dias, incluir
+    return periodEndDate >= thirtyDaysAgo && periodEndDate <= today
+  }
+  
+  // Se não tem data final, usar a data inicial
   return periodDate >= thirtyDaysAgo && periodDate <= today
 }
 
