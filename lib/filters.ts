@@ -10,6 +10,11 @@ export function getMonthFromPeriod(period: string): string {
     '12': 'Dezembro',
     '01': 'Janeiro',
     '02': 'Fevereiro',
+    '03': 'Março',
+    '04': 'Abril',
+    '05': 'Maio',
+    '06': 'Junho',
+    '07': 'Julho',
   }
   
   // Extrai o mês da data inicial do período (formato: DD/MM a DD/MM)
@@ -97,13 +102,53 @@ export function matchesSearch(data: WeeklyData, query: string): boolean {
   return false
 }
 
+// Função para converter período em data
+function parsePeriodToDate(period: string): Date | null {
+  // Formato: "DD/MM a DD/MM" ou "DD/MM"
+  const match = period.match(/(\d{1,2})\/(\d{1,2})/)
+  if (!match) return null
+  
+  const day = parseInt(match[1])
+  const month = parseInt(match[2]) - 1 // JavaScript months are 0-indexed
+  const currentYear = new Date().getFullYear()
+  
+  // Se o mês é dezembro ou janeiro, pode ser do ano anterior ou atual
+  let year = currentYear
+  if (month === 11 && new Date().getMonth() < 11) {
+    // Dezembro do ano anterior
+    year = currentYear - 1
+  } else if (month === 0 && new Date().getMonth() > 0) {
+    // Janeiro do ano atual
+    year = currentYear
+  }
+  
+  return new Date(year, month, day)
+}
+
+// Função para verificar se período está nos últimos 30 dias
+function isWithinLast30Days(period: string): boolean {
+  const periodDate = parsePeriodToDate(period)
+  if (!periodDate) return false
+  
+  const today = new Date()
+  const thirtyDaysAgo = new Date(today)
+  thirtyDaysAgo.setDate(today.getDate() - 30)
+  
+  return periodDate >= thirtyDaysAgo && periodDate <= today
+}
+
 // Função principal de filtragem
 export function filterData(data: WeeklyData[], filters: FilterState): WeeklyData[] {
   let filtered = [...data]
   
   // Filtro por período específico
   if (filters.period && filters.period !== 'all') {
-    filtered = filtered.filter(d => d.period === filters.period)
+    if (filters.period === 'last30days') {
+      // Filtro especial para últimos 30 dias
+      filtered = filtered.filter(d => isWithinLast30Days(d.period))
+    } else {
+      filtered = filtered.filter(d => d.period === filters.period)
+    }
   }
   
   // Filtro por mês

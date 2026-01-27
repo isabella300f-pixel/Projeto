@@ -41,9 +41,9 @@ export default function QuickFilters({ onFilterApply, currentFilters }: QuickFil
     {
       label: 'Últimos 30 dias',
       icon: <Calendar className="w-4 h-4" />,
-      filter: { period: 'all', month: 'all' },
+      filter: { period: 'last30days' as any, month: 'all' },
       color: 'bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700',
-      isActive: false,
+      isActive: currentFilters.period === 'last30days',
     },
   ]
 

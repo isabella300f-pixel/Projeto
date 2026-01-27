@@ -1,5 +1,5 @@
 export interface FilterState {
-  period: string | 'all'
+  period: string | 'all' | 'last30days'
   paMin?: number
   paMax?: number
   nMin?: number

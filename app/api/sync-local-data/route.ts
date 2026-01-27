@@ -244,19 +244,40 @@ export async function POST() {
       }
     }
 
-    // Ordenar por período
+    // Ordenar por período (considerando ano também)
     uniqueData.sort((a, b) => {
-      // Extrair primeira data do período para ordenar
-      const getFirstDate = (period: string) => {
+      const parsePeriodToDate = (period: string): Date => {
         const match = period.match(/(\d{1,2})\/(\d{1,2})/)
-        if (match) {
-          const day = parseInt(match[1])
-          const month = parseInt(match[2])
-          return month * 100 + day
+        if (!match) return new Date(0)
+        
+        const day = parseInt(match[1])
+        const month = parseInt(match[2]) - 1
+        const currentYear = new Date().getFullYear()
+        
+        // Determinar ano baseado no mês
+        let year = currentYear
+        const currentMonth = new Date().getMonth()
+        
+        // Se o mês é dezembro (11) e estamos antes de dezembro, é do ano anterior
+        if (month === 11 && currentMonth < 11) {
+          year = currentYear - 1
         }
-        return 0
+        // Se o mês é janeiro (0) e estamos depois de janeiro, pode ser do ano atual
+        else if (month === 0 && currentMonth > 0) {
+          year = currentYear
+        }
+        // Se o mês é maior que o mês atual, é do ano anterior
+        else if (month > currentMonth) {
+          year = currentYear - 1
+        }
+        
+        return new Date(year, month, day)
       }
-      return getFirstDate(a.period) - getFirstDate(b.period)
+      
+      const dateA = parsePeriodToDate(a.period)
+      const dateB = parsePeriodToDate(b.period)
+      
+      return dateA.getTime() - dateB.getTime()
     })
 
     // Gerar código TypeScript
