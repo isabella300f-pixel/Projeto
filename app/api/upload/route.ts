@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       return period
         .trim()
         .replace(/\s+/g, ' ') // Remove múltiplos espaços
-        .replace(/\s*a\s*/g, ' a ') // Normaliza "a" entre datas
+        .replace(/\s*[Aa]\s*/g, ' a ') // Normaliza "a" ou "A" entre datas
         .replace(/\//g, '/') // Garante formato consistente
     }
 
