@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { weeklyData as fallbackData, formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
-import { getAllWeeklyData } from '@/lib/supabase'
+// Removido: import { getAllWeeklyData } from '@/lib/supabase' - Usando apenas dados locais
 import { filterData, getFilterStats } from '@/lib/filters'
 import { FilterState, WeeklyData } from '@/lib/types'
 import KPICard from '@/components/KPICard'
@@ -27,36 +27,36 @@ export default function Dashboard() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   
-  // Buscar dados do Supabase
+  // Usar apenas dados locais (SEM Supabase)
   useEffect(() => {
-    async function loadData() {
+    // Sincronizar dados locais automaticamente da planilha
+    async function syncLocalData() {
       try {
-        const data = await getAllWeeklyData()
-        console.log('Dados carregados do Supabase:', data.length, 'registros')
+        const response = await fetch('/api/sync-local-data', {
+          method: 'POST',
+        })
         
-        // Verificar se os dados do Supabase são válidos (não todos zerados)
-        const hasValidData = data.length > 0 && data.some(d => 
-          d.paSemanal > 0 || d.nSemana > 0 || d.paAcumuladoAno > 0
-        )
-        
-        if (hasValidData) {
-          console.log('Atualizando estado com dados válidos do Supabase')
-          setWeeklyDataState(data)
-        } else if (data.length > 0) {
-          console.warn('Dados do Supabase encontrados mas todos zerados, mantendo dados locais')
-          // Dados existem mas estão zerados, manter fallback
-        } else {
-          console.log('Nenhum dado do Supabase, mantendo dados locais como fallback')
-          // Se não há dados no Supabase, manter fallbackData
+        if (response.ok) {
+          const result = await response.json()
+          console.log('✅ Dados atualizados da planilha:', result.count, 'registros')
+          
+          // Recarregar módulo para pegar dados atualizados
+          const dataModule = await import('@/lib/data')
+          setWeeklyDataState(dataModule.weeklyData)
         }
       } catch (error) {
-        console.error('Erro ao carregar dados:', error)
-        // Em caso de erro, manter dados locais (fallbackData já está no estado inicial)
+        console.log('ℹ️ Usando dados locais existentes')
       } finally {
         setLoading(false)
       }
     }
-    loadData()
+    
+    // Usar dados locais imediatamente
+    setWeeklyDataState(fallbackData)
+    setLoading(false)
+    
+    // Sincronizar em background para atualizar se necessário
+    syncLocalData()
   }, [])
   
   const periods = getAllPeriods(weeklyDataState)
