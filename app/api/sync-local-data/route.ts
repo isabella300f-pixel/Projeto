@@ -146,12 +146,41 @@ export async function POST() {
         rowMap[normalizeKey(key)] = row[key]
       })
 
+      // Buscar período com MUITAS variações para garantir que encontre
       let periodRaw = getTextValue(rowMap, [
         'período', 'periodo', 'period', 'semana', 'data',
         'periodo semanal', 'periodo da semana', 'semana de',
         'data inicial', 'data final', 'range', 'intervalo',
-        'data periodo', 'periodo data', 'semana periodo'
+        'data periodo', 'periodo data', 'semana periodo',
+        'periodo semanal realizado', 'periodo realizado',
+        'semana de referencia', 'periodo referencia',
+        'data inicio', 'data fim', 'periodo inicio', 'periodo fim'
       ]) || ''
+      
+      // Se não encontrou, buscar em QUALQUER coluna que possa ser período
+      if (!periodRaw) {
+        for (const key in rowMap) {
+          const normalizedKey = normalizeKey(key)
+          const value = rowMap[key]
+          
+          // Se a chave contém palavras relacionadas a período/data
+          if (normalizedKey.includes('period') || 
+              normalizedKey.includes('semana') || 
+              normalizedKey.includes('data') ||
+              normalizedKey.includes('referencia') ||
+              normalizedKey.includes('intervalo') ||
+              normalizedKey.includes('inicio') ||
+              normalizedKey.includes('fim')) {
+            const strValue = String(value || '').trim()
+            if (strValue && strValue.length > 0 && strValue !== 'undefined' && strValue !== 'null') {
+              if (isValidPeriod(strValue)) {
+                periodRaw = strValue
+                break
+              }
+            }
+          }
+        }
+      }
 
       if (!periodRaw) {
         for (const key in rowMap) {
