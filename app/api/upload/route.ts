@@ -23,8 +23,13 @@ export async function POST(request: NextRequest) {
     const sheetName = workbook.SheetNames[0]
     const worksheet = workbook.Sheets[sheetName]
     
-    // Converter para JSON
-    const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet)
+    // Converter para JSON com opções para melhor compatibilidade
+    const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, {
+      defval: null, // Valor padrão para células vazias
+      raw: false, // Converter números e datas para strings primeiro (melhor para processamento)
+      dateNF: 'dd/mm/yyyy', // Formato de data esperado
+      blankrows: false // Ignorar linhas completamente vazias
+    })
 
     if (!jsonData || jsonData.length === 0) {
       return NextResponse.json(
@@ -146,13 +151,47 @@ export async function POST(request: NextRequest) {
       return hasDatePattern || hasPeriodPattern || hasWeekPattern || hasDateRange
     }
 
+    // Função auxiliar para converter valor para número (mais robusta)
+    const parseNumber = (value: any): number | undefined => {
+      if (value === null || value === undefined || value === '') return undefined
+      
+      // Se já é número, retornar
+      if (typeof value === 'number') {
+        return isNaN(value) ? undefined : value
+      }
+      
+      // Converter string para número
+      if (typeof value === 'string') {
+        // Remove espaços, vírgulas (formato brasileiro), e outros caracteres
+        const cleaned = value.trim()
+          .replace(/\./g, '') // Remove pontos (separadores de milhar)
+          .replace(/,/g, '.') // Substitui vírgula por ponto (decimal)
+          .replace(/[^\d.-]/g, '') // Remove tudo exceto dígitos, ponto e sinal negativo
+        
+        const parsed = parseFloat(cleaned)
+        return isNaN(parsed) ? undefined : parsed
+      }
+      
+      return undefined
+    }
+
     // Função auxiliar para buscar valor com múltiplas variações de nome
     const getValue = (rowMap: any, variations: string[]): number | undefined => {
       for (const variation of variations) {
         const normalized = normalizeKey(variation)
+        
+        // Tentar busca exata primeiro
         if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
-          const value = parseFloat(rowMap[normalized])
-          if (!isNaN(value)) return value
+          const value = parseNumber(rowMap[normalized])
+          if (value !== undefined) return value
+        }
+        
+        // Tentar busca parcial (contém a variação)
+        for (const key in rowMap) {
+          if (key.includes(normalized) || normalized.includes(key)) {
+            const value = parseNumber(rowMap[key])
+            if (value !== undefined) return value
+          }
         }
       }
       return undefined
@@ -181,8 +220,23 @@ export async function POST(request: NextRequest) {
         let periodRaw = getTextValue(rowMap, [
           'período', 'periodo', 'period', 'semana', 'data',
           'periodo semanal', 'periodo da semana', 'semana de',
-          'data inicial', 'data final', 'range', 'intervalo'
+          'data inicial', 'data final', 'range', 'intervalo',
+          'data periodo', 'periodo data', 'semana periodo'
         ]) || ''
+        
+        // Se período vier como Date object, converter para string
+        if (!periodRaw) {
+          for (const key in rowMap) {
+            const value = rowMap[key]
+            if (value instanceof Date) {
+              const dateStr = value.toLocaleDateString('pt-BR')
+              if (isValidPeriod(dateStr)) {
+                periodRaw = dateStr
+                break
+              }
+            }
+          }
+        }
         
         // Se não encontrou, tentar buscar em qualquer coluna que contenha "period", "semana" ou "data"
         if (!periodRaw) {
@@ -233,7 +287,10 @@ export async function POST(request: NextRequest) {
             'pa semanal',
             'pasemanal',
             'premio anual semanal',
-            'pa realizado'
+            'pa realizado',
+            'pa semanal realizado r$',
+            'pa semanal r$',
+            'premio anual semanal realizado'
           ]) || 0,
           
           // PA Acumulado no Mês
@@ -266,7 +323,10 @@ export async function POST(request: NextRequest) {
             '% meta pa semana',
             'meta pa semana',
             'percentual meta pa semana',
-            '% meta de pa realizada da semana'
+            '% meta de pa realizada da semana',
+            'percentual meta pa realizada semana',
+            '% meta pa realizada semana',
+            'meta pa realizada semana %'
           ]) || 0,
           
           // % Meta de PA Realizada do Ano
@@ -292,7 +352,11 @@ export async function POST(request: NextRequest) {
             'apolices emitidas',
             'apolicesemitidas',
             'apolices',
-            'numero de apolices'
+            'numero de apolices',
+            'apolices emitidas semana',
+            'qtd apolices emitidas',
+            'quantidade apolices emitidas',
+            'n apolices emitidas'
           ]) || 0,
           
           // Meta de N Semanal
@@ -358,7 +422,10 @@ export async function POST(request: NextRequest) {
             'ois agendadas',
             'oisagendadas',
             'oportunidades de inovacao agendadas',
-            'ois agend'
+            'ois agend',
+            'ois agendadas semana',
+            'qtd ois agendadas',
+            'quantidade ois agendadas'
           ]) || 0,
           
           // OIs Realizadas na Semana
@@ -366,7 +433,10 @@ export async function POST(request: NextRequest) {
             'ois realizadas na semana',
             'ois realizadas',
             'oisrealizadas',
-            'oportunidades de inovacao realizadas'
+            'oportunidades de inovacao realizadas',
+            'ois realizadas semana',
+            'qtd ois realizadas',
+            'quantidade ois realizadas'
           ]) || 0,
           
           // Meta RECS
@@ -518,7 +588,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Calcular campos derivados
-        if (data.oIsAgendadas > 0 && data.oIsRealizadas !== undefined) {
+        if (data.oIsAgendadas > 0 && data.oIsRealizadas !== undefined && data.oIsRealizadas >= 0) {
           data.percentualOIsRealizadas = (data.oIsRealizadas / data.oIsAgendadas) * 100
         }
         
@@ -526,7 +596,7 @@ export async function POST(request: NextRequest) {
           data.ticketMedio = data.paSemanal / data.apolicesEmitidas
         }
         
-        if (data.oIsAgendadas > 0 && data.oIsRealizadas !== undefined) {
+        if (data.oIsAgendadas > 0 && data.oIsRealizadas !== undefined && data.oIsRealizadas >= 0) {
           data.conversaoOIs = (data.oIsRealizadas / data.oIsAgendadas) * 100
         }
 
@@ -654,11 +724,17 @@ export async function POST(request: NextRequest) {
     
     // Mensagens de erro mais específicas
     let errorMessage = 'Erro ao processar arquivo'
+    let statusCode = 500
     
-    if (error.message?.includes('Cannot read')) {
+    if (error.message?.includes('Cannot read') || error.message?.includes('Unexpected')) {
       errorMessage = 'Erro ao ler o arquivo. Verifique se o formato está correto (.xlsx ou .xls)'
-    } else if (error.message?.includes('Supabase')) {
+      statusCode = 400
+    } else if (error.message?.includes('Supabase') || error.message?.includes('database')) {
       errorMessage = 'Erro ao conectar com o banco de dados. Verifique as variáveis de ambiente.'
+      statusCode = 500
+    } else if (error.message?.includes('timeout') || error.message?.includes('network')) {
+      errorMessage = 'Erro de conexão. Tente novamente em alguns instantes.'
+      statusCode = 503
     } else if (error.message) {
       errorMessage = `Erro: ${error.message}`
     }
@@ -668,7 +744,7 @@ export async function POST(request: NextRequest) {
         error: errorMessage,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
-      { status: 500 }
+      { status: statusCode }
     )
   }
 }
