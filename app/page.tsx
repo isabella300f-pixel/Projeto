@@ -27,36 +27,38 @@ export default function Dashboard() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   
-  // Usar apenas dados locais (SEM Supabase)
+  // Sincronizar dados ANTES de mostrar (garantir dados atualizados)
   useEffect(() => {
-    // Sincronizar dados locais automaticamente da planilha
-    async function syncLocalData() {
+    async function syncAndLoadData() {
       try {
+        // PRIMEIRO: Sincronizar dados da planilha
         const response = await fetch('/api/sync-local-data', {
           method: 'POST',
         })
         
         if (response.ok) {
           const result = await response.json()
-          console.log('✅ Dados atualizados da planilha:', result.count, 'registros')
+          console.log('✅ Dados sincronizados da planilha:', result.count, 'registros')
           
           // Recarregar módulo para pegar dados atualizados
           const dataModule = await import('@/lib/data')
           setWeeklyDataState(dataModule.weeklyData)
+        } else {
+          // Se falhar, usar dados locais existentes
+          console.log('ℹ️ Usando dados locais existentes')
+          setWeeklyDataState(fallbackData)
         }
       } catch (error) {
-        console.log('ℹ️ Usando dados locais existentes')
+        // Em caso de erro, usar dados locais existentes
+        console.log('ℹ️ Usando dados locais existentes (erro ao sincronizar)')
+        setWeeklyDataState(fallbackData)
       } finally {
         setLoading(false)
       }
     }
     
-    // Usar dados locais imediatamente
-    setWeeklyDataState(fallbackData)
-    setLoading(false)
-    
-    // Sincronizar em background para atualizar se necessário
-    syncLocalData()
+    // Sincronizar ANTES de mostrar qualquer coisa
+    syncAndLoadData()
   }, [])
   
   const periods = getAllPeriods(weeklyDataState)
