@@ -343,13 +343,28 @@ export function getAllPeriods(data?: WeeklyData[]): string[] {
 }
 `
 
-    // Salvar arquivo
+    // Salvar arquivo (garantir que seja salvo corretamente)
     const dataFilePath = path.join(process.cwd(), 'lib', 'data.ts')
+    
+    // Verificar se o diretório existe
+    const dataDir = path.dirname(dataFilePath)
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true })
+    }
+    
+    // Salvar arquivo
     fs.writeFileSync(dataFilePath, dataCode, 'utf8')
+    
+    // Verificar se foi salvo corretamente
+    const savedFile = fs.readFileSync(dataFilePath, 'utf8')
+    const savedDataMatch = savedFile.match(/export const weeklyData: WeeklyData\[\] = (\[[\s\S]*?\]);/)
     
     console.log('✅ Arquivo salvo:', dataFilePath)
     console.log('📊 Total de registros:', uniqueData.length)
-    console.log('📅 Períodos processados:', uniqueData.map(d => d.period).join(', '))
+    console.log('📅 Primeiro período:', uniqueData[0]?.period)
+    console.log('📅 Último período:', uniqueData[uniqueData.length - 1]?.period)
+    console.log('📅 Todos os períodos:', uniqueData.map(d => d.period))
+    console.log('✅ Arquivo verificado:', savedDataMatch ? 'OK' : 'ERRO')
 
     return NextResponse.json({
       success: true,
