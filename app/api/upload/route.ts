@@ -312,7 +312,10 @@ export async function POST(request: NextRequest) {
             'pa acumulado no mes',
             'pa acumulado mes',
             'paacumuladomes',
-            'premio anual acumulado mes'
+            'premio anual acumulado mes',
+            'pa acum mes',
+            'pa acumulado mes r$',
+            'pa acum mes r$'
           ]) || 0,
           
           // PA Acumulado no Ano
@@ -320,7 +323,11 @@ export async function POST(request: NextRequest) {
             'pa acumulado no ano',
             'pa acumulado ano',
             'paacumuladoano',
-            'premio anual acumulado ano'
+            'premio anual acumulado ano',
+            'pa acum ano',
+            'pa acumulado ano r$',
+            'pa acum ano r$',
+            'pa acumulado total ano'
           ]) || 0,
           
           // Meta de PA Semanal Necessária
@@ -349,7 +356,10 @@ export async function POST(request: NextRequest) {
             '% meta pa ano',
             'meta pa ano',
             'percentual meta pa ano',
-            '% meta de pa realizada do ano'
+            '% meta de pa realizada do ano',
+            'percentual meta pa realizada ano',
+            '% meta pa realizada ano',
+            'meta pa realizada ano %'
           ]) || 0,
           
           // PA Emitido na Semana
@@ -357,7 +367,10 @@ export async function POST(request: NextRequest) {
             'pa emitido na semana',
             'pa emitido',
             'paemitido',
-            'premio anual emitido'
+            'premio anual emitido',
+            'pa emitido semana',
+            'pa emitido r$',
+            'premio anual emitido semana'
           ]) || 0,
           
           // Apólices Emitidas (por semana)
@@ -378,7 +391,10 @@ export async function POST(request: NextRequest) {
             'meta de n semanal',
             'meta n semanal',
             'metansemanal',
-            'meta n'
+            'meta n',
+            'meta n semana',
+            'meta apolices semanal',
+            'meta numero apolices semanal'
           ]) || 5,
           
           // N da Semana
@@ -386,7 +402,10 @@ export async function POST(request: NextRequest) {
             'n da semana',
             'n semana',
             'nsemana',
-            'n semanal'
+            'n semanal',
+            'n semana realizado',
+            'numero apolices semana',
+            'qtd apolices semana'
           ]) || 0,
           
           // N Acumulados do Mês
@@ -394,7 +413,10 @@ export async function POST(request: NextRequest) {
             'n acumulados do mes',
             'n acumulado mes',
             'nacumuladomes',
-            'n acumulado mes'
+            'n acumulado mes',
+            'n acum mes',
+            'apolices acumuladas mes',
+            'numero apolices acumulado mes'
           ]) || 0,
           
           // N Acumulados do Ano
@@ -402,7 +424,11 @@ export async function POST(request: NextRequest) {
             'n acumulados do ano',
             'n acumulado ano',
             'nacumuladoano',
-            'n acumulado ano'
+            'n acumulado ano',
+            'n acum ano',
+            'apolices acumuladas ano',
+            'numero apolices acumulado ano',
+            'n acumulado total ano'
           ]) || 0,
           
           // % Meta de N Realizada da Semana
@@ -411,7 +437,10 @@ export async function POST(request: NextRequest) {
             '% meta n semana',
             'meta n semana',
             'percentual meta n semana',
-            '% meta de n realizada da semana'
+            '% meta de n realizada da semana',
+            'percentual meta n realizada semana',
+            '% meta n realizada semana',
+            'meta n realizada semana %'
           ]) || 0,
           
           // % Meta de N Realizada do Ano
@@ -420,7 +449,10 @@ export async function POST(request: NextRequest) {
             '% meta n ano',
             'meta n ano',
             'percentual meta n ano',
-            '% meta de n realizada do ano'
+            '% meta de n realizada do ano',
+            'percentual meta n realizada ano',
+            '% meta n realizada ano',
+            'meta n realizada ano %'
           ]) || 0,
           
           // Meta OIs Agendadas
@@ -428,7 +460,10 @@ export async function POST(request: NextRequest) {
             'meta ois agendadas',
             'metaoisagendadas',
             'meta ois',
-            'meta oportunidades de inovacao agendadas'
+            'meta oportunidades de inovacao agendadas',
+            'meta ois semana',
+            'meta ois agendadas semana',
+            'meta oi agendadas'
           ]) || 8,
           
           // OIs Agendadas
@@ -458,7 +493,10 @@ export async function POST(request: NextRequest) {
             'meta recs',
             'metarecs',
             'meta rec',
-            'meta revisao de carteira'
+            'meta revisao de carteira',
+            'meta recs agendadas',
+            'meta revisoes carteira',
+            'meta rec semana'
           ]),
           
           // Novas RECS
@@ -466,7 +504,10 @@ export async function POST(request: NextRequest) {
             'novas recs',
             'novasrecs',
             'novas rec',
-            'novas revisoes de carteira'
+            'novas revisoes de carteira',
+            'novas recs realizadas',
+            'qtd novas recs',
+            'quantidade novas recs'
           ]),
           
           // Meta de PCs/C2 Agendados
@@ -475,7 +516,10 @@ export async function POST(request: NextRequest) {
             'meta pcs c2 agendados',
             'meta pcs/c2 agendados',
             'metapcsc2agendados',
-            'meta pcs agendados'
+            'meta pcs agendados',
+            'meta pcs c2',
+            'meta pcs e c2 agendados',
+            'meta pcs c2 semana'
           ]),
           
           // PCs Realizados na Semana
@@ -483,7 +527,11 @@ export async function POST(request: NextRequest) {
             'pcs realizados na semana',
             'pcs realizados',
             'pcsrealizados',
-            'pcs'
+            'pcs',
+            'pcs realizados semana',
+            'qtd pcs realizados',
+            'quantidade pcs realizados',
+            'pcs realiz'
           ]),
           
           // Quantidade de C2 Realizados na Semana
@@ -492,7 +540,11 @@ export async function POST(request: NextRequest) {
             'c2 realizados na semana',
             'c2 realizados',
             'c2realizados',
-            'quantidade c2 realizados'
+            'quantidade c2 realizados',
+            'c2 realizados semana',
+            'qtd c2 realizados',
+            'quantidade c2',
+            'c2 realiz'
           ]),
           
           // Apólice em Atraso (nº)
@@ -501,7 +553,11 @@ export async function POST(request: NextRequest) {
             'apolice em atraso no',
             'apoliceematraso',
             'apolices em atraso',
-            'numero de apolices em atraso'
+            'numero de apolices em atraso',
+            'qtd apolices atraso',
+            'quantidade apolices atraso',
+            'apolices atrasadas',
+            'n apolices atraso'
           ]),
           
           // Prêmio em Atraso de Clientes (R$)
@@ -510,7 +566,11 @@ export async function POST(request: NextRequest) {
             'premio em atraso',
             'premioematraso',
             'premios em atraso',
-            'valor premio em atraso'
+            'valor premio em atraso',
+            'premio atraso r$',
+            'valor premio atraso',
+            'premios atrasados r$',
+            'pa em atraso'
           ]),
           
           // Taxa de Inadimplência (%) Geral
@@ -519,7 +579,10 @@ export async function POST(request: NextRequest) {
             'taxa inadimplencia geral',
             'taxainadimplenciageral',
             'inadimplencia geral',
-            '% inadimplencia geral'
+            '% inadimplencia geral',
+            'taxa inadimplencia %',
+            'inadimplencia % geral',
+            'taxa inad geral'
           ]),
           
           // Taxa de Inadimplência (%) Assistente
@@ -528,7 +591,10 @@ export async function POST(request: NextRequest) {
             'taxa inadimplencia assistente',
             'taxainadimplenciaassistente',
             'inadimplencia assistente',
-            '% inadimplencia assistente'
+            '% inadimplencia assistente',
+            'taxa inadimplencia % assistente',
+            'inadimplencia % assistente',
+            'taxa inad assistente'
           ]),
           
           // Meta Revisitas Agendadas
@@ -536,7 +602,9 @@ export async function POST(request: NextRequest) {
             'meta revisitas agendadas',
             'metarevisitasagendadas',
             'meta revisita',
-            'meta revisitas'
+            'meta revisitas',
+            'meta revisitas semana',
+            'meta revisitas agendadas semana'
           ]),
           
           // Revisitas Agendadas na Semana
@@ -544,7 +612,10 @@ export async function POST(request: NextRequest) {
             'revisitas agendadas na semana',
             'revisitas agendadas',
             'revisitasagendadas',
-            'revisita agendada'
+            'revisita agendada',
+            'revisitas agendadas semana',
+            'qtd revisitas agendadas',
+            'quantidade revisitas agendadas'
           ]),
           
           // Revisitas Realizadas na Semana
@@ -552,7 +623,10 @@ export async function POST(request: NextRequest) {
             'revisitas realizadas na semana',
             'revisitas realizadas',
             'revisitasrealizadas',
-            'revisita realizada'
+            'revisita realizada',
+            'revisitas realizadas semana',
+            'qtd revisitas realizadas',
+            'quantidade revisitas realizadas'
           ]),
           
           // Volume de Tarefas Concluídas no Trello
@@ -561,7 +635,11 @@ export async function POST(request: NextRequest) {
             'volume tarefas trello',
             'volumetarefastrello',
             'tarefas trello',
-            'tarefas concluidas trello'
+            'tarefas concluidas trello',
+            'qtd tarefas trello',
+            'quantidade tarefas trello',
+            'tarefas concluidas',
+            'volume trello'
           ]),
           
           // Número de Vídeos de Treinamento Gravados
@@ -570,7 +648,11 @@ export async function POST(request: NextRequest) {
             'videos treinamento gravados',
             'videostreinamentogravados',
             'videos treinamento',
-            'videos gravados'
+            'videos gravados',
+            'qtd videos treinamento',
+            'quantidade videos treinamento',
+            'videos treinamento gravados semana',
+            'numero videos gravados'
           ]),
           
           // Delivery Apólices
@@ -579,7 +661,11 @@ export async function POST(request: NextRequest) {
             'deliveryapolices',
             'delivery apolices',
             'delivery',
-            'entrega apolices'
+            'entrega apolices',
+            'qtd delivery apolices',
+            'quantidade delivery apolices',
+            'delivery apolices semana',
+            'entregas apolices'
           ]),
           
           // Total de Reuniões Realizadas na Semana
@@ -588,7 +674,11 @@ export async function POST(request: NextRequest) {
             'total reunioes',
             'totalreunioes',
             'reunioes realizadas',
-            'total reunioes semana'
+            'total reunioes semana',
+            'qtd reunioes',
+            'quantidade reunioes',
+            'reunioes realizadas semana',
+            'numero reunioes'
           ]),
           
           // Lista de Atrasos - Atribuídos Raiza
