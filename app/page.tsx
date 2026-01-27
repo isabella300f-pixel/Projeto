@@ -31,24 +31,33 @@ export default function Dashboard() {
   useEffect(() => {
     async function syncAndLoadData() {
       try {
-        // PRIMEIRO: Sincronizar dados da planilha
+        // PRIMEIRO: Sincronizar dados da planilha (FORÇAR atualização)
         const response = await fetch('/api/sync-local-data', {
           method: 'POST',
+          cache: 'no-store', // Forçar atualização
         })
         
         if (response.ok) {
           const result = await response.json()
           console.log('✅ Dados sincronizados da planilha:', result.count, 'registros')
+          console.log('📅 Períodos:', result.periods)
           
-          // Recarregar módulo para pegar dados atualizados
-          const dataModule = await import('@/lib/data')
+          // Aguardar um pouco para garantir que o arquivo foi salvo
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Recarregar módulo para pegar dados atualizados (forçar reload)
+          const dataModule = await import('@/lib/data?t=' + Date.now())
+          console.log('📊 Dados carregados:', dataModule.weeklyData.length, 'registros')
           setWeeklyDataState(dataModule.weeklyData)
         } else {
+          const errorData = await response.json().catch(() => ({}))
+          console.error('❌ Erro ao sincronizar:', errorData)
           // Se falhar, usar dados locais existentes
           console.log('ℹ️ Usando dados locais existentes')
           setWeeklyDataState(fallbackData)
         }
       } catch (error) {
+        console.error('❌ Erro ao sincronizar dados:', error)
         // Em caso de erro, usar dados locais existentes
         console.log('ℹ️ Usando dados locais existentes (erro ao sincronizar)')
         setWeeklyDataState(fallbackData)

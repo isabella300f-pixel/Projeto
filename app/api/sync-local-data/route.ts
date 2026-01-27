@@ -7,9 +7,15 @@ import path from 'path'
 
 export async function POST() {
   try {
+    // Forçar processamento sem cache
     const excelFile = path.join(process.cwd(), 'KPI DASH - Legatum.xlsx')
     
+    console.log('🔄 Iniciando sincronização de dados...')
+    console.log('📁 Arquivo:', excelFile)
+    console.log('✅ Arquivo existe:', fs.existsSync(excelFile))
+    
     if (!fs.existsSync(excelFile)) {
+      console.error('❌ Planilha não encontrada:', excelFile)
       return NextResponse.json(
         { error: 'Planilha não encontrada: KPI DASH - Legatum.xlsx' },
         { status: 404 }
@@ -243,6 +249,10 @@ export async function POST() {
         uniqueData.push(data)
       }
     }
+    
+    console.log('✅ Dados únicos processados:', uniqueData.length)
+    console.log('📅 Primeiro período:', uniqueData[0]?.period)
+    console.log('📅 Último período:', uniqueData[uniqueData.length - 1]?.period)
 
     // Ordenar por período (considerando ano corretamente - melhorado para dezembro/janeiro)
     uniqueData.sort((a, b) => {
@@ -336,12 +346,18 @@ export function getAllPeriods(data?: WeeklyData[]): string[] {
     // Salvar arquivo
     const dataFilePath = path.join(process.cwd(), 'lib', 'data.ts')
     fs.writeFileSync(dataFilePath, dataCode, 'utf8')
+    
+    console.log('✅ Arquivo salvo:', dataFilePath)
+    console.log('📊 Total de registros:', uniqueData.length)
+    console.log('📅 Períodos processados:', uniqueData.map(d => d.period).join(', '))
 
     return NextResponse.json({
       success: true,
       message: `Dados locais atualizados com sucesso! ${uniqueData.length} registros processados.`,
       count: uniqueData.length,
-      periods: uniqueData.map(d => d.period)
+      periods: uniqueData.map(d => d.period),
+      firstPeriod: uniqueData[0]?.period,
+      lastPeriod: uniqueData[uniqueData.length - 1]?.period
     })
 
   } catch (error: any) {
