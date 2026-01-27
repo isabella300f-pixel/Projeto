@@ -467,6 +467,37 @@ export function getAllPeriods(data?: WeeklyData[]): string[] {
     console.log('📅 Primeiro período:', uniqueData[0]?.period)
     console.log('📅 Último período:', uniqueData[uniqueData.length - 1]?.period)
     console.log('📅 Todos os períodos:', uniqueData.map(d => d.period))
+    
+    // Verificar se há períodos de dezembro e janeiro
+    const dezembroPeriods = uniqueData.filter(d => d.period.includes('/12') || d.period.includes('12/'))
+    const janeiroPeriods = uniqueData.filter(d => d.period.includes('/01') || d.period.includes('01/'))
+    console.log('📅 Períodos de dezembro encontrados:', dezembroPeriods.length, dezembroPeriods.map(d => d.period))
+    console.log('📅 Períodos de janeiro encontrados:', janeiroPeriods.length, janeiroPeriods.map(d => d.period))
+    
+    // Verificar se todos os períodos esperados estão presentes
+    const expectedPeriods = [
+      '01/12 a 07/12', '08/12 a 14/12', '15/12 a 21/12', '22/12 a 28/12',
+      '05/01 a 11/01', '12/01 a 18/01', '19/01 a 25/01', '26/01 a 01/02'
+    ]
+    const foundPeriods = expectedPeriods.filter(ep => 
+      uniqueData.some(d => {
+        const normalizedPeriod = d.period.toLowerCase().replace(/\s+/g, ' ').trim()
+        const normalizedExpected = ep.toLowerCase().replace(/\s+/g, ' ').trim()
+        return normalizedPeriod === normalizedExpected || normalizedPeriod.includes(normalizedExpected.split(' a ')[0])
+      })
+    )
+    console.log('✅ Períodos esperados encontrados:', foundPeriods.length, 'de', expectedPeriods.length)
+    if (foundPeriods.length < expectedPeriods.length) {
+      const missing = expectedPeriods.filter(ep => 
+        !uniqueData.some(d => {
+          const normalizedPeriod = d.period.toLowerCase().replace(/\s+/g, ' ').trim()
+          const normalizedExpected = ep.toLowerCase().replace(/\s+/g, ' ').trim()
+          return normalizedPeriod === normalizedExpected || normalizedPeriod.includes(normalizedExpected.split(' a ')[0])
+        })
+      )
+      console.warn('⚠️ Períodos faltando:', missing)
+    }
+    
     console.log('✅ Arquivo verificado:', savedDataMatch ? 'OK' : 'ERRO')
 
     return NextResponse.json({
