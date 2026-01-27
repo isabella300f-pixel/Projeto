@@ -437,11 +437,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                   <p className="text-xs text-gray-600 mb-1">Meta RECS</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.metaRECS !== undefined ? currentData.metaRECS : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaRECS ?? 0}</p>
                 </div>
                 <div className="p-3 bg-emerald-100 rounded-lg border border-emerald-300">
                   <p className="text-xs text-gray-600 mb-1">Novas RECS</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.novasRECS !== undefined ? currentData.novasRECS : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.novasRECS ?? 0}</p>
                 </div>
               </div>
             </div>
@@ -455,15 +455,15 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-3 bg-violet-50 rounded-lg border border-violet-200">
                   <p className="text-xs text-gray-600 mb-1">Meta de PCs/C2 Agendados</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.metaPCsC2Agendados !== undefined ? currentData.metaPCsC2Agendados : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaPCsC2Agendados ?? 0}</p>
                 </div>
                 <div className="p-3 bg-violet-100 rounded-lg border border-violet-300">
                   <p className="text-xs text-gray-600 mb-1">PCs Realizados na Semana</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.pcsRealizados !== undefined ? currentData.pcsRealizados : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.pcsRealizados ?? 0}</p>
                 </div>
                 <div className="p-3 bg-violet-200 rounded-lg border border-violet-400">
                   <p className="text-xs text-gray-600 mb-1">C2 Realizados na Semana</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.c2Realizados !== undefined ? currentData.c2Realizados : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.c2Realizados ?? 0}</p>
                 </div>
               </div>
             </div>
@@ -477,11 +477,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                   <p className="text-xs text-gray-600 mb-1">Apólice em Atraso (nº)</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.apoliceEmAtraso !== undefined ? currentData.apoliceEmAtraso : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.apoliceEmAtraso ?? 0}</p>
                 </div>
                 <div className="p-3 bg-red-100 rounded-lg border border-red-300">
                   <p className="text-xs text-gray-600 mb-1">Prêmio em Atraso (R$)</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.premioEmAtraso !== undefined ? formatCurrency(currentData.premioEmAtraso) : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.premioEmAtraso ? formatCurrency(currentData.premioEmAtraso) : 'R$ 0,00'}</p>
                 </div>
               </div>
             </div>
@@ -495,11 +495,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
                   <p className="text-xs text-gray-600 mb-1">Taxa de Inadimplência (%) Geral</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.taxaInadimplenciaGeral !== undefined ? formatPercent(currentData.taxaInadimplenciaGeral) : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.taxaInadimplenciaGeral ?? 0)}</p>
                 </div>
                 <div className="p-3 bg-amber-100 rounded-lg border border-amber-300">
                   <p className="text-xs text-gray-600 mb-1">Taxa de Inadimplência (%) Assistente</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.taxaInadimplenciaAssistente !== undefined ? formatPercent(currentData.taxaInadimplenciaAssistente) : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.taxaInadimplenciaAssistente ?? 0)}</p>
                 </div>
               </div>
             </div>
@@ -513,15 +513,15 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                   <p className="text-xs text-gray-600 mb-1">Meta Revisitas Agendadas</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.metaRevisitasAgendadas !== undefined ? currentData.metaRevisitasAgendadas : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.metaRevisitasAgendadas ?? 0}</p>
                 </div>
                 <div className="p-3 bg-sky-100 rounded-lg border border-sky-300">
                   <p className="text-xs text-gray-600 mb-1">Revisitas Agendadas na Semana</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.revisitasAgendadas !== undefined ? currentData.revisitasAgendadas : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.revisitasAgendadas ?? 0}</p>
                 </div>
                 <div className="p-3 bg-sky-200 rounded-lg border border-sky-400">
                   <p className="text-xs text-gray-600 mb-1">Revisitas Realizadas na Semana</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.revisitasRealizadas !== undefined ? currentData.revisitasRealizadas : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.revisitasRealizadas ?? 0}</p>
                 </div>
               </div>
             </div>
@@ -535,19 +535,19 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-3 bg-lime-50 rounded-lg border border-lime-200">
                   <p className="text-xs text-gray-600 mb-1">Volume de Tarefas Trello</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.volumeTarefasTrello !== undefined ? currentData.volumeTarefasTrello : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.volumeTarefasTrello ?? 0}</p>
                 </div>
                 <div className="p-3 bg-lime-100 rounded-lg border border-lime-300">
                   <p className="text-xs text-gray-600 mb-1">Vídeos de Treinamento Gravados</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.videosTreinamentoGravados !== undefined ? currentData.videosTreinamentoGravados : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.videosTreinamentoGravados ?? 0}</p>
                 </div>
                 <div className="p-3 bg-lime-200 rounded-lg border border-lime-400">
                   <p className="text-xs text-gray-600 mb-1">Delivery Apólices</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.deliveryApolices !== undefined ? currentData.deliveryApolices : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.deliveryApolices ?? 0}</p>
                 </div>
                 <div className="p-3 bg-lime-300 rounded-lg border border-lime-500">
                   <p className="text-xs text-gray-600 mb-1">Total de Reuniões Realizadas</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.totalReunioes !== undefined ? currentData.totalReunioes : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.totalReunioes ?? 0}</p>
                 </div>
               </div>
             </div>
@@ -560,7 +560,7 @@ export default function Dashboard() {
               </h3>
               <div className="p-4 bg-rose-50 rounded-lg border border-rose-200">
                 <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                  {currentData.listaAtrasosRaiza || 'N/A'}
+                  {currentData.listaAtrasosRaiza || '-'}
                 </p>
               </div>
             </div>
@@ -574,11 +574,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
                   <p className="text-xs text-gray-600 mb-1">Ticket Médio</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.ticketMedio ? formatCurrency(currentData.ticketMedio) : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{currentData.ticketMedio ? formatCurrency(currentData.ticketMedio) : 'R$ 0,00'}</p>
                 </div>
                 <div className="p-3 bg-indigo-100 rounded-lg border border-indigo-300">
                   <p className="text-xs text-gray-600 mb-1">% OIs Realizadas</p>
-                  <p className="text-base font-bold text-gray-900">{currentData.percentualOIsRealizadas ? formatPercent(currentData.percentualOIsRealizadas) : 'N/A'}</p>
+                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.percentualOIsRealizadas ?? 0)}</p>
                 </div>
               </div>
             </div>
