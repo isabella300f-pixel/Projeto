@@ -9,9 +9,12 @@ interface UploadResult {
   success: boolean
   message?: string
   inserted?: number
+  updated?: number
+  total?: number
   duplicates?: string[]
   duplicatesInFile?: string[]
   duplicatesInDatabase?: string[]
+  updatedPeriods?: string[]
   deleted?: number
   deletedPeriods?: string[]
   error?: string
@@ -89,7 +92,11 @@ export default function UploadPanel() {
           success: true,
           message: data.message,
           inserted: data.inserted,
+          updated: data.updated,
+          total: data.total,
           duplicates: data.duplicates,
+          duplicatesInFile: data.duplicatesInFile,
+          updatedPeriods: data.updatedPeriods,
         })
         setFile(null)
         
@@ -341,11 +348,40 @@ export default function UploadPanel() {
                       )}
                     </>
                   ) : (
-                    result.inserted !== undefined && (
-                      <p className="text-xs text-green-600 mt-1">
-                        {result.inserted} registro(s) inserido(s)
-                      </p>
+                    (result.inserted !== undefined || result.updated !== undefined) && (
+                      <div className="text-xs text-green-600 mt-1 space-y-1">
+                        {result.inserted !== undefined && result.inserted > 0 && (
+                          <p>
+                            <strong>{result.inserted}</strong> registro(s) inserido(s)
+                          </p>
+                        )}
+                        {result.updated !== undefined && result.updated > 0 && (
+                          <p>
+                            <strong>{result.updated}</strong> registro(s) atualizado(s)
+                          </p>
+                        )}
+                        {result.total !== undefined && (
+                          <p className="text-green-700 font-medium">
+                            Total processado: <strong>{result.total}</strong>
+                          </p>
+                        )}
+                      </div>
                     )
+                  )}
+                  {result.updatedPeriods && result.updatedPeriods.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-blue-800 mb-1">
+                        Períodos atualizados ({result.updatedPeriods.length}):
+                      </p>
+                      <ul className="text-xs text-blue-700 list-disc list-inside max-h-32 overflow-y-auto">
+                        {result.updatedPeriods.slice(0, 10).map((period, idx) => (
+                          <li key={idx}>{period}</li>
+                        ))}
+                        {result.updatedPeriods.length > 10 && (
+                          <li>... e mais {result.updatedPeriods.length - 10} período(s)</li>
+                        )}
+                      </ul>
+                    </div>
                   )}
                   {result.duplicates && result.duplicates.length > 0 && (
                     <div className="mt-2 space-y-2">
@@ -422,7 +458,8 @@ export default function UploadPanel() {
               <li>OIs Realizadas</li>
             </ul>
             <p className="mt-3">
-              <strong>Nota:</strong> Períodos duplicados serão ignorados automaticamente.
+              <strong>Nota:</strong> Períodos duplicados na planilha serão ignorados (mantido apenas o primeiro). 
+              Se um período já existir no banco de dados, os dados serão <strong>atualizados</strong> com os valores da planilha.
             </p>
           </div>
         </div>

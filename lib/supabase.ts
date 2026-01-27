@@ -131,7 +131,119 @@ export async function getAllWeeklyData(): Promise<WeeklyData[]> {
   }
 }
 
-// Inserir dados
+// Função auxiliar para mapear dados para o formato do banco
+function mapToDatabaseFormat(item: WeeklyData) {
+  return {
+    period: item.period,
+    pa_semanal: item.paSemanal,
+    pa_acumulado_mes: item.paAcumuladoMes,
+    pa_acumulado_ano: item.paAcumuladoAno,
+    meta_pa_semanal: item.metaPASemanal,
+    percentual_meta_pa_semana: item.percentualMetaPASemana,
+    percentual_meta_pa_ano: item.percentualMetaPAAno,
+    pa_emitido: item.paEmitido,
+    apolices_emitidas: item.apolicesEmitidas,
+    meta_n_semanal: item.metaNSemanal,
+    n_semana: item.nSemana,
+    n_acumulado_mes: item.nAcumuladoMes,
+    n_acumulado_ano: item.nAcumuladoAno,
+    percentual_meta_n_semana: item.percentualMetaNSemana,
+    percentual_meta_n_ano: item.percentualMetaNAno,
+    meta_ois_agendadas: item.metaOIsAgendadas,
+    ois_agendadas: item.oIsAgendadas,
+    ois_realizadas: item.oIsRealizadas,
+    percentual_ois_realizadas: item.percentualOIsRealizadas,
+    meta_recs: item.metaRECS,
+    novas_recs: item.novasRECS,
+    meta_pcs_c2_agendados: item.metaPCsC2Agendados,
+    pcs_realizados: item.pcsRealizados,
+    c2_realizados: item.c2Realizados,
+    apolice_em_atraso: item.apoliceEmAtraso,
+    premio_em_atraso: item.premioEmAtraso,
+    taxa_inadimplencia_geral: item.taxaInadimplenciaGeral,
+    taxa_inadimplencia_assistente: item.taxaInadimplenciaAssistente,
+    meta_revisitas_agendadas: item.metaRevisitasAgendadas,
+    revisitas_agendadas: item.revisitasAgendadas,
+    revisitas_realizadas: item.revisitasRealizadas,
+    volume_tarefas_trello: item.volumeTarefasTrello,
+    videos_treinamento_gravados: item.videosTreinamentoGravados,
+    delivery_apolices: item.deliveryApolices,
+    total_reunioes: item.totalReunioes,
+    lista_atrasos_raiza: item.listaAtrasosRaiza,
+    ticket_medio: item.ticketMedio,
+    conversao_ois: item.conversaoOIs,
+  }
+}
+
+// Inserir ou atualizar dados (UPSERT)
+export async function upsertWeeklyData(data: WeeklyData[]): Promise<{ 
+  success: boolean
+  error?: string
+  inserted?: number
+  updated?: number
+  total?: number
+}> {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { success: false, error: 'Supabase não configurado. Configure as variáveis de ambiente.' }
+  }
+
+  if (!supabase) {
+    return { success: false, error: 'Cliente Supabase não inicializado' }
+  }
+
+  try {
+    // Verificar quais períodos já existem ANTES do upsert
+    const periods = data.map(d => d.period)
+    const existingPeriodsChecks = await Promise.all(
+      periods.map(period => periodExists(period))
+    )
+    
+    // Criar mapa de períodos existentes
+    const existingPeriodsMap = new Map<string, boolean>()
+    for (let i = 0; i < periods.length; i++) {
+      existingPeriodsMap.set(periods[i], existingPeriodsChecks[i])
+    }
+
+    const dataToUpsert = data.map(mapToDatabaseFormat)
+
+    // Usar upsert com onConflict no campo 'period' (que é único)
+    const { data: upsertedData, error } = await (supabase as any)
+      .from('weekly_data')
+      .upsert(dataToUpsert, {
+        onConflict: 'period',
+        ignoreDuplicates: false
+      })
+      .select()
+
+    if (error) {
+      console.error('Erro ao fazer upsert dos dados:', error)
+      return { success: false, error: error.message }
+    }
+
+    // Contar inseridos vs atualizados baseado no que existia antes
+    let inserted = 0
+    let updated = 0
+    
+    for (const period of periods) {
+      if (existingPeriodsMap.get(period)) {
+        updated++
+      } else {
+        inserted++
+      }
+    }
+
+    return { 
+      success: true, 
+      inserted,
+      updated,
+      total: upsertedData?.length || 0
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+// Inserir dados (mantido para compatibilidade)
 export async function insertWeeklyData(data: WeeklyData[]): Promise<{ success: boolean; error?: string; count?: number }> {
   if (!supabaseUrl || !supabaseAnonKey) {
     return { success: false, error: 'Supabase não configurado. Configure as variáveis de ambiente.' }
@@ -142,46 +254,7 @@ export async function insertWeeklyData(data: WeeklyData[]): Promise<{ success: b
   }
 
   try {
-    const dataToInsert = data.map(item => ({
-      period: item.period,
-      pa_semanal: item.paSemanal,
-      pa_acumulado_mes: item.paAcumuladoMes,
-      pa_acumulado_ano: item.paAcumuladoAno,
-      meta_pa_semanal: item.metaPASemanal,
-      percentual_meta_pa_semana: item.percentualMetaPASemana,
-      percentual_meta_pa_ano: item.percentualMetaPAAno,
-      pa_emitido: item.paEmitido,
-      apolices_emitidas: item.apolicesEmitidas,
-      meta_n_semanal: item.metaNSemanal,
-      n_semana: item.nSemana,
-      n_acumulado_mes: item.nAcumuladoMes,
-      n_acumulado_ano: item.nAcumuladoAno,
-      percentual_meta_n_semana: item.percentualMetaNSemana,
-      percentual_meta_n_ano: item.percentualMetaNAno,
-      meta_ois_agendadas: item.metaOIsAgendadas,
-      ois_agendadas: item.oIsAgendadas,
-      ois_realizadas: item.oIsRealizadas,
-      percentual_ois_realizadas: item.percentualOIsRealizadas,
-      meta_recs: item.metaRECS,
-      novas_recs: item.novasRECS,
-      meta_pcs_c2_agendados: item.metaPCsC2Agendados,
-      pcs_realizados: item.pcsRealizados,
-      c2_realizados: item.c2Realizados,
-      apolice_em_atraso: item.apoliceEmAtraso,
-      premio_em_atraso: item.premioEmAtraso,
-      taxa_inadimplencia_geral: item.taxaInadimplenciaGeral,
-      taxa_inadimplencia_assistente: item.taxaInadimplenciaAssistente,
-      meta_revisitas_agendadas: item.metaRevisitasAgendadas,
-      revisitas_agendadas: item.revisitasAgendadas,
-      revisitas_realizadas: item.revisitasRealizadas,
-      volume_tarefas_trello: item.volumeTarefasTrello,
-      videos_treinamento_gravados: item.videosTreinamentoGravados,
-      delivery_apolices: item.deliveryApolices,
-      total_reunioes: item.totalReunioes,
-      lista_atrasos_raiza: item.listaAtrasosRaiza,
-      ticket_medio: item.ticketMedio,
-      conversao_ois: item.conversaoOIs,
-    }))
+    const dataToInsert = data.map(mapToDatabaseFormat)
 
     const { data: insertedData, error } = await (supabase as any)
       .from('weekly_data')

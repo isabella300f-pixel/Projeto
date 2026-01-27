@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
-import { insertWeeklyData, periodExists } from '@/lib/supabase'
+import { upsertWeeklyData, periodExists } from '@/lib/supabase'
 import { WeeklyData } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
@@ -593,43 +593,21 @@ export async function POST(request: NextRequest) {
       uniqueMappedData.push(data)
     }
 
-    // Verificar duplicatas no banco de dados
-    const newData: WeeklyData[] = []
-    const duplicatesInDatabase: string[] = []
-
-    for (const data of uniqueMappedData) {
-      const exists = await periodExists(data.period)
-      if (exists) {
-        duplicatesInDatabase.push(data.period)
-      } else {
-        newData.push(data)
-      }
+    // Verificar quais períodos já existem no banco (para relatório)
+    const periodsToCheck = uniqueMappedData.map(d => d.period)
+    const existingPeriodsMap = new Map<string, boolean>()
+    
+    for (const period of periodsToCheck) {
+      const exists = await periodExists(period)
+      existingPeriodsMap.set(period, exists)
     }
 
-    // Combinar todas as duplicatas encontradas (removendo duplicatas)
-    const allDuplicates = Array.from(new Set([...duplicatesInFile, ...duplicatesInDatabase]))
+    const existingPeriods = Array.from(existingPeriodsMap.entries())
+      .filter(([_, exists]) => exists)
+      .map(([period, _]) => period)
 
-    if (newData.length === 0) {
-      let message = 'Nenhum registro novo para inserir. '
-      if (duplicatesInFile.length > 0 && duplicatesInDatabase.length > 0) {
-        message += `${duplicatesInFile.length} período(s) duplicado(s) na planilha e ${duplicatesInDatabase.length} período(s) já existem no banco de dados.`
-      } else if (duplicatesInFile.length > 0) {
-        message += `${duplicatesInFile.length} período(s) duplicado(s) encontrado(s) na planilha.`
-      } else {
-        message += 'Todos os períodos já existem no banco de dados.'
-      }
-      
-      return NextResponse.json({
-        success: false,
-        message: message,
-        duplicates: allDuplicates,
-        duplicatesInFile: duplicatesInFile.length > 0 ? duplicatesInFile : undefined,
-        duplicatesInDatabase: duplicatesInDatabase.length > 0 ? duplicatesInDatabase : undefined
-      }, { status: 400 })
-    }
-
-    // Inserir novos dados
-    const result = await insertWeeklyData(newData)
+    // Usar upsert para inserir ou atualizar todos os dados
+    const result = await upsertWeeklyData(uniqueMappedData)
 
     if (!result.success) {
       return NextResponse.json(
@@ -639,25 +617,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Montar mensagem detalhada
-    let message = `${result.count} registro(s) inserido(s) com sucesso.`
-    if (duplicatesInFile.length > 0 || duplicatesInDatabase.length > 0) {
-      message += ' '
-      const parts: string[] = []
-      if (duplicatesInFile.length > 0) {
-        parts.push(`${duplicatesInFile.length} período(s) duplicado(s) na planilha ignorado(s)`)
-      }
-      if (duplicatesInDatabase.length > 0) {
-        parts.push(`${duplicatesInDatabase.length} período(s) já existente(s) no banco ignorado(s)`)
-      }
-      message += parts.join(' e ') + '.'
+    const parts: string[] = []
+    if (result.inserted && result.inserted > 0) {
+      parts.push(`${result.inserted} registro(s) inserido(s)`)
+    }
+    if (result.updated && result.updated > 0) {
+      parts.push(`${result.updated} registro(s) atualizado(s)`)
+    }
+    
+    let message = parts.length > 0 
+      ? parts.join(' e ') + ' com sucesso.'
+      : 'Nenhum dado processado.'
+
+    // Adicionar informações sobre duplicatas na planilha (se houver)
+    if (duplicatesInFile.length > 0) {
+      message += ` ${duplicatesInFile.length} período(s) duplicado(s) na planilha foram ignorado(s) (mantido apenas o primeiro).`
     }
 
     return NextResponse.json({
       success: true,
-      inserted: result.count,
-      duplicates: allDuplicates.length > 0 ? allDuplicates : undefined,
+      inserted: result.inserted || 0,
+      updated: result.updated || 0,
+      total: result.total || 0,
       duplicatesInFile: duplicatesInFile.length > 0 ? duplicatesInFile : undefined,
-      duplicatesInDatabase: duplicatesInDatabase.length > 0 ? duplicatesInDatabase : undefined,
+      updatedPeriods: existingPeriods.length > 0 ? existingPeriods : undefined,
       message: message
     })
 
