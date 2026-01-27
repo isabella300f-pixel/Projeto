@@ -165,8 +165,8 @@ function isWithinLast30Days(period: string): boolean {
   thirtyDaysAgo.setHours(0, 0, 0, 0) // Início do dia há 30 dias
   
   // Verificar se a data do período está dentro da janela de 30 dias
-  // Considerar a data final do período (segunda data no formato "DD/MM a DD/MM")
-  const periodEndMatch = period.match(/a\s+(\d{1,2})\/(\d{1,2})/)
+  // Considerar a data final do período (segunda data no formato "DD/MM a DD/MM" ou "DD/MM A DD/MM")
+  const periodEndMatch = period.match(/[aA]\s+(\d{1,2})\/(\d{1,2})/)
   if (periodEndMatch) {
     const endDay = parseInt(periodEndMatch[1])
     const endMonth = parseInt(periodEndMatch[2]) - 1

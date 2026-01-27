@@ -158,9 +158,9 @@ export async function POST(request: NextRequest) {
       // - OU contém "a" com números e "/" (ex: "18/08 a 24/08")
       // - OU formato de semana (ex: "2023-W34")
       const hasDatePattern = /\d{1,2}\/\d{1,2}/.test(normalized) // DD/MM ou DD/MM/YYYY
-      const hasPeriodPattern = /\d{1,2}\/\d{1,2}\s+a\s+\d{1,2}\/\d{1,2}/.test(normalized) // "DD/MM a DD/MM"
+      const hasPeriodPattern = /\d{1,2}\/\d{1,2}\s+[aA]\s+\d{1,2}\/\d{1,2}/.test(normalized) // "DD/MM a DD/MM" ou "DD/MM A DD/MM"
       const hasWeekPattern = /\d{4}-w\d{1,2}/i.test(normalized) // "2023-W34"
-      const hasDateRange = normalized.includes('a') && /\d/.test(normalized) && normalized.includes('/')
+      const hasDateRange = (normalized.includes('a') || normalized.includes('A')) && /\d/.test(normalized) && normalized.includes('/')
       
       return hasDatePattern || hasPeriodPattern || hasWeekPattern || hasDateRange
     }

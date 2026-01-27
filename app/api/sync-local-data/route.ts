@@ -50,7 +50,8 @@ export async function POST() {
       return String(period || '')
         .trim()
         .replace(/\s+/g, ' ')
-        .replace(/\s*a\s*/g, ' a ')
+        .replace(/\s*[Aa]\s*/g, ' a ') // Aceita "a" ou "A" maiúsculo
+        .replace(/\//g, '/')
     }
 
     const isValidPeriod = (value: string): boolean => {
