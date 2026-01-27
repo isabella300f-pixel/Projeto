@@ -58,9 +58,43 @@ export async function POST() {
       const normalized = value.trim().toLowerCase()
       if (normalized.length < 5 || normalized.length > 50) return false
       if (!/\d/.test(normalized)) return false
+      
+      // Lista de padrões inválidos (mais permissiva)
+      const invalidPatterns = [
+        'simples nacional', 'anexo', 'indica', 'célula', 'celula',
+        'output', 'input', 'informação', 'informacao', 'permit',
+        'alterar', 'conteúdo', 'conteudo', 'fórmula', 'formula',
+        'perdida', 'atalho', 'simulação', 'simulacao', 'hipótese',
+        'hipotese', 'cartão', 'cartao', 'crédito', 'credito',
+        'débito', 'debito', 'vista', 'dinheiro', 'caixa', 'capital',
+        'giro', 'ciclo', 'diária', 'diaria', 'franqueado',
+        'gerenciamento', 'regime', 'tributário', 'tributario',
+        'saco', 'unidade', 'medida', 'taxa', 'retorno', 'irr',
+        'tir', 'prazo', 'médio', 'medio', 'estoque', 'pagto',
+        'recebimento', 'percentual', 'índice', 'indice', 'financeiro',
+        'kpi', 'dashboard', 'legathon', 'modelo', 'planilha', 'base',
+        'dados', 'semanal', 'mensal', 'anual', 'geral', 'total', 'meta',
+        'realizado', 'acumulado', 'emitido', 'apólices', 'apolices',
+        'oportunidades', 'inovação', 'inovacao', 'recs', 'revisitas',
+        'atrasos', 'inadimplência', 'inadimplencia', 'produtividade',
+        'trello', 'vídeos', 'videos', 'treinamento', 'delivery',
+        'reuniões', 'reunioes', 'lista', 'atribuídos', 'atribuidos',
+        'raiza', 'ticket', 'conversão', 'conversao', 'pcs', 'c2'
+      ]
+      
+      // Verificar se contém padrões inválidos
+      for (const pattern of invalidPatterns) {
+        if (normalized.includes(pattern)) {
+          return false
+        }
+      }
+      
       const hasDatePattern = /\d{1,2}\/\d{1,2}/.test(normalized)
       const hasPeriodPattern = /\d{1,2}\/\d{1,2}\s+a\s+\d{1,2}\/\d{1,2}/.test(normalized)
-      return hasDatePattern || hasPeriodPattern
+      const hasWeekPattern = /\d{4}-w\d{1,2}/i.test(normalized)
+      const hasDateRange = normalized.includes('a') && /\d/.test(normalized) && normalized.includes('/')
+      
+      return hasDatePattern || hasPeriodPattern || hasWeekPattern || hasDateRange
     }
 
     const parseNumber = (value: any): number | undefined => {
