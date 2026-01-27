@@ -43,12 +43,27 @@ export default function Dashboard() {
           console.log('📅 Períodos:', result.periods)
           
           // Aguardar um pouco para garantir que o arquivo foi salvo
-          await new Promise(resolve => setTimeout(resolve, 500))
+          await new Promise(resolve => setTimeout(resolve, 1000))
           
-          // Recarregar módulo para pegar dados atualizados (forçar reload)
+          // Forçar reload completo do módulo
+          // Primeiro, limpar cache do módulo
+          if (typeof window !== 'undefined') {
+            // @ts-ignore
+            delete require?.cache[require.resolve('@/lib/data')]
+          }
+          
+          // Recarregar módulo para pegar dados atualizados (forçar reload com timestamp)
           const dataModule = await import('@/lib/data?t=' + Date.now())
           console.log('📊 Dados carregados:', dataModule.weeklyData.length, 'registros')
-          setWeeklyDataState(dataModule.weeklyData)
+          console.log('📅 Períodos carregados:', dataModule.weeklyData.map(d => d.period))
+          
+          // Verificar se há dados
+          if (dataModule.weeklyData && dataModule.weeklyData.length > 0) {
+            setWeeklyDataState(dataModule.weeklyData)
+          } else {
+            console.warn('⚠️ Nenhum dado encontrado após sincronização, usando fallback')
+            setWeeklyDataState(fallbackData)
+          }
         } else {
           const errorData = await response.json().catch(() => ({}))
           console.error('❌ Erro ao sincronizar:', errorData)
