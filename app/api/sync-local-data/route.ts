@@ -256,13 +256,42 @@ export async function POST() {
         percentualMetaNSemana: getValue(rowMap, ['meta de n realizada da semana', '% meta n semana', 'meta n semana', 'percentual meta n semana', '% meta de n realizada da semana', 'percentual meta n realizada semana', '% meta n realizada semana', 'meta n realizada semana %']) || 0,
         percentualMetaNAno: getValue(rowMap, ['meta de n realizada do ano', '% meta n ano', 'meta n ano', 'percentual meta n ano', '% meta de n realizada do ano', 'percentual meta n realizada ano', '% meta n realizada ano', 'meta n realizada ano %']) || 0,
         metaOIsAgendadas: getValue(rowMap, ['meta ois agendadas', 'metaoisagendadas', 'meta ois', 'meta oportunidades de inovacao agendadas', 'meta ois semana', 'meta ois agendadas semana', 'meta oi agendadas']) || 8,
-        oIsAgendadas: getValue(rowMap, ['ois agendadas', 'oisagendadas', 'oportunidades de inovacao agendadas', 'ois agend', 'ois agendadas semana', 'qtd ois agendadas', 'quantidade ois agendadas']) || 0,
-        oIsRealizadas: getValue(rowMap, ['ois realizadas na semana', 'ois realizadas', 'oisrealizadas', 'oportunidades de inovacao realizadas', 'ois realizadas semana', 'qtd ois realizadas', 'quantidade ois realizadas']) || 0,
-        metaRECS: getValue(rowMap, ['meta recs', 'metarecs', 'meta rec', 'meta revisao de carteira', 'meta recs agendadas', 'meta revisoes carteira', 'meta rec semana']) ?? 0,
-        novasRECS: getValue(rowMap, ['novas recs', 'novasrecs', 'novas rec', 'novas revisoes de carteira', 'novas recs realizadas', 'qtd novas recs', 'quantidade novas recs']) ?? 0,
+        oIsAgendadas: getValue(rowMap, [
+          'ois agendadas', 'oisagendadas', 
+          'oportunidades de inovacao agendadas', 'oportunidades de inovação agendadas',
+          'ois agend', 'ois agendadas semana', 
+          'qtd ois agendadas', 'quantidade ois agendadas',
+          'ols agendadas', 'ols agend' // Variação com "ols" ao invés de "ois"
+        ]) || 0,
+        oIsRealizadas: getValue(rowMap, [
+          'ois realizadas na semana', 'ois realizadas', 'oisrealizadas', 
+          'oportunidades de inovacao realizadas', 'oportunidades de inovação realizadas',
+          'ois realizadas semana', 
+          'qtd ois realizadas', 'quantidade ois realizadas',
+          'ols realizadas na semana', 'ols realizadas' // Variação com "ols"
+        ]) || 0,
+        metaRECS: getValue(rowMap, [
+          'meta recs', 'metarecs', 'meta rec', 
+          'meta revisao de carteira', 'meta revisão de carteira',
+          'meta recs agendadas', 'meta revisoes carteira', 'meta revisões carteira',
+          'meta rec semana', 'meta recs semana'
+        ]) ?? 0,
+        novasRECS: getValue(rowMap, [
+          'novas recs', 'novasrecs', 'novas rec', 
+          'novas revisoes de carteira', 'novas revisões de carteira',
+          'novas recs realizadas', 
+          'qtd novas recs', 'quantidade novas recs',
+          'novas recs na semana'
+        ]) ?? 0,
         metaPCsC2Agendados: getValue(rowMap, ['meta de pcs c2 agendados', 'meta pcs c2 agendados', 'meta pcs/c2 agendados', 'metapcsc2agendados', 'meta pcs agendados', 'meta pcs c2', 'meta pcs e c2 agendados', 'meta pcs c2 semana']) ?? 0,
         pcsRealizados: getValue(rowMap, ['pcs realizados na semana', 'pcs realizados', 'pcsrealizados', 'pcs', 'pcs realizados semana', 'qtd pcs realizados', 'quantidade pcs realizados', 'pcs realiz']) ?? 0,
-        c2Realizados: getValue(rowMap, ['quantidade de c2 realizados na semana', 'c2 realizados na semana', 'c2 realizados', 'c2realizados', 'quantidade c2 realizados', 'c2 realizados semana', 'qtd c2 realizados', 'quantidade c2', 'c2 realiz']) ?? 0,
+        c2Realizados: getValue(rowMap, [
+          'quantidade de c2 realizados na semana', 'c2 realizados na semana', 
+          'c2 realizados', 'c2realizados', 
+          'quantidade c2 realizados', 'c2 realizados semana', 
+          'qtd c2 realizados', 'quantidade c2', 'c2 realiz',
+          'quantidade de c2 realizados na seman' // Variação sem "a" no final
+        ]) ?? 0,
         apoliceEmAtraso: getValue(rowMap, ['apolice em atraso', 'apolice em atraso no', 'apoliceematraso', 'apolices em atraso', 'numero de apolices em atraso', 'qtd apolices atraso', 'quantidade apolices atraso', 'apolices atrasadas', 'n apolices atraso']) ?? 0,
         premioEmAtraso: getValue(rowMap, ['premio em atraso de clientes', 'premio em atraso', 'premioematraso', 'premios em atraso', 'valor premio em atraso', 'premio atraso r$', 'valor premio atraso', 'premios atrasados r$', 'pa em atraso']) ?? 0,
         taxaInadimplenciaGeral: getValue(rowMap, ['taxa de inadimplencia geral', 'taxa inadimplencia geral', 'taxainadimplenciageral', 'inadimplencia geral', '% inadimplencia geral', 'taxa inadimplencia %', 'inadimplencia % geral', 'taxa inad geral']) ?? 0,
@@ -273,7 +302,17 @@ export async function POST() {
         volumeTarefasTrello: getValue(rowMap, ['volume de tarefas concluidas no trello', 'volume tarefas trello', 'volumetarefastrello', 'tarefas trello', 'tarefas concluidas trello', 'qtd tarefas trello', 'quantidade tarefas trello', 'tarefas concluidas', 'volume trello']) ?? 0,
         videosTreinamentoGravados: getValue(rowMap, ['numero de videos de treinamento gravados', 'videos treinamento gravados', 'videostreinamentogravados', 'videos treinamento', 'videos gravados', 'qtd videos treinamento', 'quantidade videos treinamento', 'videos treinamento gravados semana', 'numero videos gravados']) ?? 0,
         deliveryApolices: getValue(rowMap, ['delivery apolices', 'deliveryapolices', 'delivery apolices', 'delivery', 'entrega apolices', 'qtd delivery apolices', 'quantidade delivery apolices', 'delivery apolices semana', 'entregas apolices']) ?? 0,
-        totalReunioes: getValue(rowMap, ['total de reunioes realizadas na semana', 'total reunioes', 'totalreunioes', 'reunioes realizadas', 'total reunioes semana', 'qtd reunioes', 'quantidade reunioes', 'reunioes realizadas semana', 'numero reunioes']) ?? 0,
+        totalReunioes: getValue(rowMap, [
+          'total de reunioes realizadas na semana', 'total de reuniões realizadas na semana',
+          'total reunioes', 'total reuniões',
+          'totalreunioes', 
+          'reunioes realizadas', 'reuniões realizadas',
+          'total reunioes semana', 'total reuniões semana',
+          'qtd reunioes', 'quantidade reunioes',
+          'reunioes realizadas semana', 'reuniões realizadas semana',
+          'numero reunioes', 'número reuniões',
+          'total de reuniões realizadas na seman' // Variação sem "a" no final
+        ]) ?? 0,
         listaAtrasosRaiza: getTextValue(rowMap, ['lista de atrasos atribuidos raiza', 'lista atrasos raiza', 'listaatrasosraiza', 'atrasos raiza', 'lista de atrasos raiza']) || '',
       }
 
