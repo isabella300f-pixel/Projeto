@@ -578,21 +578,40 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
                   isValid = false
                 }
               } else if (isPercentageField) {
-                // Porcentagens: se for menor que 1 e maior que 0, pode ser que precise multiplicar por 100
-                // Mas se for entre 1 e 100, provavelmente já está correto
-                // Se for maior que 100 e menor que 10000, pode ser que precise dividir por 100
-                if (numValue > 0 && numValue < 1) {
-                  // Valores como 0.012 podem ser 1.2% ou 0.012% - assumir que é 1.2%
-                  finalValue = numValue * 100
-                  console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (multiplicando por 100)`)
+                // Porcentagens: lógica melhorada para detectar formato correto
+                // Valores comuns na planilha:
+                // - 1.2 pode ser 1.2% (decimal) ou 120% (se deveria ser inteiro)
+                // - 120 pode ser 120% (já correto) ou 1.2% (se deveria ser decimal)
+                
+                // Se o valor está entre 0 e 10 e não é inteiro, provavelmente está em formato decimal
+                // Ex: 1.2 pode ser 1.2% ou 120% - vamos verificar o contexto
+                if (numValue > 0 && numValue < 10 && !Number.isInteger(numValue)) {
+                  // Valores decimais pequenos (0.012, 1.2, etc.) - verificar se faz sentido
+                  // Se for menor que 1, provavelmente precisa multiplicar por 100
+                  // Se for entre 1-10, pode ser que precise multiplicar por 100 também (ex: 1.2 -> 120%)
+                  if (numValue < 1) {
+                    finalValue = numValue * 100
+                    console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (multiplicando por 100 - decimal pequeno)`)
+                  } else if (numValue >= 1 && numValue < 10) {
+                    // Valores como 1.2 podem ser 1.2% ou 120%
+                    // Se o campo é "percentualMetaNSemana" e o valor é 1.2, provavelmente deveria ser 120%
+                    // Vamos multiplicar por 100 se o valor original não tinha vírgula/ponto como decimal
+                    const originalString = String(value).trim()
+                    const hasCommaOrDot = originalString.includes(',') || originalString.includes('.')
+                    // Se não tinha vírgula/ponto explícito, provavelmente é um inteiro que foi parseado como decimal
+                    if (!hasCommaOrDot || (hasCommaOrDot && numValue < 2)) {
+                      finalValue = numValue * 100
+                      console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (multiplicando por 100 - valor entre 1-10)`)
+                    }
+                  }
                 } else if (numValue >= 100 && numValue < 10000 && Number.isInteger(numValue)) {
-                  // Valores como 120 podem ser 120% ou 1.2% - se for inteiro e >= 100, provavelmente já está em %
-                  // Mas se o campo é porcentagem e está entre 100-10000, pode precisar dividir
-                  // Vamos manter como está se for entre 0-1000 (já está em %)
+                  // Valores inteiros altos (120, 1200, etc.)
+                  // Se for >= 1000, provavelmente precisa dividir por 100
                   if (numValue >= 1000) {
                     finalValue = numValue / 100
                     console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (dividindo por 100)`)
                   }
+                  // Se for entre 100-1000, provavelmente já está correto (120 = 120%)
                 }
                 
                 // Validação: porcentagens não devem ser maiores que 10000%

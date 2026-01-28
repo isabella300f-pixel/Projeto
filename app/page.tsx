@@ -53,16 +53,26 @@ export default function Dashboard() {
               d.paSemanal > 0 || d.nSemana > 0 || d.oIsAgendadas > 0
             )
             
-            if (hasNonZeroData) {
-              console.log('✅ [Frontend] Dados contêm valores não-zero, atualizando estado')
-              setWeeklyDataState(result.data)
-              setLastUpdate(new Date())
-            } else {
+            // Sempre atualizar com os dados recebidos (mesmo se alguns valores estiverem zerados)
+            // O problema de valores sumindo pode ser causado por não atualizar quando alguns campos estão zerados
+            console.log('✅ [Frontend] Dados carregados, atualizando estado')
+            console.log('📊 [Frontend] Total de registros:', result.data.length)
+            console.log('📊 [Frontend] Primeiro registro - PA Semanal:', result.data[0]?.paSemanal)
+            console.log('📊 [Frontend] Primeiro registro - PA Acumulado Ano:', result.data[0]?.paAcumuladoAno)
+            console.log('📊 [Frontend] Último registro - PA Semanal:', result.data[result.data.length - 1]?.paSemanal)
+            console.log('📊 [Frontend] Último registro - PA Acumulado Ano:', result.data[result.data.length - 1]?.paAcumuladoAno)
+            
+            setWeeklyDataState(result.data)
+            setLastUpdate(new Date())
+            
+            // Verificar se os dados têm valores não-zero para log
+            const hasNonZeroData = result.data.some((d: WeeklyData) => 
+              d.paSemanal > 0 || d.nSemana > 0 || d.oIsAgendadas > 0
+            )
+            
+            if (!hasNonZeroData) {
               console.warn('⚠️ [Frontend] Dados carregados mas todos os valores estão zerados')
               console.warn('⚠️ [Frontend] Verifique o mapeamento das colunas na planilha')
-              // Mesmo assim, atualizar com os dados (pode ser que realmente estejam zerados)
-              setWeeklyDataState(result.data)
-              setLastUpdate(new Date())
             }
           } else {
             console.warn('⚠️ [Frontend] Nenhum dado válido encontrado no Google Sheets')
@@ -129,14 +139,53 @@ export default function Dashboard() {
   }, [weeklyDataState, filteredData, filters.period])
   
   // Calcular totais e médias (sempre dos dados completos para os cards principais)
-  const totalPAAno = weeklyDataState.length > 0 ? weeklyDataState[weeklyDataState.length - 1]?.paAcumuladoAno || 0 : 0
-  const totalNAno = weeklyDataState.length > 0 ? weeklyDataState[weeklyDataState.length - 1]?.nAcumuladoAno || 0 : 0
-  const mediaPASemanal = weeklyDataState.length > 0 
-    ? weeklyDataState.reduce((sum, d) => sum + d.paSemanal, 0) / weeklyDataState.length 
-    : 0
-  const mediaNSemanal = weeklyDataState.length > 0
-    ? weeklyDataState.reduce((sum, d) => sum + d.nSemana, 0) / weeklyDataState.length
-    : 0
+  // IMPORTANTE: Usar o último período ordenado (mais recente) para valores acumulados
+  const totalPAAno = useMemo(() => {
+    if (weeklyDataState.length === 0) return 0
+    // Ordenar por período para garantir que pegamos o mais recente
+    const sorted = [...weeklyDataState].sort((a, b) => {
+      const dateA = a.period.match(/(\d{1,2})\/(\d{1,2})/)
+      const dateB = b.period.match(/(\d{1,2})\/(\d{1,2})/)
+      if (!dateA || !dateB) return 0
+      const monthA = parseInt(dateA[2])
+      const dayA = parseInt(dateA[1])
+      const monthB = parseInt(dateB[2])
+      const dayB = parseInt(dateB[1])
+      if (monthA !== monthB) return monthA - monthB
+      return dayA - dayB
+    })
+    return sorted[sorted.length - 1]?.paAcumuladoAno || 0
+  }, [weeklyDataState])
+  
+  const totalNAno = useMemo(() => {
+    if (weeklyDataState.length === 0) return 0
+    const sorted = [...weeklyDataState].sort((a, b) => {
+      const dateA = a.period.match(/(\d{1,2})\/(\d{1,2})/)
+      const dateB = b.period.match(/(\d{1,2})\/(\d{1,2})/)
+      if (!dateA || !dateB) return 0
+      const monthA = parseInt(dateA[2])
+      const dayA = parseInt(dateA[1])
+      const monthB = parseInt(dateB[2])
+      const dayB = parseInt(dateB[1])
+      if (monthA !== monthB) return monthA - monthB
+      return dayA - dayB
+    })
+    return sorted[sorted.length - 1]?.nAcumuladoAno || 0
+  }, [weeklyDataState])
+  
+  const mediaPASemanal = useMemo(() => {
+    if (weeklyDataState.length === 0) return 0
+    const validValues = weeklyDataState.filter(d => d.paSemanal > 0)
+    if (validValues.length === 0) return 0
+    return validValues.reduce((sum, d) => sum + d.paSemanal, 0) / validValues.length
+  }, [weeklyDataState])
+  
+  const mediaNSemanal = useMemo(() => {
+    if (weeklyDataState.length === 0) return 0
+    const validValues = weeklyDataState.filter(d => d.nSemana > 0)
+    if (validValues.length === 0) return 0
+    return validValues.reduce((sum, d) => sum + d.nSemana, 0) / validValues.length
+  }, [weeklyDataState])
 
   // Preparar dados para gráficos (usar dados filtrados) - TODOS OS INDICADORES
   const chartData = filteredData.map(d => ({
