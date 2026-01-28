@@ -68,6 +68,80 @@ export async function GET() {
     const firstRow = jsonData[0]
     const columns = Object.keys(firstRow)
     
+    // Identificar períodos
+    const normalizeKey = (key: string) => 
+      key.toLowerCase()
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/[%()]/g, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    
+    const normalizePeriod = (period: string): string => {
+      return period
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/\s*[Aa]\s*/g, ' a ')
+        .replace(/\//g, '/')
+    }
+    
+    const isValidPeriod = (value: string): boolean => {
+      if (!value || typeof value !== 'string') return false
+      const normalized = value.trim().toLowerCase()
+      if (normalized.length < 8 || normalized.length > 20) return false
+      const invalidPatterns = ['simples nacional', 'anexo', 'indica', 'célula', 'celula', 'output', 'input']
+      for (const pattern of invalidPatterns) {
+        if (normalized.includes(pattern)) return false
+      }
+      const hasDatePattern = /\d{1,2}\/\d{1,2}/.test(normalized)
+      if (!hasDatePattern) return false
+      const dateMatches = normalized.match(/(\d{1,2})\/(\d{1,2})/g)
+      if (dateMatches) {
+        for (const match of dateMatches) {
+          const [day, month] = match.split('/').map(Number)
+          if (day < 1 || day > 31 || month < 1 || month > 12) return false
+        }
+      }
+      return true
+    }
+    
+    const periodColumns: { originalKey: string, period: string }[] = []
+    for (const col of columns) {
+      const normalizedCol = normalizeKey(col)
+      if (normalizedCol === 'indicador' || normalizedCol === 'indicator') continue
+      const periodValue = String(col).trim()
+      if (isValidPeriod(periodValue)) {
+        periodColumns.push({
+          originalKey: col,
+          period: normalizePeriod(periodValue)
+        })
+      }
+    }
+    
+    // Mapear dados para um período específico (primeiro período como exemplo)
+    const examplePeriod = periodColumns[0]
+    const mappingDetails: any[] = []
+    
+    if (examplePeriod) {
+      for (const row of jsonData) {
+        const indicadorKey = Object.keys(row).find(k => normalizeKey(k) === 'indicador' || normalizeKey(k) === 'indicator')
+        const indicador = indicadorKey ? row[indicadorKey] : ''
+        const value = row[examplePeriod.originalKey]
+        if (indicador && value !== null && value !== undefined && value !== '' && String(value).trim() !== '-') {
+          mappingDetails.push({
+            indicador: String(indicador).trim(),
+            valorOriginal: value,
+            valorTipo: typeof value,
+            coluna: examplePeriod.originalKey,
+            periodo: examplePeriod.period
+          })
+        }
+      }
+    }
+    
     return NextResponse.json({
       success: true,
       csvLength: csvText.length,
@@ -76,10 +150,14 @@ export async function GET() {
       totalRows: jsonData.length,
       totalColumns: columns.length,
       columns: columns,
+      periodColumns: periodColumns.map(p => ({ original: p.originalKey, period: p.period })),
       firstRow: firstRow,
       firstRowKeys: Object.keys(firstRow),
       firstRowValues: Object.values(firstRow),
-      sampleRows: jsonData.slice(0, 5)
+      sampleRows: jsonData.slice(0, 5),
+      mappingDetails: mappingDetails.slice(0, 50), // Primeiros 50 indicadores mapeados
+      examplePeriod: examplePeriod?.period || 'N/A',
+      totalPeriods: periodColumns.length
     })
   } catch (error: any) {
     console.error('❌ [DEBUG] Erro:', error)
