@@ -83,6 +83,9 @@ const isValidPeriod = (value: string): boolean => {
     }
   }
   
+  // Aceitar TODOS os meses (incluindo dezembro e janeiro)
+  // Não rejeitar baseado no mês específico
+  
   return true
 }
 
@@ -320,11 +323,24 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       // Validar período novamente (dupla validação)
       if (!isValidPeriod(periodRaw)) {
         console.log(`❌ [Período] Período "${periodRaw}" não passou na validação`)
+        console.log(`❌ [Período] Detalhes: length=${periodRaw.length}, hasDate=${/\d{1,2}\/\d{1,2}/.test(periodRaw.toLowerCase())}`)
         return null
       }
       
       const periodNormalized = normalizePeriod(periodRaw)
       console.log(`\n📅 [Google Sheets] Processando período: ${periodNormalized}`)
+      
+      // Verificar se é dezembro ou janeiro
+      const monthMatch = periodNormalized.match(/\/(\d{1,2})/)
+      if (monthMatch) {
+        const month = parseInt(monthMatch[1])
+        if (month === 12) {
+          console.log(`📅 [Google Sheets] Período de DEZEMBRO detectado: ${periodNormalized}`)
+        } else if (month === 1) {
+          console.log(`📅 [Google Sheets] Período de JANEIRO detectado: ${periodNormalized}`)
+        }
+      }
+      
       console.log(`📋 [Google Sheets] Colunas disponíveis nesta linha:`, Object.keys(rowMap).slice(0, 15))
       
       // Mapear TODOS os 34 indicadores com variações completas
@@ -592,7 +608,24 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
     console.log('✅ [Google Sheets] Dados válidos encontrados:', validData.length, 'de', jsonData.length, 'linhas')
     
     if (validData.length > 0) {
-      console.log('📅 [Google Sheets] Períodos encontrados:', validData.map(d => d.period).slice(0, 10))
+      console.log('📅 [Google Sheets] Períodos encontrados (ANTES da ordenação):', validData.map(d => d.period))
+      
+      // Verificar se há períodos de dezembro e janeiro
+      const dezembroPeriods = validData.filter(d => d.period.includes('/12'))
+      const janeiroPeriods = validData.filter(d => d.period.includes('/01') || d.period.includes('/1 '))
+      
+      if (dezembroPeriods.length > 0) {
+        console.log('✅ [Google Sheets] Períodos de DEZEMBRO encontrados:', dezembroPeriods.map(d => d.period))
+      } else {
+        console.log('⚠️ [Google Sheets] NENHUM período de dezembro encontrado!')
+      }
+      
+      if (janeiroPeriods.length > 0) {
+        console.log('✅ [Google Sheets] Períodos de JANEIRO encontrados:', janeiroPeriods.map(d => d.period))
+      } else {
+        console.log('⚠️ [Google Sheets] NENHUM período de janeiro encontrado!')
+      }
+      
       console.log('📊 [Google Sheets] Exemplo de dados (primeiro registro):', {
         period: validData[0].period,
         paSemanal: validData[0].paSemanal,
@@ -604,21 +637,65 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       console.error('❌ [Google Sheets] Verifique se a planilha contém uma coluna "Período" válida')
     }
     
-    // Ordenar por período (melhorado para lidar com anos)
+    // Função para converter período em data completa (considerando ano)
+    const parsePeriodToDate = (period: string): Date | null => {
+      const match = period.match(/(\d{1,2})\/(\d{1,2})/)
+      if (!match) return null
+      
+      const day = parseInt(match[1])
+      const month = parseInt(match[2]) - 1 // JavaScript months are 0-indexed
+      const today = new Date()
+      const currentYear = today.getFullYear()
+      const currentMonth = today.getMonth()
+      
+      let year = currentYear
+      
+      // Se o mês do período é dezembro (11) e estamos em janeiro/fevereiro, é do ano anterior
+      if (month === 11 && currentMonth <= 1) {
+        year = currentYear - 1
+      }
+      // Se o mês do período é janeiro (0) e estamos em dezembro, é do próximo ano
+      else if (month === 0 && currentMonth === 11) {
+        year = currentYear + 1
+      }
+      // Se o mês do período é maior que o mês atual, é do ano anterior
+      else if (month > currentMonth) {
+        year = currentYear - 1
+      }
+      // Se o mês do período é menor que o mês atual, é do ano atual
+      else if (month < currentMonth) {
+        year = currentYear
+      }
+      // Se estamos no mesmo mês, é do ano atual
+      else {
+        year = currentYear
+      }
+      
+      return new Date(year, month, day)
+    }
+    
+    // Ordenar por período (considerando ano completo)
     validData.sort((a, b) => {
-      const dateA = a.period.match(/(\d{1,2})\/(\d{1,2})/)
-      const dateB = b.period.match(/(\d{1,2})\/(\d{1,2})/)
+      const dateA = parsePeriodToDate(a.period)
+      const dateB = parsePeriodToDate(b.period)
       
-      if (!dateA || !dateB) return 0
+      if (!dateA || !dateB) {
+        // Se não conseguir parsear, ordenar alfabeticamente
+        return a.period.localeCompare(b.period)
+      }
       
-      const monthA = parseInt(dateA[2])
-      const dayA = parseInt(dateA[1])
-      const monthB = parseInt(dateB[2])
-      const dayB = parseInt(dateB[1])
-      
-      if (monthA !== monthB) return monthA - monthB
-      return dayA - dayB
+      // Ordenar por data completa
+      return dateA.getTime() - dateB.getTime()
     })
+    
+    console.log('📅 [Google Sheets] Períodos ordenados (DEPOIS da ordenação):', validData.map(d => d.period))
+    console.log('📅 [Google Sheets] Primeiro período:', validData[0]?.period)
+    console.log('📅 [Google Sheets] Último período:', validData[validData.length - 1]?.period)
+    
+    // Verificar novamente dezembro e janeiro após ordenação
+    const dezembroAfterSort = validData.filter(d => d.period.includes('/12'))
+    const janeiroAfterSort = validData.filter(d => d.period.includes('/01') || d.period.includes('/1 '))
+    console.log('📅 [Google Sheets] Após ordenação - Dezembro:', dezembroAfterSort.length, '| Janeiro:', janeiroAfterSort.length)
     
     return validData
   } catch (error: any) {
