@@ -362,75 +362,142 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
     // 2. Mapear cada linha (indicador) para cada período (coluna)
     const mappedData: WeeklyData[] = []
     const indicatorFieldMap: { [key: string]: keyof WeeklyData } = {
-      // PA
+      // PA - Múltiplas variações
       'pa semanal realizado': 'paSemanal',
+      'pa semanal': 'paSemanal',
+      'pa realizado': 'paSemanal',
+      'premio anual semanal': 'paSemanal',
       'pa acumulado no mes': 'paAcumuladoMes',
+      'pa acumulado mes': 'paAcumuladoMes',
+      'pa acumulado do mes': 'paAcumuladoMes',
       'pa acumulado no ano': 'paAcumuladoAno',
+      'pa acumulado ano': 'paAcumuladoAno',
+      'pa acumulado do ano': 'paAcumuladoAno',
       'meta de pa semanal necessaria': 'metaPASemanal',
+      'meta pa semanal': 'metaPASemanal',
+      'meta pa': 'metaPASemanal',
       '% meta de pa realizada da semana': 'percentualMetaPASemana',
+      '% meta pa realizada da semana': 'percentualMetaPASemana',
+      '% meta pa semana': 'percentualMetaPASemana',
       '% meta de pa realizada do ano': 'percentualMetaPAAno',
+      '% meta pa realizada do ano': 'percentualMetaPAAno',
+      '% meta pa ano': 'percentualMetaPAAno',
       'pa emitido na semana': 'paEmitido',
+      'pa emitido': 'paEmitido',
+      'premio anual emitido': 'paEmitido',
       // Apólices
       'apolices emitidas por semana': 'apolicesEmitidas',
       'apolices emitidas': 'apolicesEmitidas',
-      // N
+      'apolices': 'apolicesEmitidas',
+      'numero de apolices': 'apolicesEmitidas',
+      // N - Múltiplas variações
       'meta de n semanal': 'metaNSemanal',
       'meta de n semanal necessaria': 'metaNSemanal',
+      'meta n semanal': 'metaNSemanal',
+      'meta n': 'metaNSemanal',
       'n da semana': 'nSemana',
       'n semanal': 'nSemana',
+      'n semana': 'nSemana',
+      'numero apolices semana': 'nSemana',
       'n acumulados do mes': 'nAcumuladoMes',
       'n acumulado mes': 'nAcumuladoMes',
+      'n acumulado do mes': 'nAcumuladoMes',
+      'n mes': 'nAcumuladoMes',
       'n acumulados do ano': 'nAcumuladoAno',
       'n acumulado ano': 'nAcumuladoAno',
+      'n acumulado do ano': 'nAcumuladoAno',
+      'n ano': 'nAcumuladoAno',
       '% meta de n realizada da semana': 'percentualMetaNSemana',
+      '% meta n realizada da semana': 'percentualMetaNSemana',
+      '% meta n semana': 'percentualMetaNSemana',
+      '% meta n semanal': 'percentualMetaNSemana',
       '% meta de n realizada do ano': 'percentualMetaNAno',
+      '% meta n realizada do ano': 'percentualMetaNAno',
+      '% meta n ano': 'percentualMetaNAno',
       // OIs
       'meta ois agendadas': 'metaOIsAgendadas',
       'meta ois': 'metaOIsAgendadas',
+      'meta oportunidades inovacao': 'metaOIsAgendadas',
       'ois agendadas': 'oIsAgendadas',
+      'ois agend': 'oIsAgendadas',
+      'oportunidades inovacao agendadas': 'oIsAgendadas',
       'ois realizadas na semana': 'oIsRealizadas',
       'ois realizadas': 'oIsRealizadas',
+      'ois realiz': 'oIsRealizadas',
+      'oportunidades inovacao realizadas': 'oIsRealizadas',
       // RECS
       'meta recs': 'metaRECS',
+      'meta rec': 'metaRECS',
       'novas recs': 'novasRECS',
+      'novas rec': 'novasRECS',
+      'recs novas': 'novasRECS',
       // PCs/C2
       'meta de pcs c2 agendados': 'metaPCsC2Agendados',
       'meta pcs c2 agendados': 'metaPCsC2Agendados',
+      'meta pcs c2': 'metaPCsC2Agendados',
+      'meta pcs': 'metaPCsC2Agendados',
       'pcs realizados na semana': 'pcsRealizados',
       'pcs realizados': 'pcsRealizados',
+      'pcs realiz': 'pcsRealizados',
+      'pcs semana': 'pcsRealizados',
       'quantidade de c2 realizados na semana': 'c2Realizados',
       'c2 realizados na semana': 'c2Realizados',
       'c2 realizados': 'c2Realizados',
+      'c2 realiz': 'c2Realizados',
+      'c2 semana': 'c2Realizados',
       // Atrasos
       'apolice em atraso no': 'apoliceEmAtraso',
       'apolice em atraso': 'apoliceEmAtraso',
+      'apolices em atraso': 'apoliceEmAtraso',
+      'apolice atraso': 'apoliceEmAtraso',
       'premio em atraso de clientes r$': 'premioEmAtraso',
       'premio em atraso': 'premioEmAtraso',
+      'premio atraso': 'premioEmAtraso',
+      'pa em atraso': 'premioEmAtraso',
       // Inadimplência
       'taxa de inadimplencia % geral': 'taxaInadimplenciaGeral',
       'taxa inadimplencia geral': 'taxaInadimplenciaGeral',
+      'taxa inadimplencia % geral': 'taxaInadimplenciaGeral',
+      'inadimplencia geral': 'taxaInadimplenciaGeral',
       'taxa de inadimplencia % assistente': 'taxaInadimplenciaAssistente',
       'taxa inadimplencia assistente': 'taxaInadimplenciaAssistente',
+      'taxa inadimplencia % assistente': 'taxaInadimplenciaAssistente',
+      'inadimplencia assistente': 'taxaInadimplenciaAssistente',
       // Revisitas
       'meta revisitas agendadas': 'metaRevisitasAgendadas',
       'meta revisitas': 'metaRevisitasAgendadas',
+      'meta revisitas agend': 'metaRevisitasAgendadas',
       'revisitas agendadas na semana': 'revisitasAgendadas',
       'revisitas agendadas': 'revisitasAgendadas',
+      'revisitas agend': 'revisitasAgendadas',
       'revisitas realizadas na semana': 'revisitasRealizadas',
       'revisitas realizadas': 'revisitasRealizadas',
+      'revisitas realiz': 'revisitasRealizadas',
       // Produtividade
       'volume de tarefas concluidas no trello': 'volumeTarefasTrello',
+      'volume tarefas concluidas trello': 'volumeTarefasTrello',
       'volume tarefas trello': 'volumeTarefasTrello',
+      'tarefas trello': 'volumeTarefasTrello',
       'numero de videos de treinamento gravados': 'videosTreinamentoGravados',
+      'videos de treinamento gravados': 'videosTreinamentoGravados',
       'videos treinamento gravados': 'videosTreinamentoGravados',
+      'videos treinamento': 'videosTreinamentoGravados',
       'delivery apolices': 'deliveryApolices',
+      'delivery apolices semana': 'deliveryApolices',
       'total de reunioes realizadas na semana': 'totalReunioes',
+      'total reunioes realizadas na semana': 'totalReunioes',
       'total reunioes': 'totalReunioes',
+      'reunioes realizadas': 'totalReunioes',
       // Outros
       'lista de atrasos atribuidos raiza': 'listaAtrasosRaiza',
+      'lista atrasos atribuidos raiza': 'listaAtrasosRaiza',
       'lista atrasos raiza': 'listaAtrasosRaiza',
+      'lista atrasos': 'listaAtrasosRaiza',
       'ticket medio': 'ticketMedio',
-      'conversao ois': 'conversaoOIs'
+      'ticket medio r$': 'ticketMedio',
+      'conversao ois': 'conversaoOIs',
+      'conversao oi': 'conversaoOIs',
+      '% conversao ois': 'conversaoOIs'
     }
     
     // Para cada período, criar um objeto WeeklyData agregando dados de todas as linhas
@@ -438,6 +505,8 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       const periodData: Partial<WeeklyData> = {
         period: periodCol.period
       }
+      
+      let mappedFieldsCount = 0
       
       // Para cada linha (indicador), buscar o valor correspondente
       for (const row of jsonData) {
@@ -456,6 +525,11 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         // Buscar o valor para este período
         const value = row[periodCol.originalKey]
         
+        // Ignorar valores vazios, hífens, ou strings vazias
+        if (value === null || value === undefined || value === '' || value === '-' || String(value).trim() === '-') {
+          continue
+        }
+        
         // Campos que são porcentagens (precisam ser divididos por 100 se vierem como inteiros)
         const percentageFields = [
           'percentualMetaPASemana', 'percentualMetaPAAno',
@@ -470,7 +544,11 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         
         for (const [indicatorPattern, fieldName] of sortedEntries) {
           const patternNormalized = normalizeKey(indicatorPattern)
-          if (indicadorNormalized.includes(patternNormalized) || patternNormalized.includes(indicadorNormalized)) {
+          
+          // Match mais preciso: verificar se o indicador normalizado contém o padrão ou vice-versa
+          const matchesPattern = indicadorNormalized.includes(patternNormalized) || patternNormalized.includes(indicadorNormalized)
+          
+          if (matchesPattern) {
             // Verificar se é campo de porcentagem
             const isPercentageField = percentageFields.includes(fieldName as string)
             const numValue = parseNumber(value, isPercentageField)
@@ -483,10 +561,14 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
               const shouldIgnoreZero = !isPercentageField && !isImportantField && numValue === 0
               
               if (!shouldIgnoreZero) {
+                // Se já existe um valor, usar o mais recente (última linha encontrada)
                 (periodData as any)[fieldName] = numValue
-                console.log(`✅ [Mapeamento] "${indicadorValue}" -> ${fieldName} = ${numValue}${isPercentageField ? '%' : ''} (período: ${periodCol.period})`)
-              } else {
-                console.log(`⚠️ [Mapeamento] Ignorando zero para "${indicadorValue}" -> ${fieldName} (período: ${periodCol.period})`)
+                mappedFieldsCount++
+                
+                // Log apenas para alguns períodos para não poluir muito
+                if (periodCol.period === periodColumns[0].period || periodCol.period === periodColumns[periodColumns.length - 1].period) {
+                  console.log(`✅ [Mapeamento] "${indicadorValue}" -> ${fieldName} = ${numValue}${isPercentageField ? '%' : ''} (período: ${periodCol.period})`)
+                }
               }
             }
             matched = true
@@ -494,9 +576,20 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
           }
         }
         
-        if (!matched && indicadorNormalized) {
-          console.log(`⚠️ [Mapeamento] Indicador não mapeado: "${indicadorValue}" (normalizado: "${indicadorNormalized}")`)
+        if (!matched && indicadorNormalized && value !== null && value !== undefined && value !== '' && value !== '-') {
+          // Log apenas indicadores não mapeados que têm valores
+          const hasValue = parseNumber(value) !== undefined
+          if (hasValue) {
+            console.log(`⚠️ [Mapeamento] Indicador não mapeado: "${indicadorValue}" (normalizado: "${indicadorNormalized}") | Valor: ${value} | Período: ${periodCol.period}`)
+          }
         }
+      }
+      
+      // Log resumo para cada período
+      if (mappedFieldsCount === 0) {
+        console.log(`⚠️ [Período] Nenhum campo mapeado para período: ${periodCol.period}`)
+      } else {
+        console.log(`✅ [Período] ${mappedFieldsCount} campos mapeados para período: ${periodCol.period}`)
       }
       
       // Criar WeeklyData completo com valores padrão
@@ -584,11 +677,37 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         console.log('⚠️ [Google Sheets] NENHUM período de janeiro encontrado!')
       }
       
+      // Log de exemplo do primeiro e último registro
       console.log('📊 [Google Sheets] Exemplo de dados (primeiro registro):', {
         period: validData[0].period,
         paSemanal: validData[0].paSemanal,
         nSemana: validData[0].nSemana,
-        oIsAgendadas: validData[0].oIsAgendadas
+        oIsAgendadas: validData[0].oIsAgendadas,
+        apolicesEmitidas: validData[0].apolicesEmitidas
+      })
+      
+      if (validData.length > 1) {
+        const lastIndex = validData.length - 1
+        console.log('📊 [Google Sheets] Exemplo de dados (último registro):', {
+          period: validData[lastIndex].period,
+          paSemanal: validData[lastIndex].paSemanal,
+          nSemana: validData[lastIndex].nSemana,
+          oIsAgendadas: validData[lastIndex].oIsAgendadas,
+          apolicesEmitidas: validData[lastIndex].apolicesEmitidas
+        })
+      }
+      
+      // Log de resumo de valores não-zero por período
+      validData.forEach((data, index) => {
+        const nonZeroFields = Object.entries(data).filter(([key, value]) => 
+          key !== 'period' && 
+          key !== 'listaAtrasosRaiza' && 
+          (typeof value === 'number' && value !== 0)
+        ).length
+        
+        if (nonZeroFields === 0) {
+          console.log(`⚠️ [Período ${index + 1}] ${data.period}: NENHUM valor não-zero encontrado!`)
+        }
       })
     } else {
       console.error('❌ [Google Sheets] NENHUM dado válido encontrado após mapeamento!')
