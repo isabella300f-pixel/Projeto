@@ -30,29 +30,43 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadGoogleSheetsData() {
       try {
+        console.log('🔄 Carregando dados do Google Sheets...')
         const response = await fetch('/api/google-sheets', {
-          cache: 'no-store', // Sempre buscar dados atualizados
-          next: { revalidate: 0 }
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         })
         
         if (response.ok) {
           const result = await response.json()
-          if (result.success && result.data && result.data.length > 0) {
+          console.log('📊 Resultado da API:', result)
+          
+          if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
             console.log('✅ Dados carregados do Google Sheets:', result.count, 'registros')
             console.log('📅 Períodos:', result.periods)
+            console.log('📈 Primeiro registro:', result.data[0])
             setWeeklyDataState(result.data)
+            setLastUpdate(new Date())
           } else {
-            console.warn('⚠️ Nenhum dado encontrado no Google Sheets, usando fallback')
-            setWeeklyDataState(fallbackData)
+            console.warn('⚠️ Nenhum dado válido encontrado no Google Sheets')
+            console.warn('⚠️ Resultado:', result)
+            // Só usar fallback se realmente não houver dados
+            if (result.data && result.data.length === 0) {
+              console.log('ℹ️ Usando dados locais como fallback')
+              setWeeklyDataState(fallbackData)
+            }
           }
         } else {
           const errorData = await response.json().catch(() => ({}))
-          console.error('❌ Erro ao carregar dados do Google Sheets:', errorData)
+          console.error('❌ Erro HTTP ao carregar dados:', response.status, errorData)
           console.log('ℹ️ Usando dados locais como fallback')
           setWeeklyDataState(fallbackData)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Erro ao carregar dados do Google Sheets:', error)
+        console.error('❌ Detalhes do erro:', error.message, error.stack)
         console.log('ℹ️ Usando dados locais como fallback (erro ao carregar)')
         setWeeklyDataState(fallbackData)
       } finally {
@@ -65,6 +79,7 @@ export default function Dashboard() {
     
     // Atualizar automaticamente a cada 30 segundos
     const interval = setInterval(() => {
+      console.log('🔄 Atualização automática...')
       loadGoogleSheetsData()
     }, 30000) // 30 segundos
     

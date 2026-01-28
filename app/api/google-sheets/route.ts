@@ -44,7 +44,8 @@ const isValidPeriod = (value: string): boolean => {
     'giro', 'ciclo', 'diária', 'diaria', 'franqueado', 'gerenciamento',
     'regime', 'tributário', 'tributario', 'saco', 'unidade', 'medida',
     'taxa', 'retorno', 'irr', 'tir', 'prazo', 'médio', 'medio',
-    'estoque', 'pagto', 'recebimento', 'percentual', 'índice', 'indice', 'financeiro'
+    'estoque', 'pagto', 'recebimento', 'percentual', 'índice', 'indice', 'financeiro',
+    'unid a de de medid a', 'unidade de medida'
   ]
   
   for (const pattern of invalidPatterns) {
@@ -63,7 +64,7 @@ const isValidPeriod = (value: string): boolean => {
   return hasDatePattern || hasPeriodPattern || hasWeekPattern || hasDateRange
 }
 
-// Função para converter valor para número
+// Função para converter valor para número (melhorada)
 const parseNumber = (value: any): number | undefined => {
   if (value === null || value === undefined || value === '') return undefined
   
@@ -73,9 +74,11 @@ const parseNumber = (value: any): number | undefined => {
   
   if (typeof value === 'string') {
     const cleaned = value.trim()
-      .replace(/\./g, '')
-      .replace(/,/g, '.')
-      .replace(/[^\d.-]/g, '')
+      .replace(/\./g, '') // Remove pontos (separadores de milhar)
+      .replace(/,/g, '.') // Substitui vírgula por ponto (decimal)
+      .replace(/[^\d.-]/g, '') // Remove tudo exceto dígitos, ponto e sinal negativo
+    
+    if (cleaned === '' || cleaned === '-') return undefined
     
     const parsed = parseFloat(cleaned)
     return isNaN(parsed) ? undefined : parsed
@@ -84,20 +87,23 @@ const parseNumber = (value: any): number | undefined => {
   return undefined
 }
 
-// Função auxiliar para buscar valor
+// Função auxiliar para buscar valor com múltiplas variações
 const getValue = (rowMap: any, variations: string[]): number | undefined => {
   for (const variation of variations) {
     const normalized = normalizeKey(variation)
     
+    // Busca exata primeiro
     if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
       const value = parseNumber(rowMap[normalized])
-      if (value !== undefined) return value
+      if (value !== undefined && value !== 0) return value
     }
     
+    // Busca parcial (contém a variação)
     for (const key in rowMap) {
-      if (key.includes(normalized) || normalized.includes(key)) {
+      const normalizedKey = normalizeKey(key)
+      if (normalizedKey.includes(normalized) || normalized.includes(normalizedKey)) {
         const value = parseNumber(rowMap[key])
-        if (value !== undefined) return value
+        if (value !== undefined && value !== 0) return value
       }
     }
   }
@@ -110,7 +116,16 @@ const getTextValue = (rowMap: any, variations: string[]): string | undefined => 
     const normalized = normalizeKey(variation)
     if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
       const value = String(rowMap[normalized]).trim()
-      if (value) return value
+      if (value && value !== 'undefined' && value !== 'null') return value
+    }
+    
+    // Busca parcial
+    for (const key in rowMap) {
+      const normalizedKey = normalizeKey(key)
+      if (normalizedKey.includes(normalized) || normalized.includes(normalizedKey)) {
+        const value = String(rowMap[key] || '').trim()
+        if (value && value !== 'undefined' && value !== 'null') return value
+      }
     }
   }
   return undefined
@@ -119,22 +134,54 @@ const getTextValue = (rowMap: any, variations: string[]): string | undefined => 
 // Função para buscar dados do Google Sheets
 async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
   try {
-    // Buscar CSV do Google Sheets
+    console.log('🔄 Buscando dados do Google Sheets...')
+    console.log('📋 URL:', GOOGLE_SHEETS_URL)
+    
+    // Buscar CSV do Google Sheets com timeout maior
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 segundos
+    
     const response = await fetch(GOOGLE_SHEETS_URL, {
-      next: { revalidate: 0 }, // Sempre buscar dados atualizados
-      cache: 'no-store'
+      signal: controller.signal,
+      cache: 'no-store',
+      headers: {
+        'Accept': 'text/csv',
+        'User-Agent': 'Mozilla/5.0'
+      }
     })
     
+    clearTimeout(timeoutId)
+    
     if (!response.ok) {
-      throw new Error(`Erro ao buscar Google Sheets: ${response.statusText}`)
+      throw new Error(`Erro ao buscar Google Sheets: ${response.status} ${response.statusText}`)
     }
     
     const csvText = await response.text()
     
+    if (!csvText || csvText.trim().length === 0) {
+      console.error('❌ CSV vazio retornado do Google Sheets')
+      return []
+    }
+    
+    console.log('✅ CSV recebido, tamanho:', csvText.length, 'caracteres')
+    
     // Converter CSV para JSON usando XLSX
-    const workbook = XLSX.read(csvText, { type: 'string' })
+    const workbook = XLSX.read(csvText, { 
+      type: 'string',
+      cellDates: false,
+      cellNF: false,
+      cellText: false
+    })
+    
+    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+      console.error('❌ Nenhuma planilha encontrada no workbook')
+      return []
+    }
+    
     const sheetName = workbook.SheetNames[0]
     const worksheet = workbook.Sheets[sheetName]
+    
+    console.log('📊 Planilha encontrada:', sheetName)
     
     const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, {
       defval: null,
@@ -143,18 +190,28 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       blankrows: false
     })
     
+    console.log('📈 Total de linhas no JSON:', jsonData.length)
+    
     if (!jsonData || jsonData.length === 0) {
+      console.error('❌ Nenhum dado encontrado após conversão')
       return []
     }
     
+    // Log das colunas encontradas (primeira linha)
+    if (jsonData.length > 0) {
+      const firstRow = jsonData[0]
+      const columns = Object.keys(firstRow)
+      console.log('📋 Colunas encontradas:', columns.slice(0, 10), '... (total:', columns.length, ')')
+    }
+    
     // Mapear dados para WeeklyData
-    const mappedData: (WeeklyData | null)[] = jsonData.map((row: any) => {
+    const mappedData: (WeeklyData | null)[] = jsonData.map((row: any, index: number) => {
       const rowMap: any = {}
       Object.keys(row).forEach(key => {
         rowMap[normalizeKey(key)] = row[key]
       })
       
-      // Buscar período
+      // Buscar período com múltiplas variações
       let periodRaw = getTextValue(rowMap, [
         'período', 'periodo', 'period', 'semana', 'data',
         'periodo semanal', 'periodo da semana', 'semana de',
@@ -198,197 +255,235 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       
       const periodNormalized = normalizePeriod(periodRaw)
       
-      // Mapear todos os indicadores
+      // Mapear TODOS os 34 indicadores com variações completas
       const data: WeeklyData = {
         period: periodNormalized,
         
-        // PA Semanal Realizado
+        // 1. PA Semanal Realizado
         paSemanal: getValue(rowMap, [
-          'pa semanal', 'pa semanal realizado', 'pa realizado', 'premio anual semanal',
-          'pa semana', 'pa da semana', 'pa realizado semanal', 'pa sem'
+          'pa semanal realizado', 'pa semanal', 'pa realizado', 'premio anual semanal',
+          'pa semana', 'pa da semana', 'pa realizado semanal', 'pa sem',
+          'pa semanal realizado r$', 'pa realizado semana'
         ]) || 0,
         
-        // PA Acumulado Mês
+        // 2. PA Acumulado no Mês
         paAcumuladoMes: getValue(rowMap, [
-          'pa acumulado mes', 'pa acumulado do mes', 'pa mes', 'pa acumulado mes',
-          'premio anual acumulado mes', 'pa acum mes'
+          'pa acumulado no mes', 'pa acumulado mes', 'pa acumulado do mes', 'pa mes',
+          'premio anual acumulado mes', 'pa acum mes', 'pa acumulado no mes r$'
         ]) || 0,
         
-        // PA Acumulado Ano
+        // 3. PA Acumulado no Ano
         paAcumuladoAno: getValue(rowMap, [
-          'pa acumulado ano', 'pa acumulado do ano', 'pa ano', 'pa acumulado ano',
-          'premio anual acumulado ano', 'pa acum ano'
+          'pa acumulado no ano', 'pa acumulado ano', 'pa acumulado do ano', 'pa ano',
+          'premio anual acumulado ano', 'pa acum ano', 'pa acumulado no ano r$'
         ]) || 0,
         
-        // Meta PA Semanal
+        // 4. Meta de PA Semanal Necessária
         metaPASemanal: getValue(rowMap, [
-          'meta pa semanal', 'meta pa', 'meta pa semana', 'meta premio anual semanal',
-          'meta pa sem', 'meta de pa semanal'
+          'meta de pa semanal necessaria', 'meta pa semanal necessaria', 'meta pa semanal', 'meta pa',
+          'meta pa semana', 'meta premio anual semanal', 'meta pa sem', 'meta de pa semanal'
         ]) || 82000,
         
-        // % Meta PA Semana
+        // 5. % Meta de PA Realizada da Semana
         percentualMetaPASemana: getValue(rowMap, [
-          '% meta pa semana', '% meta pa semanal', '% meta pa', '% pa semanal',
-          'percentual meta pa semana', 'percentual meta pa', '% pa semana'
+          '% meta de pa realizada da semana', '% meta pa realizada da semana', '% meta pa semana',
+          '% meta pa semanal', '% meta pa', '% pa semanal', 'percentual meta pa semana',
+          'percentual meta pa', '% pa semana', '% meta pa realizada semana'
         ]) || 0,
         
-        // % Meta PA Ano
+        // 6. % Meta de PA Realizada do Ano
         percentualMetaPAAno: getValue(rowMap, [
-          '% meta pa ano', '% meta pa anual', '% pa ano', '% pa acumulado ano',
-          'percentual meta pa ano', 'percentual meta pa anual', '% pa acum ano'
+          '% meta de pa realizada do ano', '% meta pa realizada do ano', '% meta pa ano',
+          '% meta pa anual', '% pa ano', '% pa acumulado ano', 'percentual meta pa ano',
+          'percentual meta pa anual', '% pa acum ano', '% meta pa realizada ano'
         ]) || 0,
         
-        // PA Emitido
+        // 7. PA Emitido na semana
         paEmitido: getValue(rowMap, [
-          'pa emitido', 'pa emitido na semana', 'pa emitido semana', 'premio anual emitido',
-          'pa emit', 'pa emitido semanal'
+          'pa emitido na semana', 'pa emitido semana', 'pa emitido', 'premio anual emitido',
+          'pa emit', 'pa emitido semanal', 'pa emitido na semana r$'
         ]) || 0,
         
-        // Apólices Emitidas
+        // 8. Apólices emitidas (por semana)
         apolicesEmitidas: getValue(rowMap, [
-          'apolices emitidas', 'apolices', 'numero de apolices', 'qtd apolices',
-          'quantidade apolices', 'apolices emit', 'total apolices'
+          'apolices emitidas por semana', 'apolices emitidas', 'apolices', 'numero de apolices',
+          'qtd apolices', 'quantidade apolices', 'apolices emit', 'total apolices',
+          'apolices emitidas semana', 'apolices por semana'
         ]) || 0,
         
-        // Meta N Semanal
+        // 9. Meta de N semanal
         metaNSemanal: getValue(rowMap, [
-          'meta n semanal', 'meta n', 'meta n semana', 'meta numero apolices',
-          'meta n sem', 'meta de n semanal'
+          'meta de n semanal', 'meta n semanal', 'meta n', 'meta n semana',
+          'meta numero apolices', 'meta n sem', 'meta de n semanal necessaria'
         ]) || 5,
         
-        // N da Semana
+        // 10. N da Semana
         nSemana: getValue(rowMap, [
           'n da semana', 'n semanal', 'n semana', 'numero apolices semana',
-          'n sem', 'n realizado', 'n da sem'
+          'n sem', 'n realizado', 'n da sem', 'n realizado semana'
         ]) || 0,
         
-        // N Acumulado Mês
+        // 11. N Acumulados do Mes
         nAcumuladoMes: getValue(rowMap, [
-          'n acumulado mes', 'n acumulado do mes', 'n mes', 'n acumulado mes',
-          'numero apolices acumulado mes', 'n acum mes'
+          'n acumulados do mes', 'n acumulado mes', 'n acumulado do mes', 'n mes',
+          'numero apolices acumulado mes', 'n acum mes', 'n acumulados mes'
         ]) || 0,
         
-        // N Acumulado Ano
+        // 12. N Acumulados do Ano
         nAcumuladoAno: getValue(rowMap, [
-          'n acumulado ano', 'n acumulado do ano', 'n ano', 'n acumulado ano',
-          'numero apolices acumulado ano', 'n acum ano'
+          'n acumulados do ano', 'n acumulado ano', 'n acumulado do ano', 'n ano',
+          'numero apolices acumulado ano', 'n acum ano', 'n acumulados ano'
         ]) || 0,
         
-        // % Meta N Semana
+        // 13. % Meta de N Realizada da Semana
         percentualMetaNSemana: getValue(rowMap, [
-          '% meta n semana', '% meta n semanal', '% meta n', '% n semanal',
-          'percentual meta n semana', 'percentual meta n', '% n semana'
+          '% meta de n realizada da semana', '% meta n realizada da semana', '% meta n semana',
+          '% meta n semanal', '% meta n', '% n semanal', 'percentual meta n semana',
+          'percentual meta n', '% n semana', '% meta n realizada semana'
         ]) || 0,
         
-        // % Meta N Ano
+        // 14. % Meta de N Realizada do Ano
         percentualMetaNAno: getValue(rowMap, [
-          '% meta n ano', '% meta n anual', '% n ano', '% n acumulado ano',
-          'percentual meta n ano', 'percentual meta n anual', '% n acum ano'
+          '% meta de n realizada do ano', '% meta n realizada do ano', '% meta n ano',
+          '% meta n anual', '% n ano', '% n acumulado ano', 'percentual meta n ano',
+          'percentual meta n anual', '% n acum ano', '% meta n realizada ano'
         ]) || 0,
         
-        // Meta OIs Agendadas
+        // 15. Meta OIs Agendadas
         metaOIsAgendadas: getValue(rowMap, [
           'meta ois agendadas', 'meta ois', 'meta ois agend', 'meta oportunidades inovacao',
-          'meta ois agendadas semana', 'meta oi agendadas'
+          'meta ois agendadas semana', 'meta oi agendadas', 'meta ois agendadas necessaria'
         ]) || 8,
         
-        // OIs Agendadas
+        // 16. OIs agendadas
         oIsAgendadas: getValue(rowMap, [
           'ois agendadas', 'ois agend', 'oIs agendadas', 'ois agendadas semana',
-          'oportunidades inovacao agendadas', 'oi agendadas', 'ois agendadas na semana'
+          'oportunidades inovacao agendadas', 'oi agendadas', 'ois agendadas na semana',
+          'ois agendadas por semana'
         ]) || 0,
         
-        // OIs Realizadas
+        // 17. OIs realizadas na semana
         oIsRealizadas: getValue(rowMap, [
-          'ois realizadas', 'ois realiz', 'oIs realizadas', 'ois realizadas semana',
-          'oportunidades inovacao realizadas', 'oi realizadas', 'ois realizadas na semana'
+          'ois realizadas na semana', 'ois realizadas semana', 'ois realizadas', 'ois realiz',
+          'oIs realizadas', 'oportunidades inovacao realizadas', 'oi realizadas',
+          'ois realizadas na semana', 'ois realizadas por semana'
         ]) || 0,
         
-        // % OIs Realizadas
-        percentualOIsRealizadas: getValue(rowMap, [
-          '% ois realizadas', '% ois realiz', '% oIs realizadas', '% ois',
-          'percentual ois realizadas', 'percentual ois', '% oi realizadas'
-        ]),
-        
-        // RECS
+        // 18. Meta RECS
         metaRECS: getValue(rowMap, [
-          'meta recs', 'meta rec', 'meta recs agendadas', 'meta recs semana'
+          'meta recs', 'meta rec', 'meta recs agendadas', 'meta recs semana',
+          'meta recs necessaria'
         ]),
+        
+        // 19. Novas RECS
         novasRECS: getValue(rowMap, [
-          'novas recs', 'novas rec', 'recs novas', 'recs realizadas', 'recs semana'
+          'novas recs', 'novas rec', 'recs novas', 'recs realizadas', 'recs semana',
+          'novas recs semana', 'recs novas semana'
         ]),
         
-        // PCs/C2
+        // 20. Meta de PCs/C2 agendados
         metaPCsC2Agendados: getValue(rowMap, [
-          'meta pcs c2 agendados', 'meta pcs c2', 'meta pcs', 'meta c2',
-          'meta pcs c2 agend', 'meta pcs c2 semana'
+          'meta de pcs c2 agendados', 'meta pcs c2 agendados', 'meta pcs c2', 'meta pcs',
+          'meta c2', 'meta pcs c2 agend', 'meta pcs c2 semana', 'meta pcs c2 agendados necessaria'
         ]),
+        
+        // 21. PCs realizados na semana
         pcsRealizados: getValue(rowMap, [
-          'pcs realizados', 'pcs realiz', 'pcs realizados semana', 'pcs semana'
+          'pcs realizados na semana', 'pcs realizados semana', 'pcs realizados', 'pcs realiz',
+          'pcs semana', 'pcs realizados por semana'
         ]),
+        
+        // 22. Quantidade de C2 realizados na semana
         c2Realizados: getValue(rowMap, [
-          'c2 realizados', 'c2 realiz', 'c2 realizados semana', 'c2 semana'
+          'quantidade de c2 realizados na semana', 'c2 realizados na semana', 'c2 realizados semana',
+          'c2 realizados', 'c2 realiz', 'c2 semana', 'quantidade c2 realizados',
+          'c2 realizados por semana', 'qtd c2 realizados'
         ]),
         
-        // Atrasos
+        // 23. Apólice em atraso (nº)
         apoliceEmAtraso: getValue(rowMap, [
-          'apolice em atraso', 'apolices em atraso', 'apolice atraso', 'apolices atraso',
-          'numero apolices atraso', 'qtd apolices atraso'
+          'apolice em atraso no', 'apolice em atraso', 'apolices em atraso', 'apolice atraso',
+          'apolices atraso', 'numero apolices atraso', 'qtd apolices atraso',
+          'apolice em atraso numero', 'apolices em atraso no'
         ]),
+        
+        // 24. Premio em atraso de clientes (R$)
         premioEmAtraso: getValue(rowMap, [
-          'premio em atraso', 'premio atraso', 'pa em atraso', 'pa atraso',
-          'valor premio atraso', 'valor pa atraso'
+          'premio em atraso de clientes r$', 'premio em atraso de clientes', 'premio em atraso',
+          'premio atraso', 'pa em atraso', 'pa atraso', 'valor premio atraso',
+          'valor pa atraso', 'premio em atraso r$', 'premio atraso clientes'
         ]),
         
-        // Inadimplência
+        // 25. Taxa de inadimplência (%) Geral
         taxaInadimplenciaGeral: getValue(rowMap, [
-          'taxa inadimplencia geral', 'taxa inadimplencia', 'inadimplencia geral',
-          '% inadimplencia geral', 'percentual inadimplencia geral'
-        ]),
-        taxaInadimplenciaAssistente: getValue(rowMap, [
-          'taxa inadimplencia assistente', 'inadimplencia assistente',
-          '% inadimplencia assistente', 'percentual inadimplencia assistente'
+          'taxa de inadimplencia % geral', 'taxa inadimplencia geral', 'taxa inadimplencia',
+          'inadimplencia geral', '% inadimplencia geral', 'percentual inadimplencia geral',
+          'taxa inadimplencia % geral'
         ]),
         
-        // Revisitas
+        // 26. Taxa de inadimplência (%) Assistente
+        taxaInadimplenciaAssistente: getValue(rowMap, [
+          'taxa de inadimplencia % assistente', 'taxa inadimplencia assistente',
+          'inadimplencia assistente', '% inadimplencia assistente',
+          'percentual inadimplencia assistente', 'taxa inadimplencia % assistente'
+        ]),
+        
+        // 27. Meta revisitas agendadas
         metaRevisitasAgendadas: getValue(rowMap, [
           'meta revisitas agendadas', 'meta revisitas', 'meta revisitas agend',
-          'meta revisitas agendadas semana'
-        ]),
-        revisitasAgendadas: getValue(rowMap, [
-          'revisitas agendadas', 'revisitas agend', 'revisitas agendadas semana',
-          'revisitas agendadas na semana'
-        ]),
-        revisitasRealizadas: getValue(rowMap, [
-          'revisitas realizadas', 'revisitas realiz', 'revisitas realizadas semana',
-          'revisitas realizadas na semana'
+          'meta revisitas agendadas semana', 'meta revisitas necessaria'
         ]),
         
-        // Produtividade
+        // 28. Revisitas Agendadas na semana
+        revisitasAgendadas: getValue(rowMap, [
+          'revisitas agendadas na semana', 'revisitas agendadas semana', 'revisitas agendadas',
+          'revisitas agend', 'revisitas agendadas na semana', 'revisitas agendadas por semana'
+        ]),
+        
+        // 29. Revisitas realizadas na semana
+        revisitasRealizadas: getValue(rowMap, [
+          'revisitas realizadas na semana', 'revisitas realizadas semana', 'revisitas realizadas',
+          'revisitas realiz', 'revisitas realizadas na semana', 'revisitas realizadas por semana'
+        ]),
+        
+        // 30. Volume de tarefas concluídas no Trello
         volumeTarefasTrello: getValue(rowMap, [
+          'volume de tarefas concluidas no trello', 'volume tarefas concluidas trello',
           'volume tarefas trello', 'tarefas trello', 'tarefas trelo',
-          'qtd tarefas trello', 'quantidade tarefas trello'
+          'qtd tarefas trello', 'quantidade tarefas trello', 'volume tarefas concluidas',
+          'tarefas concluidas trello'
         ]),
+        
+        // 31. Número de vídeos de treinamento gravados
         videosTreinamentoGravados: getValue(rowMap, [
+          'numero de videos de treinamento gravados', 'videos de treinamento gravados',
           'videos treinamento gravados', 'videos treinamento', 'videos gravados',
-          'qtd videos treinamento', 'quantidade videos treinamento'
+          'qtd videos treinamento', 'quantidade videos treinamento', 'numero videos treinamento',
+          'videos treinamento gravados numero'
         ]),
+        
+        // 32. Delivery Apólices
         deliveryApolices: getValue(rowMap, [
           'delivery apolices', 'delivery apolices semana', 'delivery apol',
-          'qtd delivery apolices', 'quantidade delivery apolices'
+          'qtd delivery apolices', 'quantidade delivery apolices', 'delivery apolices por semana'
         ]),
+        
+        // 33. Total de reuniões realizadas na semana
         totalReunioes: getValue(rowMap, [
+          'total de reunioes realizadas na semana', 'total reunioes realizadas na semana',
           'total reunioes', 'total reunioes realizadas', 'reunioes realizadas',
-          'qtd reunioes', 'quantidade reunioes', 'total reunioes semana'
+          'qtd reunioes', 'quantidade reunioes', 'total reunioes semana',
+          'reunioes realizadas na semana'
         ]),
         
-        // Lista de Atrasos Raiza
+        // 34. Lista de Atrasos - atribuídos Raiza
         listaAtrasosRaiza: getTextValue(rowMap, [
+          'lista de atrasos atribuidos raiza', 'lista atrasos atribuidos raiza',
           'lista atrasos raiza', 'lista atrasos', 'atrasos raiza',
-          'lista de atrasos raiza', 'atrasos lista raiza'
+          'lista de atrasos raiza', 'atrasos lista raiza', 'atrasos atribuidos raiza'
         ]),
         
-        // Calculados
+        // Campos calculados
         ticketMedio: getValue(rowMap, [
           'ticket medio', 'ticket medio r$', 'ticket medio rs',
           'ticket medio realizado', 'ticket medio semana'
@@ -415,7 +510,13 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
     // Filtrar nulls e ordenar por período
     const validData = mappedData.filter((data): data is WeeklyData => data !== null)
     
-    // Ordenar por período (assumindo formato "DD/MM a DD/MM")
+    console.log('✅ Dados válidos encontrados:', validData.length, 'de', jsonData.length, 'linhas')
+    
+    if (validData.length > 0) {
+      console.log('📅 Períodos encontrados:', validData.map(d => d.period).slice(0, 5), '...')
+    }
+    
+    // Ordenar por período (melhorado para lidar com anos)
     validData.sort((a, b) => {
       const dateA = a.period.match(/(\d{1,2})\/(\d{1,2})/)
       const dateB = b.period.match(/(\d{1,2})\/(\d{1,2})/)
@@ -433,7 +534,10 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
     
     return validData
   } catch (error: any) {
-    console.error('Erro ao buscar dados do Google Sheets:', error)
+    console.error('❌ Erro ao buscar dados do Google Sheets:', error)
+    if (error.name === 'AbortError') {
+      throw new Error('Timeout ao buscar dados do Google Sheets. Tente novamente.')
+    }
     throw error
   }
 }
@@ -449,7 +553,7 @@ export async function GET() {
       periods: data.map(d => d.period)
     })
   } catch (error: any) {
-    console.error('Erro na API Google Sheets:', error)
+    console.error('❌ Erro na API Google Sheets:', error)
     
     return NextResponse.json(
       {
