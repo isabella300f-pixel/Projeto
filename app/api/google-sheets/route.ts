@@ -101,14 +101,19 @@ const parseNumber = (value: any, isPercentage: boolean = false): number | undefi
   if (typeof value === 'number') {
     const result = isNaN(value) ? undefined : value
     // Se for porcentagem e o valor parece estar em formato inteiro (ex: 13984 ao invés de 139.84)
-    if (result !== undefined && shouldDivideBy100 && result > 100 && result < 100000) {
+    // Valores entre 100 e 100000 que são inteiros provavelmente precisam ser divididos por 100
+    if (result !== undefined && shouldDivideBy100 && result >= 100 && result < 100000 && Number.isInteger(result)) {
       return result / 100
     }
     return result
   }
   
   if (typeof value === 'string') {
-    const cleaned = value.trim()
+    const originalCleaned = value.trim()
+    const hasComma = originalCleaned.includes(',')
+    const hasDot = originalCleaned.includes('.')
+    
+    const cleaned = originalCleaned
       .replace(/\./g, '') // Remove pontos (separadores de milhar)
       .replace(/,/g, '.') // Substitui vírgula por ponto (decimal)
       .replace(/[^\d.-]/g, '') // Remove tudo exceto dígitos, ponto e sinal negativo
@@ -119,8 +124,16 @@ const parseNumber = (value: any, isPercentage: boolean = false): number | undefi
     if (isNaN(parsed)) return undefined
     
     // Se for porcentagem e o valor parece estar em formato inteiro (ex: 13984 ao invés de 139.84)
-    if (shouldDivideBy100 && parsed > 100 && parsed < 100000 && !cleaned.includes('.')) {
+    // Critérios: valor >= 100, < 100000, não tem vírgula nem ponto no original (ou só tem como separador de milhar)
+    const isLikelyIntegerPercentage = shouldDivideBy100 && 
+                                      parsed >= 100 && 
+                                      parsed < 100000 && 
+                                      !cleaned.includes('.') && // Não tem ponto decimal após limpeza
+                                      (!hasComma || !hasDot) // Não tinha vírgula ou ponto como decimal no original
+    
+    if (isLikelyIntegerPercentage) {
       parsed = parsed / 100
+      console.log(`📊 [parseNumber] Convertendo porcentagem: ${value} -> ${parsed}%`)
     }
     
     return parsed
