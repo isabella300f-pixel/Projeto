@@ -41,20 +41,35 @@ export default function Dashboard() {
         
         if (response.ok) {
           const result = await response.json()
-          console.log('📊 Resultado da API:', result)
+          console.log('📊 [Frontend] Resultado da API:', result)
           
           if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
-            console.log('✅ Dados carregados do Google Sheets:', result.count, 'registros')
-            console.log('📅 Períodos:', result.periods)
-            console.log('📈 Primeiro registro:', result.data[0])
-            setWeeklyDataState(result.data)
-            setLastUpdate(new Date())
+            console.log('✅ [Frontend] Dados carregados do Google Sheets:', result.count, 'registros')
+            console.log('📅 [Frontend] Períodos:', result.periods)
+            console.log('📈 [Frontend] Primeiro registro completo:', JSON.stringify(result.data[0], null, 2))
+            
+            // Verificar se os dados têm valores não-zero
+            const hasNonZeroData = result.data.some((d: WeeklyData) => 
+              d.paSemanal > 0 || d.nSemana > 0 || d.oIsAgendadas > 0
+            )
+            
+            if (hasNonZeroData) {
+              console.log('✅ [Frontend] Dados contêm valores não-zero, atualizando estado')
+              setWeeklyDataState(result.data)
+              setLastUpdate(new Date())
+            } else {
+              console.warn('⚠️ [Frontend] Dados carregados mas todos os valores estão zerados')
+              console.warn('⚠️ [Frontend] Verifique o mapeamento das colunas na planilha')
+              // Mesmo assim, atualizar com os dados (pode ser que realmente estejam zerados)
+              setWeeklyDataState(result.data)
+              setLastUpdate(new Date())
+            }
           } else {
-            console.warn('⚠️ Nenhum dado válido encontrado no Google Sheets')
-            console.warn('⚠️ Resultado:', result)
+            console.warn('⚠️ [Frontend] Nenhum dado válido encontrado no Google Sheets')
+            console.warn('⚠️ [Frontend] Resultado:', result)
             // Só usar fallback se realmente não houver dados
-            if (result.data && result.data.length === 0) {
-              console.log('ℹ️ Usando dados locais como fallback')
+            if (!result.data || result.data.length === 0) {
+              console.log('ℹ️ [Frontend] Usando dados locais como fallback')
               setWeeklyDataState(fallbackData)
             }
           }
