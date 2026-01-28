@@ -554,20 +554,70 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
             const numValue = parseNumber(value, isPercentageField)
             
             if (numValue !== null && numValue !== undefined) {
-              // Não ignorar zeros para campos importantes (porcentagens, metas, etc.)
-              const importantFields = ['metaPASemanal', 'metaNSemanal', 'metaOIsAgendadas', 'metaRECS', 
-                                     'metaPCsC2Agendados', 'metaRevisitasAgendadas']
-              const isImportantField = importantFields.includes(fieldName as string)
-              const shouldIgnoreZero = !isPercentageField && !isImportantField && numValue === 0
+              // Validações de valores razoáveis por tipo de campo
+              let finalValue = numValue
+              let isValid = true
               
-              if (!shouldIgnoreZero) {
-                // Se já existe um valor, usar o mais recente (última linha encontrada)
-                (periodData as any)[fieldName] = numValue
-                mappedFieldsCount++
+              // Validações específicas por campo
+              if (fieldName === 'paSemanal' || fieldName === 'paEmitido') {
+                // PA semanal/emitido não deve ser maior que 1 milhão (valores muito altos provavelmente são acumulados)
+                if (numValue > 1000000) {
+                  console.log(`⚠️ [Validação] ${fieldName} muito alto (${numValue}), possivelmente valor acumulado. Ignorando.`)
+                  isValid = false
+                }
+              } else if (fieldName === 'apolicesEmitidas') {
+                // Apólices emitidas não deve ser maior que 1000 por semana
+                if (numValue > 1000) {
+                  console.log(`⚠️ [Validação] ${fieldName} muito alto (${numValue}), possivelmente valor acumulado. Ignorando.`)
+                  isValid = false
+                }
+              } else if (fieldName === 'nSemana' || fieldName === 'nAcumuladoMes') {
+                // N semanal não deve ser maior que 200, acumulado do mês não deve ser maior que 1000
+                if ((fieldName === 'nSemana' && numValue > 200) || (fieldName === 'nAcumuladoMes' && numValue > 1000)) {
+                  console.log(`⚠️ [Validação] ${fieldName} muito alto (${numValue}), possivelmente valor incorreto. Ignorando.`)
+                  isValid = false
+                }
+              } else if (isPercentageField) {
+                // Porcentagens: se for menor que 1 e maior que 0, pode ser que precise multiplicar por 100
+                // Mas se for entre 1 e 100, provavelmente já está correto
+                // Se for maior que 100 e menor que 10000, pode ser que precise dividir por 100
+                if (numValue > 0 && numValue < 1) {
+                  // Valores como 0.012 podem ser 1.2% ou 0.012% - assumir que é 1.2%
+                  finalValue = numValue * 100
+                  console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (multiplicando por 100)`)
+                } else if (numValue >= 100 && numValue < 10000 && Number.isInteger(numValue)) {
+                  // Valores como 120 podem ser 120% ou 1.2% - se for inteiro e >= 100, provavelmente já está em %
+                  // Mas se o campo é porcentagem e está entre 100-10000, pode precisar dividir
+                  // Vamos manter como está se for entre 0-1000 (já está em %)
+                  if (numValue >= 1000) {
+                    finalValue = numValue / 100
+                    console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (dividindo por 100)`)
+                  }
+                }
                 
-                // Log apenas para alguns períodos para não poluir muito
-                if (periodCol.period === periodColumns[0].period || periodCol.period === periodColumns[periodColumns.length - 1].period) {
-                  console.log(`✅ [Mapeamento] "${indicadorValue}" -> ${fieldName} = ${numValue}${isPercentageField ? '%' : ''} (período: ${periodCol.period})`)
+                // Validação: porcentagens não devem ser maiores que 10000%
+                if (finalValue > 10000) {
+                  console.log(`⚠️ [Validação] ${fieldName} muito alto (${finalValue}%), possivelmente valor incorreto. Ignorando.`)
+                  isValid = false
+                }
+              }
+              
+              if (isValid) {
+                // Não ignorar zeros para campos importantes (porcentagens, metas, etc.)
+                const importantFields = ['metaPASemanal', 'metaNSemanal', 'metaOIsAgendadas', 'metaRECS', 
+                                       'metaPCsC2Agendados', 'metaRevisitasAgendadas']
+                const isImportantField = importantFields.includes(fieldName as string)
+                const shouldIgnoreZero = !isPercentageField && !isImportantField && finalValue === 0
+                
+                if (!shouldIgnoreZero) {
+                  // Se já existe um valor, usar o mais recente (última linha encontrada)
+                  (periodData as any)[fieldName] = finalValue
+                  mappedFieldsCount++
+                  
+                  // Log apenas para alguns períodos para não poluir muito
+                  if (periodCol.period === periodColumns[0].period || periodCol.period === periodColumns[periodColumns.length - 1].period) {
+                    console.log(`✅ [Mapeamento] "${indicadorValue}" -> ${fieldName} = ${finalValue}${isPercentageField ? '%' : ''} (período: ${periodCol.period})`)
+                  }
                 }
               }
             }
@@ -634,12 +684,28 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         percentualOIsRealizadas: periodData.percentualOIsRealizadas ?? 0
       }
       
-      // Calcular campos derivados
-      if (!weeklyData.percentualOIsRealizadas && weeklyData.oIsAgendadas > 0) {
-        weeklyData.percentualOIsRealizadas = (weeklyData.oIsRealizadas / weeklyData.oIsAgendadas) * 100
+      // Calcular campos derivados apenas se não foram fornecidos
+      if (!weeklyData.percentualOIsRealizadas || weeklyData.percentualOIsRealizadas === 0) {
+        if (weeklyData.oIsAgendadas > 0 && weeklyData.oIsRealizadas >= 0) {
+          weeklyData.percentualOIsRealizadas = (weeklyData.oIsRealizadas / weeklyData.oIsAgendadas) * 100
+        }
       }
-      if (!weeklyData.ticketMedio && weeklyData.apolicesEmitidas > 0 && weeklyData.paSemanal > 0) {
-        weeklyData.ticketMedio = weeklyData.paSemanal / weeklyData.apolicesEmitidas
+      
+      if (!weeklyData.ticketMedio || weeklyData.ticketMedio === 0) {
+        if (weeklyData.apolicesEmitidas > 0 && weeklyData.paSemanal > 0) {
+          weeklyData.ticketMedio = weeklyData.paSemanal / weeklyData.apolicesEmitidas
+        }
+      }
+      
+      // Validações finais de coerência
+      // Se PA semanal é muito maior que PA emitido, pode haver erro
+      if (weeklyData.paSemanal > 0 && weeklyData.paEmitido > 0 && weeklyData.paSemanal > weeklyData.paEmitido * 10) {
+        console.log(`⚠️ [Validação] PA Semanal (${weeklyData.paSemanal}) muito maior que PA Emitido (${weeklyData.paEmitido}) para período ${weeklyData.period}`)
+      }
+      
+      // Se percentual de meta está muito alto, verificar
+      if (weeklyData.percentualMetaPASemana > 1000 || weeklyData.percentualMetaNSemana > 1000) {
+        console.log(`⚠️ [Validação] Porcentagem de meta muito alta para período ${weeklyData.period}: PA=${weeklyData.percentualMetaPASemana}%, N=${weeklyData.percentualMetaNSemana}%`)
       }
       
       mappedData.push(weeklyData)
