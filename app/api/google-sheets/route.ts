@@ -89,32 +89,37 @@ const parseNumber = (value: any): number | undefined => {
 
 // Função auxiliar para buscar valor com múltiplas variações (MELHORADA)
 const getValue = (rowMap: any, variations: string[], debugKey?: string): number | undefined => {
+  // Primeiro: busca exata
   for (const variation of variations) {
     const normalized = normalizeKey(variation)
     
-    // Busca exata primeiro
     if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
       const value = parseNumber(rowMap[normalized])
       if (value !== undefined) {
-        if (debugKey) console.log(`✅ ${debugKey}: encontrado "${variation}" = ${value}`)
+        if (debugKey) console.log(`✅ [${debugKey}] Encontrado exato: "${variation}" (normalizado: "${normalized}") = ${value}`)
         return value
       }
     }
+  }
+  
+  // Segundo: busca parcial (contém a variação)
+  for (const variation of variations) {
+    const normalized = normalizeKey(variation)
     
-    // Busca parcial (contém a variação)
     for (const key in rowMap) {
       const normalizedKey = normalizeKey(key)
+      // Match mais flexível: se a chave contém a variação OU a variação contém a chave
       if (normalizedKey.includes(normalized) || normalized.includes(normalizedKey)) {
         const value = parseNumber(rowMap[key])
         if (value !== undefined) {
-          if (debugKey) console.log(`✅ ${debugKey}: encontrado parcialmente em "${key}" = ${value}`)
+          if (debugKey) console.log(`✅ [${debugKey}] Encontrado parcial: "${variation}" em coluna "${key}" = ${value}`)
           return value
         }
       }
     }
   }
   
-  // Se não encontrou, tentar buscar por qualquer coluna que contenha palavras-chave
+  // Terceiro: busca por palavras-chave individuais (mais agressiva)
   const keywords = variations[0].split(' ').filter(w => w.length > 2)
   for (const keyword of keywords) {
     const normalizedKeyword = normalizeKey(keyword)
@@ -122,15 +127,46 @@ const getValue = (rowMap: any, variations: string[], debugKey?: string): number 
       const normalizedKey = normalizeKey(key)
       if (normalizedKey.includes(normalizedKeyword)) {
         const value = parseNumber(rowMap[key])
-        if (value !== undefined && value !== 0) {
-          if (debugKey) console.log(`✅ ${debugKey}: encontrado por palavra-chave "${keyword}" em "${key}" = ${value}`)
+        if (value !== undefined) {
+          if (debugKey) console.log(`✅ [${debugKey}] Encontrado por palavra-chave "${keyword}" em "${key}" = ${value}`)
           return value
         }
       }
     }
   }
   
-  if (debugKey) console.log(`⚠️ ${debugKey}: não encontrado em nenhuma variação`)
+  // Quarto: busca por qualquer coluna que contenha as palavras principais (PA, N, OIs, etc)
+  const mainKeywords = ['pa', 'n', 'ois', 'recs', 'pcs', 'c2', 'atraso', 'inadimplencia', 'revisita', 'trello', 'video', 'delivery', 'reuniao']
+  for (const mainKeyword of mainKeywords) {
+    if (variations.some(v => normalizeKey(v).includes(mainKeyword))) {
+      for (const key in rowMap) {
+        const normalizedKey = normalizeKey(key)
+        if (normalizedKey.includes(mainKeyword)) {
+          const value = parseNumber(rowMap[key])
+          if (value !== undefined && value !== 0) {
+            if (debugKey) console.log(`✅ [${debugKey}] Encontrado por palavra principal "${mainKeyword}" em "${key}" = ${value}`)
+            return value
+          }
+        }
+      }
+    }
+  }
+  
+  if (debugKey) {
+    console.log(`⚠️ [${debugKey}] NÃO encontrado. Variações tentadas:`, variations.slice(0, 3))
+    // Listar colunas disponíveis que podem ser relevantes
+    const relevantKeys = Object.keys(rowMap).filter(k => {
+      const nk = normalizeKey(k)
+      return variations.some(v => {
+        const nv = normalizeKey(v)
+        const keywords = nv.split(' ').filter(w => w.length > 2)
+        return keywords.some(kw => nk.includes(kw))
+      })
+    })
+    if (relevantKeys.length > 0) {
+      console.log(`💡 [${debugKey}] Colunas relevantes encontradas (mas sem valor):`, relevantKeys.slice(0, 5))
+    }
+  }
   return undefined
 }
 
@@ -228,7 +264,15 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       const columns = Object.keys(firstRow)
       console.log('📋 [Google Sheets] Colunas encontradas (primeiras 20):', columns.slice(0, 20))
       console.log('📋 [Google Sheets] Total de colunas:', columns.length)
-      console.log('📋 [Google Sheets] Primeira linha completa:', JSON.stringify(firstRow, null, 2).substring(0, 1000))
+      console.log('📋 [Google Sheets] TODAS as colunas:', columns)
+      console.log('📋 [Google Sheets] Primeira linha completa:', JSON.stringify(firstRow, null, 2).substring(0, 2000))
+      
+      // Criar mapa de todas as colunas normalizadas para debug
+      const normalizedColumns: any = {}
+      columns.forEach(col => {
+        normalizedColumns[normalizeKey(col)] = col
+      })
+      console.log('📋 [Google Sheets] Colunas normalizadas (primeiras 30):', Object.keys(normalizedColumns).slice(0, 30))
     }
     
     // Mapear dados para WeeklyData
