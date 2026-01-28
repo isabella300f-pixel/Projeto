@@ -325,55 +325,103 @@ export default function Dashboard() {
     return validValues.reduce((sum, d) => sum + d.nSemana, 0) / validValues.length
   }, [weeklyDataState])
 
-  // Preparar dados para gráficos (usar dados filtrados) - TODOS OS INDICADORES
-  const chartData = filteredData.map(d => ({
-    period: d.period,
-    // PA
-    paSemanal: d.paSemanal,
-    metaPASemanal: d.metaPASemanal,
-    paAcumuladoMes: d.paAcumuladoMes,
-    paAcumuladoAno: d.paAcumuladoAno,
-    paEmitido: d.paEmitido,
-    percentualMeta: d.percentualMetaPASemana,
-    percentualMetaPAAno: d.percentualMetaPAAno,
-    // N
-    nSemana: d.nSemana,
-    metaNSemanal: d.metaNSemanal,
-    nAcumuladoMes: d.nAcumuladoMes,
-    nAcumuladoAno: d.nAcumuladoAno,
-    percentualMetaN: d.percentualMetaNSemana,
-    percentualMetaNAno: d.percentualMetaNAno,
-    // Apólices e OIs
-    apolicesEmitidas: d.apolicesEmitidas,
-    oIsAgendadas: d.oIsAgendadas,
-    oIsRealizadas: d.oIsRealizadas,
-    metaOIsAgendadas: d.metaOIsAgendadas,
-    percentualOIsRealizadas: d.percentualOIsRealizadas || 0,
-    // RECS
-    metaRECS: d.metaRECS || 0,
-    novasRECS: d.novasRECS || 0,
-    // PCs/C2
-    metaPCsC2Agendados: d.metaPCsC2Agendados || 0,
-    pcsRealizados: d.pcsRealizados || 0,
-    c2Realizados: d.c2Realizados || 0,
-    // Atrasos
-    apoliceEmAtraso: d.apoliceEmAtraso || 0,
-    premioEmAtraso: d.premioEmAtraso || 0,
-    // Inadimplência
-    taxaInadimplenciaGeral: d.taxaInadimplenciaGeral || 0,
-    taxaInadimplenciaAssistente: d.taxaInadimplenciaAssistente || 0,
-    // Revisitas
-    metaRevisitasAgendadas: d.metaRevisitasAgendadas || 0,
-    revisitasAgendadas: d.revisitasAgendadas || 0,
-    revisitasRealizadas: d.revisitasRealizadas || 0,
-    // Produtividade
-    volumeTarefasTrello: d.volumeTarefasTrello || 0,
-    videosTreinamentoGravados: d.videosTreinamentoGravados || 0,
-    deliveryApolices: d.deliveryApolices || 0,
-    totalReunioes: d.totalReunioes || 0,
-    // Calculados
-    ticketMedio: d.ticketMedio || 0,
-  }))
+  // Preparar dados para gráficos
+  // IMPORTANTE: Usar weeklyDataState (todos os dados) em vez de filteredData para garantir que todos os períodos apareçam
+  // Ordenar por período para garantir ordem cronológica correta
+  const chartData = useMemo(() => {
+    // Ordenar dados por período (cronologicamente)
+    const sortedForCharts = [...weeklyDataState].sort((a, b) => {
+      const dateA = parsePeriodToDate(a.period)
+      const dateB = parsePeriodToDate(b.period)
+      if (!dateA || !dateB) return 0
+      return dateA.getTime() - dateB.getTime()
+    })
+    
+    const data = sortedForCharts.map(d => ({
+      period: d.period,
+      // PA
+      paSemanal: d.paSemanal || 0,
+      metaPASemanal: d.metaPASemanal || 0,
+      paAcumuladoMes: d.paAcumuladoMes || 0,
+      paAcumuladoAno: d.paAcumuladoAno || 0,
+      paEmitido: d.paEmitido || 0,
+      percentualMeta: d.percentualMetaPASemana || 0,
+      percentualMetaPAAno: d.percentualMetaPAAno || 0,
+      // N
+      nSemana: d.nSemana || 0,
+      metaNSemanal: d.metaNSemanal || 0,
+      nAcumuladoMes: d.nAcumuladoMes || 0,
+      nAcumuladoAno: d.nAcumuladoAno || 0,
+      percentualMetaN: d.percentualMetaNSemana || 0,
+      percentualMetaNAno: d.percentualMetaNAno || 0,
+      // Apólices e OIs
+      apolicesEmitidas: d.apolicesEmitidas || 0,
+      oIsAgendadas: d.oIsAgendadas || 0,
+      oIsRealizadas: d.oIsRealizadas || 0,
+      metaOIsAgendadas: d.metaOIsAgendadas || 0,
+      percentualOIsRealizadas: d.percentualOIsRealizadas || 0,
+      // RECS
+      metaRECS: d.metaRECS || 0,
+      novasRECS: d.novasRECS || 0,
+      // PCs/C2
+      metaPCsC2Agendados: d.metaPCsC2Agendados || 0,
+      pcsRealizados: d.pcsRealizados || 0,
+      c2Realizados: d.c2Realizados || 0,
+      // Atrasos
+      apoliceEmAtraso: d.apoliceEmAtraso || 0,
+      premioEmAtraso: d.premioEmAtraso || 0,
+      // Inadimplência
+      taxaInadimplenciaGeral: d.taxaInadimplenciaGeral || 0,
+      taxaInadimplenciaAssistente: d.taxaInadimplenciaAssistente || 0,
+      // Revisitas
+      metaRevisitasAgendadas: d.metaRevisitasAgendadas || 0,
+      revisitasAgendadas: d.revisitasAgendadas || 0,
+      revisitasRealizadas: d.revisitasRealizadas || 0,
+      // Produtividade
+      volumeTarefasTrello: d.volumeTarefasTrello || 0,
+      videosTreinamentoGravados: d.videosTreinamentoGravados || 0,
+      deliveryApolices: d.deliveryApolices || 0,
+      totalReunioes: d.totalReunioes || 0,
+      // Calculados
+      ticketMedio: d.ticketMedio || 0,
+    }))
+    
+    // Log para debug - verificar valores zerados
+    console.log('📊 [Gráficos] Total de períodos para gráficos:', data.length)
+    console.log('📊 [Gráficos] Períodos:', data.map(d => d.period))
+    
+    // Verificar quantos períodos têm valores zerados para cada indicador principal
+    const zeroCounts = {
+      paSemanal: data.filter(d => d.paSemanal === 0).length,
+      paEmitido: data.filter(d => d.paEmitido === 0).length,
+      nSemana: data.filter(d => d.nSemana === 0).length,
+      apolicesEmitidas: data.filter(d => d.apolicesEmitidas === 0).length,
+      oIsRealizadas: data.filter(d => d.oIsRealizadas === 0).length,
+      novasRECS: data.filter(d => d.novasRECS === 0).length,
+      pcsRealizados: data.filter(d => d.pcsRealizados === 0).length,
+      c2Realizados: data.filter(d => d.c2Realizados === 0).length,
+      apoliceEmAtraso: data.filter(d => d.apoliceEmAtraso === 0).length,
+      premioEmAtraso: data.filter(d => d.premioEmAtraso === 0).length,
+      taxaInadimplenciaGeral: data.filter(d => d.taxaInadimplenciaGeral === 0).length,
+      revisitasRealizadas: data.filter(d => d.revisitasRealizadas === 0).length,
+      volumeTarefasTrello: data.filter(d => d.volumeTarefasTrello === 0).length,
+      totalReunioes: data.filter(d => d.totalReunioes === 0).length,
+    }
+    
+    console.log('📊 [Gráficos] Períodos com valores zerados:', zeroCounts)
+    
+    // Verificar se algum indicador está completamente zerado
+    Object.entries(zeroCounts).forEach(([key, count]) => {
+      if (count === data.length) {
+        console.warn(`⚠️ [Gráficos] ATENÇÃO: ${key} está completamente zerado em todos os ${data.length} períodos!`)
+      }
+    })
+    
+    console.log('📊 [Gráficos] Exemplo - PA Semanal do primeiro período:', data[0]?.paSemanal)
+    console.log('📊 [Gráficos] Exemplo - PA Semanal do último período:', data[data.length - 1]?.paSemanal)
+    
+    return data
+  }, [weeklyDataState])
 
   const handleSearch = (query: string) => {
     setFilters(prev => ({ ...prev, searchQuery: query }))
@@ -1038,7 +1086,7 @@ export default function Dashboard() {
         )}
 
         {/* GRÁFICOS - TODOS OS INDICADORES VISUALIZADOS */}
-        {filteredData.length > 0 && (
+        {chartData.length > 0 && (
           <>
             {/* Seção 1: Indicadores de PA (Prêmio Anual) */}
             <div className="mb-8">
