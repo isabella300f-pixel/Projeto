@@ -118,18 +118,96 @@ export default function Dashboard() {
     return getFilterStats(filteredData)
   }, [filteredData])
   
+  // Função auxiliar para converter período em data completa (considerando ano)
+  const parsePeriodToDate = (period: string): Date | null => {
+    const match = period.match(/(\d{1,2})\/(\d{1,2})/)
+    if (!match) return null
+    
+    const day = parseInt(match[1])
+    const month = parseInt(match[2]) - 1 // JavaScript months are 0-indexed
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth()
+    
+    let year = currentYear
+    
+    // Se o mês do período é dezembro (11) e estamos em janeiro/fevereiro, é do ano anterior
+    if (month === 11 && currentMonth <= 1) {
+      year = currentYear - 1
+    }
+    // Se o mês do período é janeiro (0) e estamos em dezembro, é do próximo ano
+    else if (month === 0 && currentMonth === 11) {
+      year = currentYear + 1
+    }
+    // Se o mês do período é maior que o mês atual, é do ano anterior
+    else if (month > currentMonth) {
+      year = currentYear - 1
+    }
+    // Se o mês do período é menor que o mês atual, é do ano atual
+    else if (month < currentMonth) {
+      year = currentYear
+    }
+    // Se estamos no mesmo mês, é do ano atual
+    else {
+      year = currentYear
+    }
+    
+    return new Date(year, month, day)
+  }
+
   // Dados atuais para cards principais (usar dados totais ou filtrados)
+  // IMPORTANTE: Buscar o período mais recente com dados válidos (não zerados)
   const currentData = useMemo(() => {
     if (!weeklyDataState || weeklyDataState.length === 0) {
       return null
     }
     
+    // Função para verificar se um registro tem dados válidos
+    const hasValidData = (data: WeeklyData): boolean => {
+      return data.paSemanal > 0 || data.paAcumuladoAno > 0 || data.nSemana > 0 || 
+             data.metaPASemanal > 0 || data.apolicesEmitidas > 0
+    }
+    
+    // Ordenar por período (mais recente primeiro) usando data completa
+    const sortedData = [...weeklyDataState].sort((a, b) => {
+      const dateA = parsePeriodToDate(a.period)
+      const dateB = parsePeriodToDate(b.period)
+      
+      if (!dateA || !dateB) {
+        // Se não conseguir parsear, ordenar alfabeticamente (invertido para mais recente primeiro)
+        return b.period.localeCompare(a.period)
+      }
+      
+      // Ordenar por data completa (mais recente primeiro)
+      return dateB.getTime() - dateA.getTime()
+    })
+    
     if (filters.period === 'all') {
-      return weeklyDataState[weeklyDataState.length - 1] || null
+      // Buscar o período mais recente com dados válidos
+      const mostRecentWithData = sortedData.find(d => hasValidData(d))
+      if (mostRecentWithData) {
+        console.log('✅ [Frontend] Período mais recente com dados válidos:', mostRecentWithData.period)
+        console.log('📊 [Frontend] Valores:', {
+          paSemanal: mostRecentWithData.paSemanal,
+          paAcumuladoAno: mostRecentWithData.paAcumuladoAno,
+          metaPASemanal: mostRecentWithData.metaPASemanal
+        })
+      }
+      return mostRecentWithData || sortedData[0] || null
     } else {
-      return filteredData.length > 0 
-        ? filteredData[filteredData.length - 1]
-        : (weeklyDataState[weeklyDataState.length - 1] || null)
+      // Se há filtro de período, usar dados filtrados
+      const sortedFiltered = [...filteredData].sort((a, b) => {
+        const dateA = parsePeriodToDate(a.period)
+        const dateB = parsePeriodToDate(b.period)
+        
+        if (!dateA || !dateB) {
+          return b.period.localeCompare(a.period)
+        }
+        
+        return dateB.getTime() - dateA.getTime()
+      })
+      const mostRecentFiltered = sortedFiltered.find(d => hasValidData(d))
+      return mostRecentFiltered || sortedFiltered[0] || null
     }
   }, [weeklyDataState, filteredData, filters.period])
   
@@ -139,33 +217,27 @@ export default function Dashboard() {
     if (weeklyDataState.length === 0) return 0
     // Ordenar por período para garantir que pegamos o mais recente
     const sorted = [...weeklyDataState].sort((a, b) => {
-      const dateA = a.period.match(/(\d{1,2})\/(\d{1,2})/)
-      const dateB = b.period.match(/(\d{1,2})\/(\d{1,2})/)
+      const dateA = parsePeriodToDate(a.period)
+      const dateB = parsePeriodToDate(b.period)
       if (!dateA || !dateB) return 0
-      const monthA = parseInt(dateA[2])
-      const dayA = parseInt(dateA[1])
-      const monthB = parseInt(dateB[2])
-      const dayB = parseInt(dateB[1])
-      if (monthA !== monthB) return monthA - monthB
-      return dayA - dayB
+      return dateA.getTime() - dateB.getTime()
     })
-    return sorted[sorted.length - 1]?.paAcumuladoAno || 0
+    // Buscar o último período com dados válidos
+    const lastWithData = [...sorted].reverse().find(d => d.paAcumuladoAno > 0)
+    return lastWithData?.paAcumuladoAno || sorted[sorted.length - 1]?.paAcumuladoAno || 0
   }, [weeklyDataState])
   
   const totalNAno = useMemo(() => {
     if (weeklyDataState.length === 0) return 0
     const sorted = [...weeklyDataState].sort((a, b) => {
-      const dateA = a.period.match(/(\d{1,2})\/(\d{1,2})/)
-      const dateB = b.period.match(/(\d{1,2})\/(\d{1,2})/)
+      const dateA = parsePeriodToDate(a.period)
+      const dateB = parsePeriodToDate(b.period)
       if (!dateA || !dateB) return 0
-      const monthA = parseInt(dateA[2])
-      const dayA = parseInt(dateA[1])
-      const monthB = parseInt(dateB[2])
-      const dayB = parseInt(dateB[1])
-      if (monthA !== monthB) return monthA - monthB
-      return dayA - dayB
+      return dateA.getTime() - dateB.getTime()
     })
-    return sorted[sorted.length - 1]?.nAcumuladoAno || 0
+    // Buscar o último período com dados válidos
+    const lastWithData = [...sorted].reverse().find(d => d.nAcumuladoAno > 0)
+    return lastWithData?.nAcumuladoAno || sorted[sorted.length - 1]?.nAcumuladoAno || 0
   }, [weeklyDataState])
   
   const mediaPASemanal = useMemo(() => {
