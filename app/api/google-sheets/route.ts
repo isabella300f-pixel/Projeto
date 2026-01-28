@@ -89,12 +89,22 @@ const isValidPeriod = (value: string): boolean => {
   return true
 }
 
-// Função para converter valor para número (melhorada)
-const parseNumber = (value: any): number | undefined => {
+// Função para converter valor para número (melhorada - trata porcentagens)
+const parseNumber = (value: any, isPercentage: boolean = false): number | undefined => {
   if (value === null || value === undefined || value === '') return undefined
   
+  // Verificar se é porcentagem pelo valor original
+  const originalString = typeof value === 'string' ? value : String(value)
+  const hasPercentSign = originalString.includes('%')
+  const shouldDivideBy100 = isPercentage || hasPercentSign
+  
   if (typeof value === 'number') {
-    return isNaN(value) ? undefined : value
+    const result = isNaN(value) ? undefined : value
+    // Se for porcentagem e o valor parece estar em formato inteiro (ex: 13984 ao invés de 139.84)
+    if (result !== undefined && shouldDivideBy100 && result > 100 && result < 100000) {
+      return result / 100
+    }
+    return result
   }
   
   if (typeof value === 'string') {
@@ -105,24 +115,34 @@ const parseNumber = (value: any): number | undefined => {
     
     if (cleaned === '' || cleaned === '-') return undefined
     
-    const parsed = parseFloat(cleaned)
-    return isNaN(parsed) ? undefined : parsed
+    let parsed = parseFloat(cleaned)
+    if (isNaN(parsed)) return undefined
+    
+    // Se for porcentagem e o valor parece estar em formato inteiro (ex: 13984 ao invés de 139.84)
+    if (shouldDivideBy100 && parsed > 100 && parsed < 100000 && !cleaned.includes('.')) {
+      parsed = parsed / 100
+    }
+    
+    return parsed
   }
   
   return undefined
 }
 
 // Função auxiliar para buscar valor com múltiplas variações (MELHORADA - MAIS RESTRITIVA)
-const getValue = (rowMap: any, variations: string[], debugKey?: string): number | undefined => {
+const getValue = (rowMap: any, variations: string[], debugKey?: string, isPercentage: boolean = false): number | undefined => {
   // Primeiro: busca exata (mais confiável)
   for (const variation of variations) {
     const normalized = normalizeKey(variation)
     
     if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
-      const value = parseNumber(rowMap[normalized])
-      if (value !== undefined && value !== 0) { // Ignorar zeros também
-        if (debugKey) console.log(`✅ [${debugKey}] Encontrado exato: "${variation}" (normalizado: "${normalized}") = ${value}`)
-        return value
+      const value = parseNumber(rowMap[normalized], isPercentage)
+      if (value !== undefined) {
+        // Não ignorar zeros para porcentagens ou valores importantes
+        if (value !== 0 || isPercentage) {
+          if (debugKey) console.log(`✅ [${debugKey}] Encontrado exato: "${variation}" (normalizado: "${normalized}") = ${value}${isPercentage ? '%' : ''}`)
+          return value
+        }
       }
     }
   }
@@ -141,10 +161,12 @@ const getValue = (rowMap: any, variations: string[], debugKey?: string): number 
       const allKeywordsMatch = variationKeywords.every(kw => normalizedKey.includes(kw))
       
       if (allKeywordsMatch && normalizedKey.length < 100) { // Evitar colunas muito longas (provavelmente descritivas)
-        const value = parseNumber(rowMap[key])
-        if (value !== undefined && value !== 0) {
-          if (debugKey) console.log(`✅ [${debugKey}] Encontrado parcial: "${variation}" em coluna "${key}" = ${value}`)
-          return value
+        const value = parseNumber(rowMap[key], isPercentage)
+        if (value !== undefined) {
+          if (value !== 0 || isPercentage) {
+            if (debugKey) console.log(`✅ [${debugKey}] Encontrado parcial: "${variation}" em coluna "${key}" = ${value}${isPercentage ? '%' : ''}`)
+            return value
+          }
         }
       }
     }
@@ -161,10 +183,12 @@ const getValue = (rowMap: any, variations: string[], debugKey?: string): number 
         const normalizedKey = normalizeKey(key)
         // Match mais específico: a coluna deve conter a palavra-chave principal
         if (normalizedKey.includes(mainKeyword) && normalizedKey.length < 80) {
-          const value = parseNumber(rowMap[key])
-          if (value !== undefined && value !== 0) {
-            if (debugKey) console.log(`✅ [${debugKey}] Encontrado por palavra-chave "${mainKeyword}" em "${key}" = ${value}`)
-            return value
+          const value = parseNumber(rowMap[key], isPercentage)
+          if (value !== undefined) {
+            if (value !== 0 || isPercentage) {
+              if (debugKey) console.log(`✅ [${debugKey}] Encontrado por palavra-chave "${mainKeyword}" em "${key}" = ${value}${isPercentage ? '%' : ''}`)
+              return value
+            }
           }
         }
       }
@@ -418,7 +442,14 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         
         // Buscar o valor para este período
         const value = row[periodCol.originalKey]
-        const numValue = parseNumber(value)
+        
+        // Campos que são porcentagens (precisam ser divididos por 100 se vierem como inteiros)
+        const percentageFields = [
+          'percentualMetaPASemana', 'percentualMetaPAAno',
+          'percentualMetaNSemana', 'percentualMetaNAno',
+          'percentualOIsRealizadas', 'taxaInadimplenciaGeral',
+          'taxaInadimplenciaAssistente', 'conversaoOIs'
+        ]
         
         // Mapear o indicador para o campo correto (buscar o match mais específico primeiro)
         let matched = false
@@ -427,9 +458,23 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         for (const [indicatorPattern, fieldName] of sortedEntries) {
           const patternNormalized = normalizeKey(indicatorPattern)
           if (indicadorNormalized.includes(patternNormalized) || patternNormalized.includes(indicadorNormalized)) {
-            if (numValue !== null && numValue !== undefined && numValue !== 0) {
-              (periodData as any)[fieldName] = numValue
-              console.log(`✅ [Mapeamento] "${indicadorValue}" -> ${fieldName} = ${numValue} (período: ${periodCol.period})`)
+            // Verificar se é campo de porcentagem
+            const isPercentageField = percentageFields.includes(fieldName as string)
+            const numValue = parseNumber(value, isPercentageField)
+            
+            if (numValue !== null && numValue !== undefined) {
+              // Não ignorar zeros para campos importantes (porcentagens, metas, etc.)
+              const importantFields = ['metaPASemanal', 'metaNSemanal', 'metaOIsAgendadas', 'metaRECS', 
+                                     'metaPCsC2Agendados', 'metaRevisitasAgendadas']
+              const isImportantField = importantFields.includes(fieldName as string)
+              const shouldIgnoreZero = !isPercentageField && !isImportantField && numValue === 0
+              
+              if (!shouldIgnoreZero) {
+                (periodData as any)[fieldName] = numValue
+                console.log(`✅ [Mapeamento] "${indicadorValue}" -> ${fieldName} = ${numValue}${isPercentageField ? '%' : ''} (período: ${periodCol.period})`)
+              } else {
+                console.log(`⚠️ [Mapeamento] Ignorando zero para "${indicadorValue}" -> ${fieldName} (período: ${periodCol.period})`)
+              }
             }
             matched = true
             break
