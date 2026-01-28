@@ -282,328 +282,228 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       console.log('📋 [Google Sheets] Colunas normalizadas (primeiras 30):', Object.keys(normalizedColumns).slice(0, 30))
     }
     
-    // Mapear dados para WeeklyData
-    let validCount = 0
-    const mappedData: (WeeklyData | null)[] = jsonData.map((row: any, index: number) => {
-      const rowMap: any = {}
-      Object.keys(row).forEach(key => {
-        rowMap[normalizeKey(key)] = row[key]
-      })
+    // NOVA LÓGICA: Os períodos estão nos CABEÇALHOS das colunas, não em uma coluna "período"
+    // Estrutura: Coluna A = "Indicador", Colunas O+ = Períodos
+    // Cada linha representa um indicador diferente, e cada coluna (período) tem o valor desse indicador
+    
+    // 1. Identificar quais colunas são períodos válidos
+    const firstRow = jsonData[0] || {}
+    const allColumns = Object.keys(firstRow)
+    const periodColumns: { originalKey: string, normalizedKey: string, period: string }[] = []
+    
+    console.log('🔍 [Google Sheets] Identificando colunas de período...')
+    
+    for (const col of allColumns) {
+      const normalizedCol = normalizeKey(col)
+      // Ignorar a coluna "Indicador"
+      if (normalizedCol === 'indicador' || normalizedCol === 'indicator') {
+        continue
+      }
       
-      // Buscar período APENAS em colunas específicas (mais restritivo)
-      let periodRaw = ''
+      // Validar se é um período válido
+      const periodValue = String(col).trim()
+      if (isValidPeriod(periodValue)) {
+        const normalizedPeriod = normalizePeriod(periodValue)
+        periodColumns.push({
+          originalKey: col,
+          normalizedKey: normalizedCol,
+          period: normalizedPeriod
+        })
+        console.log(`✅ [Período] Coluna identificada: "${col}" -> "${normalizedPeriod}"`)
+      }
+    }
+    
+    console.log(`📅 [Google Sheets] Total de colunas de período encontradas: ${periodColumns.length}`)
+    console.log(`📅 [Google Sheets] Períodos:`, periodColumns.map(p => p.period))
+    
+    if (periodColumns.length === 0) {
+      console.error('❌ [Google Sheets] NENHUMA coluna de período válida encontrada!')
+      console.error('❌ [Google Sheets] Verifique se os cabeçalhos das colunas contêm períodos no formato "DD/MM a DD/MM"')
+      return []
+    }
+    
+    // 2. Mapear cada linha (indicador) para cada período (coluna)
+    const mappedData: WeeklyData[] = []
+    const indicatorFieldMap: { [key: string]: keyof WeeklyData } = {
+      // PA
+      'pa semanal realizado': 'paSemanal',
+      'pa acumulado no mes': 'paAcumuladoMes',
+      'pa acumulado no ano': 'paAcumuladoAno',
+      'meta de pa semanal necessaria': 'metaPASemanal',
+      '% meta de pa realizada da semana': 'percentualMetaPASemana',
+      '% meta de pa realizada do ano': 'percentualMetaPAAno',
+      'pa emitido na semana': 'paEmitido',
+      // Apólices
+      'apolices emitidas por semana': 'apolicesEmitidas',
+      'apolices emitidas': 'apolicesEmitidas',
+      // N
+      'meta de n semanal': 'metaNSemanal',
+      'meta de n semanal necessaria': 'metaNSemanal',
+      'n da semana': 'nSemana',
+      'n semanal': 'nSemana',
+      'n acumulados do mes': 'nAcumuladoMes',
+      'n acumulado mes': 'nAcumuladoMes',
+      'n acumulados do ano': 'nAcumuladoAno',
+      'n acumulado ano': 'nAcumuladoAno',
+      '% meta de n realizada da semana': 'percentualMetaNSemana',
+      '% meta de n realizada do ano': 'percentualMetaNAno',
+      // OIs
+      'meta ois agendadas': 'metaOIsAgendadas',
+      'meta ois': 'metaOIsAgendadas',
+      'ois agendadas': 'oIsAgendadas',
+      'ois realizadas na semana': 'oIsRealizadas',
+      'ois realizadas': 'oIsRealizadas',
+      // RECS
+      'meta recs': 'metaRECS',
+      'novas recs': 'novasRECS',
+      // PCs/C2
+      'meta de pcs c2 agendados': 'metaPCsC2Agendados',
+      'meta pcs c2 agendados': 'metaPCsC2Agendados',
+      'pcs realizados na semana': 'pcsRealizados',
+      'pcs realizados': 'pcsRealizados',
+      'quantidade de c2 realizados na semana': 'c2Realizados',
+      'c2 realizados na semana': 'c2Realizados',
+      'c2 realizados': 'c2Realizados',
+      // Atrasos
+      'apolice em atraso no': 'apoliceEmAtraso',
+      'apolice em atraso': 'apoliceEmAtraso',
+      'premio em atraso de clientes r$': 'premioEmAtraso',
+      'premio em atraso': 'premioEmAtraso',
+      // Inadimplência
+      'taxa de inadimplencia % geral': 'taxaInadimplenciaGeral',
+      'taxa inadimplencia geral': 'taxaInadimplenciaGeral',
+      'taxa de inadimplencia % assistente': 'taxaInadimplenciaAssistente',
+      'taxa inadimplencia assistente': 'taxaInadimplenciaAssistente',
+      // Revisitas
+      'meta revisitas agendadas': 'metaRevisitasAgendadas',
+      'meta revisitas': 'metaRevisitasAgendadas',
+      'revisitas agendadas na semana': 'revisitasAgendadas',
+      'revisitas agendadas': 'revisitasAgendadas',
+      'revisitas realizadas na semana': 'revisitasRealizadas',
+      'revisitas realizadas': 'revisitasRealizadas',
+      // Produtividade
+      'volume de tarefas concluidas no trello': 'volumeTarefasTrello',
+      'volume tarefas trello': 'volumeTarefasTrello',
+      'numero de videos de treinamento gravados': 'videosTreinamentoGravados',
+      'videos treinamento gravados': 'videosTreinamentoGravados',
+      'delivery apolices': 'deliveryApolices',
+      'total de reunioes realizadas na semana': 'totalReunioes',
+      'total reunioes': 'totalReunioes',
+      // Outros
+      'lista de atrasos atribuidos raiza': 'listaAtrasosRaiza',
+      'lista atrasos raiza': 'listaAtrasosRaiza',
+      'ticket medio': 'ticketMedio',
+      'conversao ois': 'conversaoOIs'
+    }
+    
+    // Para cada período, criar um objeto WeeklyData agregando dados de todas as linhas
+    for (const periodCol of periodColumns) {
+      const periodData: Partial<WeeklyData> = {
+        period: periodCol.period
+      }
       
-      // Primeiro: buscar em colunas que claramente são de período
-      const periodColumns = [
-        'período', 'periodo', 'period', 'semana', 'data',
-        'periodo semanal', 'periodo da semana', 'semana de',
-        'data inicial', 'data final', 'range', 'intervalo'
-      ]
-      
-      for (const colName of periodColumns) {
-        const normalized = normalizeKey(colName)
-        if (rowMap[normalized] !== undefined && rowMap[normalized] !== null) {
-          const value = String(rowMap[normalized]).trim()
-          if (value && isValidPeriod(value)) {
-            periodRaw = value
-            console.log(`✅ [Período] Encontrado em coluna "${colName}": ${periodRaw}`)
+      // Para cada linha (indicador), buscar o valor correspondente
+      for (const row of jsonData) {
+        const rowMap: any = {}
+        Object.keys(row).forEach(key => {
+          rowMap[normalizeKey(key)] = row[key]
+        })
+        
+        // Buscar o nome do indicador
+        const indicadorKey = normalizeKey('Indicador')
+        const indicadorValue = rowMap[indicadorKey] ? String(rowMap[indicadorKey]).trim() : ''
+        const indicadorNormalized = indicadorValue ? normalizeKey(indicadorValue) : ''
+        
+        if (!indicadorNormalized) continue
+        
+        // Buscar o valor para este período
+        const value = row[periodCol.originalKey]
+        const numValue = parseNumber(value)
+        
+        // Mapear o indicador para o campo correto (buscar o match mais específico primeiro)
+        let matched = false
+        const sortedEntries = Object.entries(indicatorFieldMap).sort((a, b) => b[0].length - a[0].length) // Mais específico primeiro
+        
+        for (const [indicatorPattern, fieldName] of sortedEntries) {
+          const patternNormalized = normalizeKey(indicatorPattern)
+          if (indicadorNormalized.includes(patternNormalized) || patternNormalized.includes(indicadorNormalized)) {
+            if (numValue !== null && numValue !== undefined && numValue !== 0) {
+              (periodData as any)[fieldName] = numValue
+              console.log(`✅ [Mapeamento] "${indicadorValue}" -> ${fieldName} = ${numValue} (período: ${periodCol.period})`)
+            }
+            matched = true
             break
           }
         }
-      }
-      
-      // Se não encontrou, NÃO buscar em outras colunas (muito perigoso - pode pegar valores errados)
-      // Apenas retornar null se não encontrou em colunas específicas de período
-      if (!periodRaw) {
-        console.log(`⚠️ [Período] Nenhum período válido encontrado na linha ${index + 1}`)
-        console.log(`⚠️ [Período] Colunas disponíveis:`, Object.keys(rowMap).slice(0, 10))
-        return null
-      }
-      
-      // Validar período novamente (dupla validação)
-      if (!isValidPeriod(periodRaw)) {
-        console.log(`❌ [Período] Período "${periodRaw}" não passou na validação`)
-        console.log(`❌ [Período] Detalhes: length=${periodRaw.length}, hasDate=${/\d{1,2}\/\d{1,2}/.test(periodRaw.toLowerCase())}`)
-        return null
-      }
-      
-      const periodNormalized = normalizePeriod(periodRaw)
-      console.log(`\n📅 [Google Sheets] Processando período: ${periodNormalized}`)
-      
-      // Verificar se é dezembro ou janeiro
-      const monthMatch = periodNormalized.match(/\/(\d{1,2})/)
-      if (monthMatch) {
-        const month = parseInt(monthMatch[1])
-        if (month === 12) {
-          console.log(`📅 [Google Sheets] Período de DEZEMBRO detectado: ${periodNormalized}`)
-        } else if (month === 1) {
-          console.log(`📅 [Google Sheets] Período de JANEIRO detectado: ${periodNormalized}`)
+        
+        if (!matched && indicadorNormalized) {
+          console.log(`⚠️ [Mapeamento] Indicador não mapeado: "${indicadorValue}" (normalizado: "${indicadorNormalized}")`)
         }
       }
       
-      console.log(`📋 [Google Sheets] Colunas disponíveis nesta linha:`, Object.keys(rowMap).slice(0, 15))
-      
-      // Mapear TODOS os 34 indicadores com variações completas
-      // IMPORTANTE: Não usar || 0, usar undefined para valores não encontrados
-      const data: WeeklyData = {
-        period: periodNormalized,
-        
-        // 1. PA Semanal Realizado
-        paSemanal: getValue(rowMap, [
-          'pa semanal realizado', 'pa semanal', 'pa realizado', 'premio anual semanal',
-          'pa semana', 'pa da semana', 'pa realizado semanal', 'pa sem',
-          'pa semanal realizado r$', 'pa realizado semana'
-        ], 'paSemanal') ?? 0,
-        
-        // 2. PA Acumulado no Mês
-        paAcumuladoMes: getValue(rowMap, [
-          'pa acumulado no mes', 'pa acumulado mes', 'pa acumulado do mes', 'pa mes',
-          'premio anual acumulado mes', 'pa acum mes', 'pa acumulado no mes r$'
-        ], 'paAcumuladoMes') ?? 0,
-        
-        // 3. PA Acumulado no Ano
-        paAcumuladoAno: getValue(rowMap, [
-          'pa acumulado no ano', 'pa acumulado ano', 'pa acumulado do ano', 'pa ano',
-          'premio anual acumulado ano', 'pa acum ano', 'pa acumulado no ano r$'
-        ], 'paAcumuladoAno') ?? 0,
-        
-        // 4. Meta de PA Semanal Necessária
-        metaPASemanal: getValue(rowMap, [
-          'meta de pa semanal necessaria', 'meta pa semanal necessaria', 'meta pa semanal', 'meta pa',
-          'meta pa semana', 'meta premio anual semanal', 'meta pa sem', 'meta de pa semanal'
-        ], 'metaPASemanal') ?? 82000,
-        
-        // 5. % Meta de PA Realizada da Semana
-        percentualMetaPASemana: getValue(rowMap, [
-          '% meta de pa realizada da semana', '% meta pa realizada da semana', '% meta pa semana',
-          '% meta pa semanal', '% meta pa', '% pa semanal', 'percentual meta pa semana',
-          'percentual meta pa', '% pa semana', '% meta pa realizada semana'
-        ], 'percentualMetaPASemana') ?? 0,
-        
-        // 6. % Meta de PA Realizada do Ano
-        percentualMetaPAAno: getValue(rowMap, [
-          '% meta de pa realizada do ano', '% meta pa realizada do ano', '% meta pa ano',
-          '% meta pa anual', '% pa ano', '% pa acumulado ano', 'percentual meta pa ano',
-          'percentual meta pa anual', '% pa acum ano', '% meta pa realizada ano'
-        ], 'percentualMetaPAAno') ?? 0,
-        
-        // 7. PA Emitido na semana
-        paEmitido: getValue(rowMap, [
-          'pa emitido na semana', 'pa emitido semana', 'pa emitido', 'premio anual emitido',
-          'pa emit', 'pa emitido semanal', 'pa emitido na semana r$'
-        ], 'paEmitido') ?? 0,
-        
-        // 8. Apólices emitidas (por semana)
-        apolicesEmitidas: getValue(rowMap, [
-          'apolices emitidas por semana', 'apolices emitidas', 'apolices', 'numero de apolices',
-          'qtd apolices', 'quantidade apolices', 'apolices emit', 'total apolices',
-          'apolices emitidas semana', 'apolices por semana'
-        ], 'apolicesEmitidas') ?? 0,
-        
-        // 9. Meta de N semanal
-        metaNSemanal: getValue(rowMap, [
-          'meta de n semanal', 'meta n semanal', 'meta n', 'meta n semana',
-          'meta numero apolices', 'meta n sem', 'meta de n semanal necessaria'
-        ], 'metaNSemanal') ?? 5,
-        
-        // 10. N da Semana
-        nSemana: getValue(rowMap, [
-          'n da semana', 'n semanal', 'n semana', 'numero apolices semana',
-          'n sem', 'n realizado', 'n da sem', 'n realizado semana'
-        ], 'nSemana') ?? 0,
-        
-        // 11. N Acumulados do Mes
-        nAcumuladoMes: getValue(rowMap, [
-          'n acumulados do mes', 'n acumulado mes', 'n acumulado do mes', 'n mes',
-          'numero apolices acumulado mes', 'n acum mes', 'n acumulados mes'
-        ], 'nAcumuladoMes') ?? 0,
-        
-        // 12. N Acumulados do Ano
-        nAcumuladoAno: getValue(rowMap, [
-          'n acumulados do ano', 'n acumulado ano', 'n acumulado do ano', 'n ano',
-          'numero apolices acumulado ano', 'n acum ano', 'n acumulados ano'
-        ], 'nAcumuladoAno') ?? 0,
-        
-        // 13. % Meta de N Realizada da Semana
-        percentualMetaNSemana: getValue(rowMap, [
-          '% meta de n realizada da semana', '% meta n realizada da semana', '% meta n semana',
-          '% meta n semanal', '% meta n', '% n semanal', 'percentual meta n semana',
-          'percentual meta n', '% n semana', '% meta n realizada semana'
-        ], 'percentualMetaNSemana') ?? 0,
-        
-        // 14. % Meta de N Realizada do Ano
-        percentualMetaNAno: getValue(rowMap, [
-          '% meta de n realizada do ano', '% meta n realizada do ano', '% meta n ano',
-          '% meta n anual', '% n ano', '% n acumulado ano', 'percentual meta n ano',
-          'percentual meta n anual', '% n acum ano', '% meta n realizada ano'
-        ], 'percentualMetaNAno') ?? 0,
-        
-        // 15. Meta OIs Agendadas
-        metaOIsAgendadas: getValue(rowMap, [
-          'meta ois agendadas', 'meta ois', 'meta ois agend', 'meta oportunidades inovacao',
-          'meta ois agendadas semana', 'meta oi agendadas', 'meta ois agendadas necessaria'
-        ], 'metaOIsAgendadas') ?? 8,
-        
-        // 16. OIs agendadas
-        oIsAgendadas: getValue(rowMap, [
-          'ois agendadas', 'ois agend', 'oIs agendadas', 'ois agendadas semana',
-          'oportunidades inovacao agendadas', 'oi agendadas', 'ois agendadas na semana',
-          'ois agendadas por semana'
-        ], 'oIsAgendadas') ?? 0,
-        
-        // 17. OIs realizadas na semana
-        oIsRealizadas: getValue(rowMap, [
-          'ois realizadas na semana', 'ois realizadas semana', 'ois realizadas', 'ois realiz',
-          'oIs realizadas', 'oportunidades inovacao realizadas', 'oi realizadas',
-          'ois realizadas na semana', 'ois realizadas por semana'
-        ], 'oIsRealizadas') ?? 0,
-        
-        // 18. Meta RECS
-        metaRECS: getValue(rowMap, [
-          'meta recs', 'meta rec', 'meta recs agendadas', 'meta recs semana',
-          'meta recs necessaria'
-        ], 'metaRECS'),
-        
-        // 19. Novas RECS
-        novasRECS: getValue(rowMap, [
-          'novas recs', 'novas rec', 'recs novas', 'recs realizadas', 'recs semana',
-          'novas recs semana', 'recs novas semana'
-        ], 'novasRECS'),
-        
-        // 20. Meta de PCs/C2 agendados
-        metaPCsC2Agendados: getValue(rowMap, [
-          'meta de pcs c2 agendados', 'meta pcs c2 agendados', 'meta pcs c2', 'meta pcs',
-          'meta c2', 'meta pcs c2 agend', 'meta pcs c2 semana', 'meta pcs c2 agendados necessaria'
-        ], 'metaPCsC2Agendados'),
-        
-        // 21. PCs realizados na semana
-        pcsRealizados: getValue(rowMap, [
-          'pcs realizados na semana', 'pcs realizados semana', 'pcs realizados', 'pcs realiz',
-          'pcs semana', 'pcs realizados por semana'
-        ], 'pcsRealizados'),
-        
-        // 22. Quantidade de C2 realizados na semana
-        c2Realizados: getValue(rowMap, [
-          'quantidade de c2 realizados na semana', 'c2 realizados na semana', 'c2 realizados semana',
-          'c2 realizados', 'c2 realiz', 'c2 semana', 'quantidade c2 realizados',
-          'c2 realizados por semana', 'qtd c2 realizados'
-        ], 'c2Realizados'),
-        
-        // 23. Apólice em atraso (nº)
-        apoliceEmAtraso: getValue(rowMap, [
-          'apolice em atraso no', 'apolice em atraso', 'apolices em atraso', 'apolice atraso',
-          'apolices atraso', 'numero apolices atraso', 'qtd apolices atraso',
-          'apolice em atraso numero', 'apolices em atraso no'
-        ], 'apoliceEmAtraso'),
-        
-        // 24. Premio em atraso de clientes (R$)
-        premioEmAtraso: getValue(rowMap, [
-          'premio em atraso de clientes r$', 'premio em atraso de clientes', 'premio em atraso',
-          'premio atraso', 'pa em atraso', 'pa atraso', 'valor premio atraso',
-          'valor pa atraso', 'premio em atraso r$', 'premio atraso clientes'
-        ], 'premioEmAtraso'),
-        
-        // 25. Taxa de inadimplência (%) Geral
-        taxaInadimplenciaGeral: getValue(rowMap, [
-          'taxa de inadimplencia % geral', 'taxa inadimplencia geral', 'taxa inadimplencia',
-          'inadimplencia geral', '% inadimplencia geral', 'percentual inadimplencia geral',
-          'taxa inadimplencia % geral'
-        ], 'taxaInadimplenciaGeral'),
-        
-        // 26. Taxa de inadimplência (%) Assistente
-        taxaInadimplenciaAssistente: getValue(rowMap, [
-          'taxa de inadimplencia % assistente', 'taxa inadimplencia assistente',
-          'inadimplencia assistente', '% inadimplencia assistente',
-          'percentual inadimplencia assistente', 'taxa inadimplencia % assistente'
-        ], 'taxaInadimplenciaAssistente'),
-        
-        // 27. Meta revisitas agendadas
-        metaRevisitasAgendadas: getValue(rowMap, [
-          'meta revisitas agendadas', 'meta revisitas', 'meta revisitas agend',
-          'meta revisitas agendadas semana', 'meta revisitas necessaria'
-        ], 'metaRevisitasAgendadas'),
-        
-        // 28. Revisitas Agendadas na semana
-        revisitasAgendadas: getValue(rowMap, [
-          'revisitas agendadas na semana', 'revisitas agendadas semana', 'revisitas agendadas',
-          'revisitas agend', 'revisitas agendadas na semana', 'revisitas agendadas por semana'
-        ], 'revisitasAgendadas'),
-        
-        // 29. Revisitas realizadas na semana
-        revisitasRealizadas: getValue(rowMap, [
-          'revisitas realizadas na semana', 'revisitas realizadas semana', 'revisitas realizadas',
-          'revisitas realiz', 'revisitas realizadas na semana', 'revisitas realizadas por semana'
-        ], 'revisitasRealizadas'),
-        
-        // 30. Volume de tarefas concluídas no Trello
-        volumeTarefasTrello: getValue(rowMap, [
-          'volume de tarefas concluidas no trello', 'volume tarefas concluidas trello',
-          'volume tarefas trello', 'tarefas trello', 'tarefas trelo',
-          'qtd tarefas trello', 'quantidade tarefas trello', 'volume tarefas concluidas',
-          'tarefas concluidas trello'
-        ], 'volumeTarefasTrello'),
-        
-        // 31. Número de vídeos de treinamento gravados
-        videosTreinamentoGravados: getValue(rowMap, [
-          'numero de videos de treinamento gravados', 'videos de treinamento gravados',
-          'videos treinamento gravados', 'videos treinamento', 'videos gravados',
-          'qtd videos treinamento', 'quantidade videos treinamento', 'numero videos treinamento',
-          'videos treinamento gravados numero'
-        ], 'videosTreinamentoGravados'),
-        
-        // 32. Delivery Apólices
-        deliveryApolices: getValue(rowMap, [
-          'delivery apolices', 'delivery apolices semana', 'delivery apol',
-          'qtd delivery apolices', 'quantidade delivery apolices', 'delivery apolices por semana'
-        ], 'deliveryApolices'),
-        
-        // 33. Total de reuniões realizadas na semana
-        totalReunioes: getValue(rowMap, [
-          'total de reunioes realizadas na semana', 'total reunioes realizadas na semana',
-          'total reunioes', 'total reunioes realizadas', 'reunioes realizadas',
-          'qtd reunioes', 'quantidade reunioes', 'total reunioes semana',
-          'reunioes realizadas na semana'
-        ], 'totalReunioes'),
-        
-        // 34. Lista de Atrasos - atribuídos Raiza
-        listaAtrasosRaiza: getTextValue(rowMap, [
-          'lista de atrasos atribuidos raiza', 'lista atrasos atribuidos raiza',
-          'lista atrasos raiza', 'lista atrasos', 'atrasos raiza',
-          'lista de atrasos raiza', 'atrasos lista raiza', 'atrasos atribuidos raiza'
-        ]),
-        
-        // Campos calculados
-        ticketMedio: getValue(rowMap, [
-          'ticket medio', 'ticket medio r$', 'ticket medio rs',
-          'ticket medio realizado', 'ticket medio semana'
-        ], 'ticketMedio'),
-        conversaoOIs: getValue(rowMap, [
-          'conversao ois', 'conversao oi', '% conversao ois',
-          'percentual conversao ois', 'taxa conversao ois'
-        ], 'conversaoOIs'),
+      // Criar WeeklyData completo com valores padrão
+      const weeklyData: WeeklyData = {
+        period: periodCol.period,
+        paSemanal: periodData.paSemanal ?? 0,
+        paAcumuladoMes: periodData.paAcumuladoMes ?? 0,
+        paAcumuladoAno: periodData.paAcumuladoAno ?? 0,
+        metaPASemanal: periodData.metaPASemanal ?? 82000,
+        percentualMetaPASemana: periodData.percentualMetaPASemana ?? 0,
+        percentualMetaPAAno: periodData.percentualMetaPAAno ?? 0,
+        paEmitido: periodData.paEmitido ?? 0,
+        apolicesEmitidas: periodData.apolicesEmitidas ?? 0,
+        metaNSemanal: periodData.metaNSemanal ?? 5,
+        nSemana: periodData.nSemana ?? 0,
+        nAcumuladoMes: periodData.nAcumuladoMes ?? 0,
+        nAcumuladoAno: periodData.nAcumuladoAno ?? 0,
+        percentualMetaNSemana: periodData.percentualMetaNSemana ?? 0,
+        percentualMetaNAno: periodData.percentualMetaNAno ?? 0,
+        metaOIsAgendadas: periodData.metaOIsAgendadas ?? 8,
+        oIsAgendadas: periodData.oIsAgendadas ?? 0,
+        oIsRealizadas: periodData.oIsRealizadas ?? 0,
+        metaRECS: periodData.metaRECS ?? 0,
+        novasRECS: periodData.novasRECS ?? 0,
+        metaPCsC2Agendados: periodData.metaPCsC2Agendados ?? 0,
+        pcsRealizados: periodData.pcsRealizados ?? 0,
+        c2Realizados: periodData.c2Realizados ?? 0,
+        apoliceEmAtraso: periodData.apoliceEmAtraso ?? 0,
+        premioEmAtraso: periodData.premioEmAtraso ?? 0,
+        taxaInadimplenciaGeral: periodData.taxaInadimplenciaGeral ?? 0,
+        taxaInadimplenciaAssistente: periodData.taxaInadimplenciaAssistente ?? 0,
+        metaRevisitasAgendadas: periodData.metaRevisitasAgendadas ?? 0,
+        revisitasAgendadas: periodData.revisitasAgendadas ?? 0,
+        revisitasRealizadas: periodData.revisitasRealizadas ?? 0,
+        volumeTarefasTrello: periodData.volumeTarefasTrello ?? 0,
+        videosTreinamentoGravados: periodData.videosTreinamentoGravados ?? 0,
+        deliveryApolices: periodData.deliveryApolices ?? 0,
+        totalReunioes: periodData.totalReunioes ?? 0,
+        listaAtrasosRaiza: periodData.listaAtrasosRaiza ?? '',
+        ticketMedio: periodData.ticketMedio ?? 0,
+        conversaoOIs: periodData.conversaoOIs ?? 0,
+        percentualOIsRealizadas: periodData.percentualOIsRealizadas ?? 0
       }
       
-      // Calcular % OIs Realizadas se não estiver presente
-      if (!data.percentualOIsRealizadas && data.oIsAgendadas > 0) {
-        data.percentualOIsRealizadas = (data.oIsRealizadas / data.oIsAgendadas) * 100
+      // Calcular campos derivados
+      if (!weeklyData.percentualOIsRealizadas && weeklyData.oIsAgendadas > 0) {
+        weeklyData.percentualOIsRealizadas = (weeklyData.oIsRealizadas / weeklyData.oIsAgendadas) * 100
+      }
+      if (!weeklyData.ticketMedio && weeklyData.apolicesEmitidas > 0 && weeklyData.paSemanal > 0) {
+        weeklyData.ticketMedio = weeklyData.paSemanal / weeklyData.apolicesEmitidas
       }
       
-      // Calcular Ticket Médio se não estiver presente
-      if (!data.ticketMedio && data.apolicesEmitidas > 0 && data.paSemanal > 0) {
-        data.ticketMedio = data.paSemanal / data.apolicesEmitidas
-      }
-      
-      // Log do primeiro registro completo para debug
-      if (validCount === 0) {
-        console.log('📊 [Google Sheets] Primeiro registro completo:', JSON.stringify(data, null, 2))
-      }
-      
-      validCount++
-      return data
-    })
+      mappedData.push(weeklyData)
+    }
     
-    // Filtrar nulls e ordenar por período
-    const validData = mappedData.filter((data): data is WeeklyData => data !== null)
+    // Log dos dados mapeados
+    console.log(`✅ [Google Sheets] Total de registros criados: ${mappedData.length}`)
+    
+    if (mappedData.length === 0) {
+      console.error('❌ [Google Sheets] NENHUM dado válido encontrado após mapeamento!')
+      return []
+    }
+    
+    // Usar mappedData diretamente (já está completo)
+    const validData = mappedData
     
     console.log('✅ [Google Sheets] Dados válidos encontrados:', validData.length, 'de', jsonData.length, 'linhas')
     
