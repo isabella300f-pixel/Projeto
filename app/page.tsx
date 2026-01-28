@@ -177,6 +177,20 @@ export default function Dashboard() {
       return (hasPAData && hasMetaPA) || hasNData
     }
     
+    // Função mais rigorosa: verificar se tem dados suficientes para exibir os KPIs principais
+    const hasCompleteKPIData = (data: WeeklyData): boolean => {
+      // Deve ter pelo menos:
+      // 1. PA Semanal OU PA Acumulado Ano (com valores > 0)
+      // 2. Meta de PA Semanal (para cálculos de porcentagem)
+      // 3. PA Acumulado no Mês OU PA Acumulado no Ano (para exibir nos cards)
+      const hasPASemanalOrAcumulado = data.paSemanal > 0 || data.paAcumuladoAno > 0
+      const hasMetaPA = data.metaPASemanal > 0
+      const hasPAcumuladoMes = data.paAcumuladoMes > 0
+      
+      // Para KPIs principais, precisamos de dados de PA completos
+      return hasPASemanalOrAcumulado && hasMetaPA && (hasPAcumuladoMes || data.paAcumuladoAno > 0)
+    }
+    
     // Ordenar por período (mais recente primeiro) usando data completa
     const sortedData = [...weeklyDataState].sort((a, b) => {
       const dateA = parsePeriodToDate(a.period)
@@ -192,11 +206,20 @@ export default function Dashboard() {
     })
     
     if (filters.period === 'all') {
-      // Buscar o período mais recente com dados válidos
-      const mostRecentWithData = sortedData.find(d => hasValidData(d))
+      // PRIMEIRO: Tentar encontrar período mais recente com dados COMPLETOS para KPIs
+      let mostRecentWithCompleteData = sortedData.find(d => hasCompleteKPIData(d))
+      
+      // SEGUNDO: Se não encontrar, buscar período mais recente com dados válidos (menos rigoroso)
+      if (!mostRecentWithCompleteData) {
+        mostRecentWithCompleteData = sortedData.find(d => hasValidData(d))
+      }
+      
+      // TERCEIRO: Se ainda não encontrar, usar o mais recente disponível
+      const mostRecentWithData = mostRecentWithCompleteData || sortedData[0] || null
       
       if (mostRecentWithData) {
-        console.log('✅ [Frontend] Período mais recente com dados válidos:', mostRecentWithData.period)
+        const isComplete = hasCompleteKPIData(mostRecentWithData)
+        console.log(`✅ [Frontend] Período selecionado: ${mostRecentWithData.period} ${isComplete ? '(dados completos)' : '(dados parciais)'}`)
         console.log('📊 [Frontend] Valores COMPLETOS do período selecionado:', {
           period: mostRecentWithData.period,
           paSemanal: mostRecentWithData.paSemanal,
@@ -211,21 +234,18 @@ export default function Dashboard() {
           nAcumuladoAno: mostRecentWithData.nAcumuladoAno
         })
         
-        // Verificar se os valores principais estão zerados e avisar
-        if (mostRecentWithData.paSemanal === 0 && mostRecentWithData.paAcumuladoAno === 0) {
-          console.warn('⚠️ [Frontend] ATENÇÃO: Período selecionado tem PA Semanal e PA Acumulado Ano zerados!')
-          console.warn('⚠️ [Frontend] Tentando encontrar período anterior com dados válidos...')
+        // Se os valores principais estão zerados, tentar encontrar período alternativo
+        if (!isComplete && (mostRecentWithData.paSemanal === 0 || mostRecentWithData.paAcumuladoAno === 0)) {
+          console.warn('⚠️ [Frontend] ATENÇÃO: Período selecionado tem valores principais zerados!')
+          console.warn('⚠️ [Frontend] Tentando encontrar período anterior com dados completos...')
           
-          // Tentar encontrar o próximo período com dados válidos (mais antigo)
+          // Tentar encontrar período mais antigo (índices maiores) com dados completos
           const currentIndex = sortedData.findIndex(d => d.period === mostRecentWithData.period)
-          // Buscar períodos mais antigos (índices maiores) que tenham dados válidos
-          const alternativePeriods = sortedData.slice(currentIndex + 1).filter(d => 
-            hasValidData(d) && (d.paSemanal > 0 || d.paAcumuladoAno > 0)
-          )
+          const alternativePeriods = sortedData.slice(currentIndex + 1).filter(d => hasCompleteKPIData(d))
           
           if (alternativePeriods.length > 0) {
-            const nextValid = alternativePeriods[0] // Pegar o primeiro período alternativo encontrado
-            console.log('✅ [Frontend] Período alternativo encontrado:', nextValid.period)
+            const nextValid = alternativePeriods[0]
+            console.log('✅ [Frontend] Período alternativo com dados completos encontrado:', nextValid.period)
             console.log('📊 [Frontend] Valores do período alternativo:', {
               paSemanal: nextValid.paSemanal,
               paAcumuladoAno: nextValid.paAcumuladoAno,
@@ -235,9 +255,8 @@ export default function Dashboard() {
             })
             return nextValid
           } else {
-            console.warn('⚠️ [Frontend] Nenhum período alternativo encontrado com dados válidos')
-            // Mesmo assim, retornar o período encontrado (pode ter alguns dados zerados)
-            return mostRecentWithData
+            console.warn('⚠️ [Frontend] Nenhum período alternativo com dados completos encontrado')
+            console.warn('⚠️ [Frontend] Usando período selecionado mesmo com dados parciais')
           }
         }
       } else {
@@ -245,7 +264,7 @@ export default function Dashboard() {
         console.warn('⚠️ [Frontend] Usando primeiro período disponível:', sortedData[0]?.period)
       }
       
-      return mostRecentWithData || sortedData[0] || null
+      return mostRecentWithData
     } else {
       // Se há filtro de período, usar dados filtrados
       const sortedFiltered = [...filteredData].sort((a, b) => {
