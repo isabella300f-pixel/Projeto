@@ -162,10 +162,19 @@ export default function Dashboard() {
       return null
     }
     
-    // Função para verificar se um registro tem dados válidos
+    // Função para verificar se um registro tem dados válidos para exibir KPIs principais
+    // Deve ter pelo menos PA Semanal OU PA Acumulado Ano com valores significativos
     const hasValidData = (data: WeeklyData): boolean => {
-      return data.paSemanal > 0 || data.paAcumuladoAno > 0 || data.nSemana > 0 || 
-             data.metaPASemanal > 0 || data.apolicesEmitidas > 0
+      // Verificar se tem dados de PA (semanal ou acumulado)
+      const hasPAData = data.paSemanal > 0 || data.paAcumuladoAno > 0
+      // Verificar se tem meta de PA (importante para cálculos de porcentagem)
+      const hasMetaPA = data.metaPASemanal > 0
+      // Verificar se tem dados de N ou apólices
+      const hasNData = data.nSemana > 0 || data.apolicesEmitidas > 0 || data.nAcumuladoAno > 0
+      
+      // Para ser considerado válido, deve ter pelo menos dados de PA E meta de PA
+      // OU ter dados de N significativos
+      return (hasPAData && hasMetaPA) || hasNData
     }
     
     // Ordenar por período (mais recente primeiro) usando data completa
@@ -185,14 +194,57 @@ export default function Dashboard() {
     if (filters.period === 'all') {
       // Buscar o período mais recente com dados válidos
       const mostRecentWithData = sortedData.find(d => hasValidData(d))
+      
       if (mostRecentWithData) {
         console.log('✅ [Frontend] Período mais recente com dados válidos:', mostRecentWithData.period)
-        console.log('📊 [Frontend] Valores:', {
+        console.log('📊 [Frontend] Valores COMPLETOS do período selecionado:', {
+          period: mostRecentWithData.period,
           paSemanal: mostRecentWithData.paSemanal,
+          paAcumuladoMes: mostRecentWithData.paAcumuladoMes,
           paAcumuladoAno: mostRecentWithData.paAcumuladoAno,
-          metaPASemanal: mostRecentWithData.metaPASemanal
+          metaPASemanal: mostRecentWithData.metaPASemanal,
+          percentualMetaPASemana: mostRecentWithData.percentualMetaPASemana,
+          percentualMetaPAAno: mostRecentWithData.percentualMetaPAAno,
+          paEmitido: mostRecentWithData.paEmitido,
+          apolicesEmitidas: mostRecentWithData.apolicesEmitidas,
+          nSemana: mostRecentWithData.nSemana,
+          nAcumuladoAno: mostRecentWithData.nAcumuladoAno
         })
+        
+        // Verificar se os valores principais estão zerados e avisar
+        if (mostRecentWithData.paSemanal === 0 && mostRecentWithData.paAcumuladoAno === 0) {
+          console.warn('⚠️ [Frontend] ATENÇÃO: Período selecionado tem PA Semanal e PA Acumulado Ano zerados!')
+          console.warn('⚠️ [Frontend] Tentando encontrar período anterior com dados válidos...')
+          
+          // Tentar encontrar o próximo período com dados válidos (mais antigo)
+          const currentIndex = sortedData.findIndex(d => d.period === mostRecentWithData.period)
+          // Buscar períodos mais antigos (índices maiores) que tenham dados válidos
+          const alternativePeriods = sortedData.slice(currentIndex + 1).filter(d => 
+            hasValidData(d) && (d.paSemanal > 0 || d.paAcumuladoAno > 0)
+          )
+          
+          if (alternativePeriods.length > 0) {
+            const nextValid = alternativePeriods[0] // Pegar o primeiro período alternativo encontrado
+            console.log('✅ [Frontend] Período alternativo encontrado:', nextValid.period)
+            console.log('📊 [Frontend] Valores do período alternativo:', {
+              paSemanal: nextValid.paSemanal,
+              paAcumuladoAno: nextValid.paAcumuladoAno,
+              paAcumuladoMes: nextValid.paAcumuladoMes,
+              metaPASemanal: nextValid.metaPASemanal,
+              paEmitido: nextValid.paEmitido
+            })
+            return nextValid
+          } else {
+            console.warn('⚠️ [Frontend] Nenhum período alternativo encontrado com dados válidos')
+            // Mesmo assim, retornar o período encontrado (pode ter alguns dados zerados)
+            return mostRecentWithData
+          }
+        }
+      } else {
+        console.warn('⚠️ [Frontend] Nenhum período com dados válidos encontrado!')
+        console.warn('⚠️ [Frontend] Usando primeiro período disponível:', sortedData[0]?.period)
       }
+      
       return mostRecentWithData || sortedData[0] || null
     } else {
       // Se há filtro de período, usar dados filtrados
@@ -482,6 +534,14 @@ export default function Dashboard() {
               <Target className="w-6 h-6 text-indigo-600" />
               Todos os Indicadores - Período Mais Recente: {currentData.period}
             </h2>
+            
+            {/* Debug: Mostrar valores do currentData */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <strong>Debug:</strong> PA Semanal={currentData.paSemanal}, PA Acumulado Ano={currentData.paAcumuladoAno}, 
+                Meta PA={currentData.metaPASemanal}, PA Emitido={currentData.paEmitido}
+              </div>
+            )}
 
             {/* Seção 1: Indicadores de PA (7 indicadores) */}
             <div className="mb-6">
@@ -492,31 +552,45 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-xs text-gray-600 mb-1">PA Semanal Realizado</p>
-                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paSemanal)}</p>
+                  <p className="text-base font-bold text-gray-900">
+                    {currentData.paSemanal > 0 ? formatCurrency(currentData.paSemanal) : 'R$ 0,00'}
+                  </p>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-lg border border-blue-300">
                   <p className="text-xs text-gray-600 mb-1">PA Acumulado no Mês</p>
-                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paAcumuladoMes)}</p>
+                  <p className="text-base font-bold text-gray-900">
+                    {currentData.paAcumuladoMes > 0 ? formatCurrency(currentData.paAcumuladoMes) : 'R$ 0,00'}
+                  </p>
                 </div>
                 <div className="p-3 bg-blue-200 rounded-lg border border-blue-400">
                   <p className="text-xs text-gray-600 mb-1">PA Acumulado no Ano</p>
-                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paAcumuladoAno)}</p>
+                  <p className="text-base font-bold text-gray-900">
+                    {currentData.paAcumuladoAno > 0 ? formatCurrency(currentData.paAcumuladoAno) : 'R$ 0,00'}
+                  </p>
                 </div>
                 <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
                   <p className="text-xs text-gray-600 mb-1">Meta de PA Semanal</p>
-                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.metaPASemanal)}</p>
+                  <p className="text-base font-bold text-gray-900">
+                    {currentData.metaPASemanal > 0 ? formatCurrency(currentData.metaPASemanal) : 'R$ 0,00'}
+                  </p>
                 </div>
                 <div className="p-3 bg-indigo-100 rounded-lg border border-indigo-300">
                   <p className="text-xs text-gray-600 mb-1">% Meta PA Semana</p>
-                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.percentualMetaPASemana)}</p>
+                  <p className="text-base font-bold text-gray-900">
+                    {currentData.percentualMetaPASemana > 0 ? formatPercent(currentData.percentualMetaPASemana) : '0%'}
+                  </p>
                 </div>
                 <div className="p-3 bg-indigo-200 rounded-lg border border-indigo-400">
                   <p className="text-xs text-gray-600 mb-1">% Meta PA Ano</p>
-                  <p className="text-base font-bold text-gray-900">{formatPercent(currentData.percentualMetaPAAno)}</p>
+                  <p className="text-base font-bold text-gray-900">
+                    {currentData.percentualMetaPAAno > 0 ? formatPercent(currentData.percentualMetaPAAno) : '0%'}
+                  </p>
                 </div>
                 <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
                   <p className="text-xs text-gray-600 mb-1">PA Emitido na Semana</p>
-                  <p className="text-base font-bold text-gray-900">{formatCurrency(currentData.paEmitido)}</p>
+                  <p className="text-base font-bold text-gray-900">
+                    {currentData.paEmitido > 0 ? formatCurrency(currentData.paEmitido) : 'R$ 0,00'}
+                  </p>
                 </div>
               </div>
             </div>
