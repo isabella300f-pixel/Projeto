@@ -1,5 +1,5 @@
 export interface FilterState {
-  period: string | 'all' | 'last30days'
+  period: string | 'all'
   paMin?: number
   paMax?: number
   nMin?: number
@@ -78,4 +78,3 @@ export interface WeeklyData {
   created_at?: string
   updated_at?: string
 }
-

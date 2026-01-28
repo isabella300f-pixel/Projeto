@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { weeklyData as fallbackData, formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
-// Removido: import { getAllWeeklyData } from '@/lib/supabase' - Usando apenas dados locais
 import { filterData, getFilterStats } from '@/lib/filters'
 import { FilterState, WeeklyData } from '@/lib/types'
 import KPICard from '@/components/KPICard'
@@ -11,12 +10,12 @@ import BarChart from '@/components/BarChart'
 import SearchBar from '@/components/SearchBar'
 import FilterPanel from '@/components/FilterPanel'
 import QuickFilters from '@/components/QuickFilters'
-import { DollarSign, Target, TrendingUp, CheckCircle, Search, Filter as FilterIcon, Upload, AlertCircle } from 'lucide-react'
-import Link from 'next/link'
+import { DollarSign, Target, TrendingUp, CheckCircle, Search, Filter as FilterIcon, AlertCircle } from 'lucide-react'
 
 export default function Dashboard() {
   const [weeklyDataState, setWeeklyDataState] = useState<WeeklyData[]>(fallbackData)
   const [loading, setLoading] = useState(true)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [filters, setFilters] = useState<FilterState>({
     period: 'all',
     month: 'all',
@@ -27,57 +26,49 @@ export default function Dashboard() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   
-  // Sincronizar dados ANTES de mostrar (garantir dados atualizados)
+  // Carregar dados do Google Sheets em tempo real
   useEffect(() => {
-    async function syncAndLoadData() {
+    async function loadGoogleSheetsData() {
       try {
-        // PRIMEIRO: Sincronizar dados da planilha (FORÇAR atualização)
-        const response = await fetch('/api/sync-local-data', {
-          method: 'POST',
-          cache: 'no-store', // Forçar atualização
+        const response = await fetch('/api/google-sheets', {
+          cache: 'no-store', // Sempre buscar dados atualizados
+          next: { revalidate: 0 }
         })
         
         if (response.ok) {
           const result = await response.json()
-          console.log('✅ Dados sincronizados da planilha:', result.count, 'registros')
-          console.log('📅 Períodos:', result.periods)
-          
-          // Aguardar um pouco para garantir que o arquivo foi salvo
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
-          // Forçar reload completo do módulo
-          
-          // Recarregar módulo para pegar dados atualizados (forçar reload com timestamp)
-          const dataModule = await import('@/lib/data?t=' + Date.now())
-          console.log('📊 Dados carregados:', dataModule.weeklyData.length, 'registros')
-          console.log('📅 Períodos carregados:', dataModule.weeklyData.map((d: WeeklyData) => d.period))
-          
-          // Verificar se há dados
-          if (dataModule.weeklyData && dataModule.weeklyData.length > 0) {
-            setWeeklyDataState(dataModule.weeklyData)
+          if (result.success && result.data && result.data.length > 0) {
+            console.log('✅ Dados carregados do Google Sheets:', result.count, 'registros')
+            console.log('📅 Períodos:', result.periods)
+            setWeeklyDataState(result.data)
           } else {
-            console.warn('⚠️ Nenhum dado encontrado após sincronização, usando fallback')
+            console.warn('⚠️ Nenhum dado encontrado no Google Sheets, usando fallback')
             setWeeklyDataState(fallbackData)
           }
         } else {
           const errorData = await response.json().catch(() => ({}))
-          console.error('❌ Erro ao sincronizar:', errorData)
-          // Se falhar, usar dados locais existentes
-          console.log('ℹ️ Usando dados locais existentes')
+          console.error('❌ Erro ao carregar dados do Google Sheets:', errorData)
+          console.log('ℹ️ Usando dados locais como fallback')
           setWeeklyDataState(fallbackData)
         }
       } catch (error) {
-        console.error('❌ Erro ao sincronizar dados:', error)
-        // Em caso de erro, usar dados locais existentes
-        console.log('ℹ️ Usando dados locais existentes (erro ao sincronizar)')
+        console.error('❌ Erro ao carregar dados do Google Sheets:', error)
+        console.log('ℹ️ Usando dados locais como fallback (erro ao carregar)')
         setWeeklyDataState(fallbackData)
       } finally {
         setLoading(false)
       }
     }
     
-    // Sincronizar ANTES de mostrar qualquer coisa
-    syncAndLoadData()
+    // Carregar dados imediatamente
+    loadGoogleSheetsData()
+    
+    // Atualizar automaticamente a cada 30 segundos
+    const interval = setInterval(() => {
+      loadGoogleSheetsData()
+    }, 30000) // 30 segundos
+    
+    return () => clearInterval(interval)
   }, [])
   
   const periods = getAllPeriods(weeklyDataState)
@@ -195,7 +186,14 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">KPI Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">Legathon - Indicadores e Métricas</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Legathon - Indicadores e Métricas
+                {lastUpdate && (
+                  <span className="ml-2 text-green-600">
+                    • Atualizado: {lastUpdate.toLocaleTimeString('pt-BR')}
+                  </span>
+                )}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -209,13 +207,6 @@ export default function Dashboard() {
               >
                 <Search className="w-5 h-5" />
               </button>
-              <Link
-                href="/import"
-                className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                title="Importar dados"
-              >
-                <Upload className="w-5 h-5" />
-              </Link>
               <FilterPanel
                 filters={filters}
                 onFilterChange={handleFilterChange}
