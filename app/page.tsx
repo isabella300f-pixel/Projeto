@@ -48,11 +48,6 @@ export default function Dashboard() {
             console.log('📅 [Frontend] Períodos:', result.periods)
             console.log('📈 [Frontend] Primeiro registro completo:', JSON.stringify(result.data[0], null, 2))
             
-            // Verificar se os dados têm valores não-zero
-            const hasNonZeroData = result.data.some((d: WeeklyData) => 
-              d.paSemanal > 0 || d.nSemana > 0 || d.oIsAgendadas > 0
-            )
-            
             // Sempre atualizar com os dados recebidos (mesmo se alguns valores estiverem zerados)
             // O problema de valores sumindo pode ser causado por não atualizar quando alguns campos estão zerados
             console.log('✅ [Frontend] Dados carregados, atualizando estado')
