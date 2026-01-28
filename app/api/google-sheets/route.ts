@@ -26,14 +26,16 @@ const normalizePeriod = (period: string): string => {
     .replace(/\//g, '/')
 }
 
-// Função para validar período
+// Função para validar período (MUITO MAIS RESTRITIVA)
 const isValidPeriod = (value: string): boolean => {
   if (!value || typeof value !== 'string') return false
   
   const normalized = value.trim().toLowerCase()
   
-  if (normalized.length < 5 || normalized.length > 50) return false
+  // Deve ter entre 8 e 20 caracteres (formato típico: "18/08 a 24/08")
+  if (normalized.length < 8 || normalized.length > 20) return false
   
+  // Lista expandida de padrões inválidos
   const invalidPatterns = [
     'simples nacional', 'anexo', 'indica', 'célula', 'celula',
     'output', 'input', 'informação', 'informacao', 'permit',
@@ -45,23 +47,43 @@ const isValidPeriod = (value: string): boolean => {
     'regime', 'tributário', 'tributario', 'saco', 'unidade', 'medida',
     'taxa', 'retorno', 'irr', 'tir', 'prazo', 'médio', 'medio',
     'estoque', 'pagto', 'recebimento', 'percentual', 'índice', 'indice', 'financeiro',
-    'unid a de de medid a', 'unidade de medida', 'p a emitido', 'c2 a gend a dos'
+    'unid a de de medid a', 'unidade de medida', 'p a emitido', 'c2 a gend a dos',
+    'meta', 'met a', 'pcs', 'c2', 'agend', 'agendados', 'emitido', 'emit', 'até',
+    'premio', 'apolice', 'apolices', 'numero', 'quantidade', 'qtd', 'total',
+    'realizado', 'realizada', 'realizados', 'acumulado', 'acumulados',
+    'semanal', 'semana', 'mes', 'ano', 'geral', 'assistente', 'raiza',
+    'trello', 'video', 'reuniao', 'delivery', 'tarefa', 'treinamento'
   ]
   
+  // Se contém qualquer padrão inválido, rejeitar
   for (const pattern of invalidPatterns) {
     if (normalized.includes(pattern)) {
       return false
     }
   }
   
-  if (!/\d/.test(normalized)) return false
-  
+  // DEVE ter pelo menos um padrão de data válido
+  // Formato esperado: "DD/MM a DD/MM" ou "DD/MM"
   const hasDatePattern = /\d{1,2}\/\d{1,2}/.test(normalized)
   const hasPeriodPattern = /\d{1,2}\/\d{1,2}\s+[aA]\s+\d{1,2}\/\d{1,2}/.test(normalized)
-  const hasWeekPattern = /\d{4}-w\d{1,2}/i.test(normalized)
-  const hasDateRange = (normalized.includes('a') || normalized.includes('A')) && /\d/.test(normalized) && normalized.includes('/')
   
-  return hasDatePattern || hasPeriodPattern || hasWeekPattern || hasDateRange
+  // Se não tem padrão de data, rejeitar
+  if (!hasDatePattern && !hasPeriodPattern) {
+    return false
+  }
+  
+  // Validar que os números fazem sentido (dia entre 1-31, mês entre 1-12)
+  const dateMatches = normalized.match(/(\d{1,2})\/(\d{1,2})/g)
+  if (dateMatches) {
+    for (const match of dateMatches) {
+      const [day, month] = match.split('/').map(Number)
+      if (day < 1 || day > 31 || month < 1 || month > 12) {
+        return false
+      }
+    }
+  }
+  
+  return true
 }
 
 // Função para converter valor para número (melhorada)
@@ -87,31 +109,37 @@ const parseNumber = (value: any): number | undefined => {
   return undefined
 }
 
-// Função auxiliar para buscar valor com múltiplas variações (MELHORADA)
+// Função auxiliar para buscar valor com múltiplas variações (MELHORADA - MAIS RESTRITIVA)
 const getValue = (rowMap: any, variations: string[], debugKey?: string): number | undefined => {
-  // Primeiro: busca exata
+  // Primeiro: busca exata (mais confiável)
   for (const variation of variations) {
     const normalized = normalizeKey(variation)
     
     if (rowMap[normalized] !== undefined && rowMap[normalized] !== null && rowMap[normalized] !== '') {
       const value = parseNumber(rowMap[normalized])
-      if (value !== undefined) {
+      if (value !== undefined && value !== 0) { // Ignorar zeros também
         if (debugKey) console.log(`✅ [${debugKey}] Encontrado exato: "${variation}" (normalizado: "${normalized}") = ${value}`)
         return value
       }
     }
   }
   
-  // Segundo: busca parcial (contém a variação)
+  // Segundo: busca parcial (contém a variação) - mas mais restritiva
   for (const variation of variations) {
     const normalized = normalizeKey(variation)
     
+    // Extrair palavras-chave principais da variação
+    const variationKeywords = normalized.split(' ').filter(w => w.length > 2)
+    
     for (const key in rowMap) {
       const normalizedKey = normalizeKey(key)
-      // Match mais flexível: se a chave contém a variação OU a variação contém a chave
-      if (normalizedKey.includes(normalized) || normalized.includes(normalizedKey)) {
+      
+      // Verificar se TODAS as palavras-chave principais estão presentes na coluna
+      const allKeywordsMatch = variationKeywords.every(kw => normalizedKey.includes(kw))
+      
+      if (allKeywordsMatch && normalizedKey.length < 100) { // Evitar colunas muito longas (provavelmente descritivas)
         const value = parseNumber(rowMap[key])
-        if (value !== undefined) {
+        if (value !== undefined && value !== 0) {
           if (debugKey) console.log(`✅ [${debugKey}] Encontrado parcial: "${variation}" em coluna "${key}" = ${value}`)
           return value
         }
@@ -119,32 +147,20 @@ const getValue = (rowMap: any, variations: string[], debugKey?: string): number 
     }
   }
   
-  // Terceiro: busca por palavras-chave individuais (mais agressiva)
-  const keywords = variations[0].split(' ').filter(w => w.length > 2)
-  for (const keyword of keywords) {
-    const normalizedKeyword = normalizeKey(keyword)
-    for (const key in rowMap) {
-      const normalizedKey = normalizeKey(key)
-      if (normalizedKey.includes(normalizedKeyword)) {
-        const value = parseNumber(rowMap[key])
-        if (value !== undefined) {
-          if (debugKey) console.log(`✅ [${debugKey}] Encontrado por palavra-chave "${keyword}" em "${key}" = ${value}`)
-          return value
-        }
-      }
-    }
-  }
+  // Terceiro: busca por palavras-chave individuais (apenas se a variação tiver palavras-chave claras)
+  const mainKeywords = ['pa semanal', 'pa acumulado', 'n semana', 'n acumulado', 'ois agendadas', 'ois realizadas', 
+                       'recs', 'pcs realizados', 'c2 realizados', 'atraso', 'inadimplencia', 'revisita', 
+                       'trello', 'video', 'delivery', 'reuniao']
   
-  // Quarto: busca por qualquer coluna que contenha as palavras principais (PA, N, OIs, etc)
-  const mainKeywords = ['pa', 'n', 'ois', 'recs', 'pcs', 'c2', 'atraso', 'inadimplencia', 'revisita', 'trello', 'video', 'delivery', 'reuniao']
   for (const mainKeyword of mainKeywords) {
     if (variations.some(v => normalizeKey(v).includes(mainKeyword))) {
       for (const key in rowMap) {
         const normalizedKey = normalizeKey(key)
-        if (normalizedKey.includes(mainKeyword)) {
+        // Match mais específico: a coluna deve conter a palavra-chave principal
+        if (normalizedKey.includes(mainKeyword) && normalizedKey.length < 80) {
           const value = parseNumber(rowMap[key])
           if (value !== undefined && value !== 0) {
-            if (debugKey) console.log(`✅ [${debugKey}] Encontrado por palavra principal "${mainKeyword}" em "${key}" = ${value}`)
+            if (debugKey) console.log(`✅ [${debugKey}] Encontrado por palavra-chave "${mainKeyword}" em "${key}" = ${value}`)
             return value
           }
         }
@@ -154,18 +170,6 @@ const getValue = (rowMap: any, variations: string[], debugKey?: string): number 
   
   if (debugKey) {
     console.log(`⚠️ [${debugKey}] NÃO encontrado. Variações tentadas:`, variations.slice(0, 3))
-    // Listar colunas disponíveis que podem ser relevantes
-    const relevantKeys = Object.keys(rowMap).filter(k => {
-      const nk = normalizeKey(k)
-      return variations.some(v => {
-        const nv = normalizeKey(v)
-        const keywords = nv.split(' ').filter(w => w.length > 2)
-        return keywords.some(kw => nk.includes(kw))
-      })
-    })
-    if (relevantKeys.length > 0) {
-      console.log(`💡 [${debugKey}] Colunas relevantes encontradas (mas sem valor):`, relevantKeys.slice(0, 5))
-    }
   }
   return undefined
 }
@@ -283,52 +287,48 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         rowMap[normalizeKey(key)] = row[key]
       })
       
-      // Buscar período com múltiplas variações
-      let periodRaw = getTextValue(rowMap, [
+      // Buscar período APENAS em colunas específicas (mais restritivo)
+      let periodRaw = ''
+      
+      // Primeiro: buscar em colunas que claramente são de período
+      const periodColumns = [
         'período', 'periodo', 'period', 'semana', 'data',
         'periodo semanal', 'periodo da semana', 'semana de',
-        'data inicial', 'data final', 'range', 'intervalo',
-        'data periodo', 'periodo data', 'semana periodo'
-      ]) || ''
+        'data inicial', 'data final', 'range', 'intervalo'
+      ]
       
-      // Se não encontrou, buscar em qualquer coluna que contenha "period", "semana" ou "data"
-      if (!periodRaw) {
-        for (const key in rowMap) {
-          const normalizedKey = normalizeKey(key)
-          if (normalizedKey.includes('period') || normalizedKey.includes('semana') || normalizedKey.includes('data')) {
-            const value = String(rowMap[key] || '').trim()
-            if (value && value.length > 0 && value !== 'undefined' && value !== 'null') {
-              if (isValidPeriod(value)) {
-                periodRaw = value
-                break
-              }
-            }
+      for (const colName of periodColumns) {
+        const normalized = normalizeKey(colName)
+        if (rowMap[normalized] !== undefined && rowMap[normalized] !== null) {
+          const value = String(rowMap[normalized]).trim()
+          if (value && isValidPeriod(value)) {
+            periodRaw = value
+            console.log(`✅ [Período] Encontrado em coluna "${colName}": ${periodRaw}`)
+            break
           }
         }
       }
       
-      // Se ainda não encontrou, usar a primeira coluna que tenha valor válido
+      // Se não encontrou, NÃO buscar em outras colunas (muito perigoso - pode pegar valores errados)
+      // Apenas retornar null se não encontrou em colunas específicas de período
       if (!periodRaw) {
-        for (const key in rowMap) {
-          const value = String(rowMap[key] || '').trim()
-          if (value && value.length > 0 && value !== 'undefined' && value !== 'null') {
-            if (isValidPeriod(value)) {
-              periodRaw = value
-              break
-            }
-          }
-        }
+        console.log(`⚠️ [Período] Nenhum período válido encontrado na linha ${index + 1}`)
+        console.log(`⚠️ [Período] Colunas disponíveis:`, Object.keys(rowMap).slice(0, 10))
+        return null
       }
       
-      // Validar período
-      if (!periodRaw || !isValidPeriod(periodRaw)) {
+      // Validar período novamente (dupla validação)
+      if (!isValidPeriod(periodRaw)) {
+        console.log(`❌ [Período] Período "${periodRaw}" não passou na validação`)
         return null
       }
       
       const periodNormalized = normalizePeriod(periodRaw)
       console.log(`\n📅 [Google Sheets] Processando período: ${periodNormalized}`)
+      console.log(`📋 [Google Sheets] Colunas disponíveis nesta linha:`, Object.keys(rowMap).slice(0, 15))
       
       // Mapear TODOS os 34 indicadores com variações completas
+      // IMPORTANTE: Não usar || 0, usar undefined para valores não encontrados
       const data: WeeklyData = {
         period: periodNormalized,
         
@@ -337,110 +337,110 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
           'pa semanal realizado', 'pa semanal', 'pa realizado', 'premio anual semanal',
           'pa semana', 'pa da semana', 'pa realizado semanal', 'pa sem',
           'pa semanal realizado r$', 'pa realizado semana'
-        ], 'paSemanal') || 0,
+        ], 'paSemanal') ?? 0,
         
         // 2. PA Acumulado no Mês
         paAcumuladoMes: getValue(rowMap, [
           'pa acumulado no mes', 'pa acumulado mes', 'pa acumulado do mes', 'pa mes',
           'premio anual acumulado mes', 'pa acum mes', 'pa acumulado no mes r$'
-        ], 'paAcumuladoMes') || 0,
+        ], 'paAcumuladoMes') ?? 0,
         
         // 3. PA Acumulado no Ano
         paAcumuladoAno: getValue(rowMap, [
           'pa acumulado no ano', 'pa acumulado ano', 'pa acumulado do ano', 'pa ano',
           'premio anual acumulado ano', 'pa acum ano', 'pa acumulado no ano r$'
-        ], 'paAcumuladoAno') || 0,
+        ], 'paAcumuladoAno') ?? 0,
         
         // 4. Meta de PA Semanal Necessária
         metaPASemanal: getValue(rowMap, [
           'meta de pa semanal necessaria', 'meta pa semanal necessaria', 'meta pa semanal', 'meta pa',
           'meta pa semana', 'meta premio anual semanal', 'meta pa sem', 'meta de pa semanal'
-        ], 'metaPASemanal') || 82000,
+        ], 'metaPASemanal') ?? 82000,
         
         // 5. % Meta de PA Realizada da Semana
         percentualMetaPASemana: getValue(rowMap, [
           '% meta de pa realizada da semana', '% meta pa realizada da semana', '% meta pa semana',
           '% meta pa semanal', '% meta pa', '% pa semanal', 'percentual meta pa semana',
           'percentual meta pa', '% pa semana', '% meta pa realizada semana'
-        ], 'percentualMetaPASemana') || 0,
+        ], 'percentualMetaPASemana') ?? 0,
         
         // 6. % Meta de PA Realizada do Ano
         percentualMetaPAAno: getValue(rowMap, [
           '% meta de pa realizada do ano', '% meta pa realizada do ano', '% meta pa ano',
           '% meta pa anual', '% pa ano', '% pa acumulado ano', 'percentual meta pa ano',
           'percentual meta pa anual', '% pa acum ano', '% meta pa realizada ano'
-        ], 'percentualMetaPAAno') || 0,
+        ], 'percentualMetaPAAno') ?? 0,
         
         // 7. PA Emitido na semana
         paEmitido: getValue(rowMap, [
           'pa emitido na semana', 'pa emitido semana', 'pa emitido', 'premio anual emitido',
           'pa emit', 'pa emitido semanal', 'pa emitido na semana r$'
-        ], 'paEmitido') || 0,
+        ], 'paEmitido') ?? 0,
         
         // 8. Apólices emitidas (por semana)
         apolicesEmitidas: getValue(rowMap, [
           'apolices emitidas por semana', 'apolices emitidas', 'apolices', 'numero de apolices',
           'qtd apolices', 'quantidade apolices', 'apolices emit', 'total apolices',
           'apolices emitidas semana', 'apolices por semana'
-        ], 'apolicesEmitidas') || 0,
+        ], 'apolicesEmitidas') ?? 0,
         
         // 9. Meta de N semanal
         metaNSemanal: getValue(rowMap, [
           'meta de n semanal', 'meta n semanal', 'meta n', 'meta n semana',
           'meta numero apolices', 'meta n sem', 'meta de n semanal necessaria'
-        ], 'metaNSemanal') || 5,
+        ], 'metaNSemanal') ?? 5,
         
         // 10. N da Semana
         nSemana: getValue(rowMap, [
           'n da semana', 'n semanal', 'n semana', 'numero apolices semana',
           'n sem', 'n realizado', 'n da sem', 'n realizado semana'
-        ], 'nSemana') || 0,
+        ], 'nSemana') ?? 0,
         
         // 11. N Acumulados do Mes
         nAcumuladoMes: getValue(rowMap, [
           'n acumulados do mes', 'n acumulado mes', 'n acumulado do mes', 'n mes',
           'numero apolices acumulado mes', 'n acum mes', 'n acumulados mes'
-        ], 'nAcumuladoMes') || 0,
+        ], 'nAcumuladoMes') ?? 0,
         
         // 12. N Acumulados do Ano
         nAcumuladoAno: getValue(rowMap, [
           'n acumulados do ano', 'n acumulado ano', 'n acumulado do ano', 'n ano',
           'numero apolices acumulado ano', 'n acum ano', 'n acumulados ano'
-        ], 'nAcumuladoAno') || 0,
+        ], 'nAcumuladoAno') ?? 0,
         
         // 13. % Meta de N Realizada da Semana
         percentualMetaNSemana: getValue(rowMap, [
           '% meta de n realizada da semana', '% meta n realizada da semana', '% meta n semana',
           '% meta n semanal', '% meta n', '% n semanal', 'percentual meta n semana',
           'percentual meta n', '% n semana', '% meta n realizada semana'
-        ], 'percentualMetaNSemana') || 0,
+        ], 'percentualMetaNSemana') ?? 0,
         
         // 14. % Meta de N Realizada do Ano
         percentualMetaNAno: getValue(rowMap, [
           '% meta de n realizada do ano', '% meta n realizada do ano', '% meta n ano',
           '% meta n anual', '% n ano', '% n acumulado ano', 'percentual meta n ano',
           'percentual meta n anual', '% n acum ano', '% meta n realizada ano'
-        ], 'percentualMetaNAno') || 0,
+        ], 'percentualMetaNAno') ?? 0,
         
         // 15. Meta OIs Agendadas
         metaOIsAgendadas: getValue(rowMap, [
           'meta ois agendadas', 'meta ois', 'meta ois agend', 'meta oportunidades inovacao',
           'meta ois agendadas semana', 'meta oi agendadas', 'meta ois agendadas necessaria'
-        ], 'metaOIsAgendadas') || 8,
+        ], 'metaOIsAgendadas') ?? 8,
         
         // 16. OIs agendadas
         oIsAgendadas: getValue(rowMap, [
           'ois agendadas', 'ois agend', 'oIs agendadas', 'ois agendadas semana',
           'oportunidades inovacao agendadas', 'oi agendadas', 'ois agendadas na semana',
           'ois agendadas por semana'
-        ], 'oIsAgendadas') || 0,
+        ], 'oIsAgendadas') ?? 0,
         
         // 17. OIs realizadas na semana
         oIsRealizadas: getValue(rowMap, [
           'ois realizadas na semana', 'ois realizadas semana', 'ois realizadas', 'ois realiz',
           'oIs realizadas', 'oportunidades inovacao realizadas', 'oi realizadas',
           'ois realizadas na semana', 'ois realizadas por semana'
-        ], 'oIsRealizadas') || 0,
+        ], 'oIsRealizadas') ?? 0,
         
         // 18. Meta RECS
         metaRECS: getValue(rowMap, [
