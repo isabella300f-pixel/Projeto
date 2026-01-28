@@ -604,6 +604,16 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
                       console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (multiplicando por 100 - valor entre 1-10)`)
                     }
                   }
+                } else if (numValue >= 1 && numValue < 100 && Number.isInteger(numValue)) {
+                  // Valores inteiros entre 1-100
+                  // Se for muito pequeno (1, 2) e o campo é uma porcentagem de meta, provavelmente precisa multiplicar por 100
+                  // Ex: 1 -> 100%, 2 -> 200%
+                  if (numValue <= 2 && (fieldName === 'percentualMetaNSemana' || fieldName === 'percentualMetaPASemana' || 
+                      fieldName === 'percentualMetaNAno' || fieldName === 'percentualMetaPAAno')) {
+                    finalValue = numValue * 100
+                    console.log(`📊 [Porcentagem] Convertendo ${numValue} para ${finalValue}% (multiplicando por 100 - valor inteiro pequeno)`)
+                  }
+                  // Caso contrário, manter como está (ex: 49 = 49%, 120 = 120%)
                 } else if (numValue >= 100 && numValue < 10000 && Number.isInteger(numValue)) {
                   // Valores inteiros altos (120, 1200, etc.)
                   // Se for >= 1000, provavelmente precisa dividir por 100
