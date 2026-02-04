@@ -26,83 +26,37 @@ export default function Dashboard() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   
-  // Carregar dados do Google Sheets em tempo real
+  // Carregar dados do Supabase (atualiza ao abrir/atualizar a página)
   useEffect(() => {
-    async function loadGoogleSheetsData() {
+    async function loadKpiData() {
       try {
-        console.log('🔄 Carregando dados do Google Sheets...')
-        const response = await fetch('/api/google-sheets', {
+        const response = await fetch('/api/kpi', {
           cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
         })
-        
+
         if (response.ok) {
           const result = await response.json()
-          console.log('📊 [Frontend] Resultado da API:', result)
-          
           if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
-            console.log('✅ [Frontend] Dados carregados do Google Sheets:', result.count, 'registros')
-            console.log('📅 [Frontend] Períodos:', result.periods)
-            console.log('📈 [Frontend] Primeiro registro completo:', JSON.stringify(result.data[0], null, 2))
-            
-            // Sempre atualizar com os dados recebidos (mesmo se alguns valores estiverem zerados)
-            // O problema de valores sumindo pode ser causado por não atualizar quando alguns campos estão zerados
-            console.log('✅ [Frontend] Dados carregados, atualizando estado')
-            console.log('📊 [Frontend] Total de registros:', result.data.length)
-            console.log('📊 [Frontend] Primeiro registro - PA Semanal:', result.data[0]?.paSemanal)
-            console.log('📊 [Frontend] Primeiro registro - PA Acumulado Ano:', result.data[0]?.paAcumuladoAno)
-            console.log('📊 [Frontend] Último registro - PA Semanal:', result.data[result.data.length - 1]?.paSemanal)
-            console.log('📊 [Frontend] Último registro - PA Acumulado Ano:', result.data[result.data.length - 1]?.paAcumuladoAno)
-            
             setWeeklyDataState(result.data)
             setLastUpdate(new Date())
-            
-            // Verificar se os dados têm valores não-zero para log
-            const hasNonZeroData = result.data.some((d: WeeklyData) => 
-              d.paSemanal > 0 || d.nSemana > 0 || d.oIsAgendadas > 0
-            )
-            
-            if (!hasNonZeroData) {
-              console.warn('⚠️ [Frontend] Dados carregados mas todos os valores estão zerados')
-              console.warn('⚠️ [Frontend] Verifique o mapeamento das colunas na planilha')
-            }
-          } else {
-            console.warn('⚠️ [Frontend] Nenhum dado válido encontrado no Google Sheets')
-            console.warn('⚠️ [Frontend] Resultado:', result)
-            // Só usar fallback se realmente não houver dados
-            if (!result.data || result.data.length === 0) {
-              console.log('ℹ️ [Frontend] Usando dados locais como fallback')
-              setWeeklyDataState(fallbackData)
-            }
+          } else if (!result.data || result.data.length === 0) {
+            setWeeklyDataState(fallbackData)
           }
         } else {
-          const errorData = await response.json().catch(() => ({}))
-          console.error('❌ Erro HTTP ao carregar dados:', response.status, errorData)
-          console.log('ℹ️ Usando dados locais como fallback')
           setWeeklyDataState(fallbackData)
         }
-      } catch (error: any) {
-        console.error('❌ Erro ao carregar dados do Google Sheets:', error)
-        console.error('❌ Detalhes do erro:', error.message, error.stack)
-        console.log('ℹ️ Usando dados locais como fallback (erro ao carregar)')
+      } catch {
         setWeeklyDataState(fallbackData)
       } finally {
         setLoading(false)
       }
     }
-    
-    // Carregar dados imediatamente
-    loadGoogleSheetsData()
-    
-    // Atualizar automaticamente a cada 30 segundos
-    const interval = setInterval(() => {
-      console.log('🔄 Atualização automática...')
-      loadGoogleSheetsData()
-    }, 30000) // 30 segundos
-    
+
+    loadKpiData()
+
+    // Atualizar a cada 30 segundos
+    const interval = setInterval(loadKpiData, 30000)
     return () => clearInterval(interval)
   }, [])
   
