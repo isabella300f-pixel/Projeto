@@ -28,13 +28,13 @@ Isso instala `@supabase/supabase-js` já adicionado no `package.json`.
 
 ## 3. Popular a tabela (primeira vez)
 
-Você pode popular de duas formas:
+Você pode popular de três formas:
 
-### Opção A: Importar os dados locais (planilha/Excel já mapeados)
+### Opção A: Botão "Popular Supabase (exemplo)" no dashboard
 
-- No Supabase: **Table Editor** → **kpi_weekly_data** → **Insert** → **Insert row**.
-- Preencha manualmente um período para testar, **ou**
-- Use a **Opção B** para puxar tudo do Google Sheets de uma vez.
+1. Abra o dashboard (local ou Vercel).
+2. No header, clique em **Popular Supabase (exemplo)**.
+3. Isso grava os 15 períodos de exemplo (fallback) na tabela. Em seguida, clique em **Atualizar dados** para recarregar.
 
 ### Opção B: Sincronizar a partir do Google Sheets
 
@@ -47,6 +47,16 @@ Você pode popular de duas formas:
    `http://localhost:3000/api/sync-sheets`
 
    Isso lê o Google Sheets e grava/atualiza todos os períodos na tabela **kpi_weekly_data** do Supabase.
+
+### Opção C: POST /api/kpi com JSON (seed manual)
+
+Envie **POST** para `/api/kpi` com body:
+
+```json
+{ "data": [ { "period": "18/08 a 24/08", "paSemanal": 114668.5, "paAcumuladoMes": 114668.5, ... }, ... ] }
+```
+
+Cada objeto deve seguir o formato **WeeklyData** (period + todos os campos numéricos da planilha). A API faz upsert por `period`.
 
 Depois disso, ao abrir ou atualizar a página do dashboard, os dados virão do Supabase (e os gráficos atualizam automaticamente).
 

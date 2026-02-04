@@ -25,16 +25,23 @@ export default function Dashboard() {
   })
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
-  
+  const [apiMessage, setApiMessage] = useState<{ type: 'info' | 'error'; text: string } | null>(null)
+
   async function loadKpiData() {
+    setApiMessage(null)
     try {
       const response = await fetch('/api/kpi', {
         cache: 'no-store',
         headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
       })
 
+      const result = await response.json().catch(() => ({}))
+      const meta = result._meta as { source?: string; message?: string } | undefined
+      if (meta?.message) {
+        setApiMessage(meta.source === 'google_sheets' && meta.message.includes('gravados') ? { type: 'info', text: meta.message } : { type: 'error', text: meta.message })
+      }
+
       if (response.ok) {
-        const result = await response.json()
         if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
           setWeeklyDataState(result.data)
           setLastUpdate(new Date())
@@ -352,6 +359,34 @@ export default function Dashboard() {
                 onToggle={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
               />
               <button
+                onClick={async () => {
+                  setLoading(true)
+                  setApiMessage(null)
+                  try {
+                    const res = await fetch('/api/kpi', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ data: fallbackData }),
+                    })
+                    const json = await res.json().catch(() => ({}))
+                    if (json.success) {
+                      setApiMessage({ type: 'info', text: json.message || `${json.synced} registros gravados.` })
+                      await loadKpiData()
+                    } else {
+                      setApiMessage({ type: 'error', text: json.error || 'Erro ao popular.' })
+                    }
+                  } catch (e) {
+                    setApiMessage({ type: 'error', text: e instanceof Error ? e.message : 'Erro ao popular.' })
+                  } finally {
+                    setLoading(false)
+                  }
+                }}
+                disabled={loading}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-gray-200 font-medium transition-colors disabled:opacity-50 text-sm"
+              >
+                Popular Supabase (exemplo)
+              </button>
+              <button
                 onClick={() => { setLoading(true); loadKpiData() }}
                 disabled={loading}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -370,6 +405,11 @@ export default function Dashboard() {
               <span className="ml-2 text-green-400">• Atualizado: {lastUpdate.toLocaleTimeString('pt-BR')}</span>
             )}
           </p>
+          {apiMessage && (
+            <div className={`mt-2 px-3 py-2 rounded text-sm ${apiMessage.type === 'info' ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
+              {apiMessage.text}
+            </div>
+          )}
           {showSearch && (
             <div className="mt-4">
               <SearchBar

@@ -46,23 +46,34 @@ export async function GET() {
     }
 
     let list: WeeklyData[] = (rows || []).map(rowToWeeklyData)
+    let meta: { source?: string; message?: string } = {}
 
     // Se o Supabase estiver vazio: buscar do Google Sheets, popular o Supabase e retornar
     if (list.length === 0) {
       const baseUrl = process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
         : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const res = await fetch(`${baseUrl}/api/google-sheets`, {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' },
-      })
-      if (res.ok) {
-        const json = await res.json()
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      try {
+        const res = await fetch(`${baseUrl}/api/google-sheets`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        })
+        const json = await res.json().catch(() => ({}))
+        if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
           const rowsToUpsert = json.data.map((d: WeeklyData) => weeklyDataToRow(d))
-          await supabase.from('kpi_weekly_data').upsert(rowsToUpsert, { onConflict: 'period' })
-          list = json.data
+          const { error: upsertError } = await supabase.from('kpi_weekly_data').upsert(rowsToUpsert, { onConflict: 'period' })
+          if (upsertError) {
+            meta = { source: 'google_sheets', message: `Planilha carregada mas falha ao gravar no Supabase: ${upsertError.message}` }
+          } else {
+            list = json.data
+            meta = { source: 'google_sheets', message: `${list.length} registros da planilha gravados no Supabase.` }
+          }
+        } else {
+          meta = { source: 'google_sheets', message: json.error || (res.ok ? 'Planilha vazia ou formato inválido.' : `Erro HTTP ${res.status}`) }
         }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        meta = { source: 'google_sheets', message: `Erro ao buscar planilha: ${msg}` }
       }
     }
 
@@ -73,6 +84,7 @@ export async function GET() {
       data: list,
       count: list.length,
       periods: list.map((d) => d.period),
+      ...(Object.keys(meta).length ? { _meta: meta } : {}),
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erro ao buscar dados do Supabase'
@@ -81,5 +93,34 @@ export async function GET() {
       { success: false, error: message, data: [] },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * POST /api/kpi/seed
+ * Body: { data: WeeklyData[] }
+ * Grava/atualiza os registros no Supabase (upsert por period).
+ * Use para popular a base manualmente (ex: dados da planilha em JSON).
+ */
+export async function POST(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}))
+    const data = Array.isArray(body.data) ? body.data : []
+    if (data.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Envie { "data": [ { "period": "...", ... }, ... ] } com pelo menos um registro.' },
+        { status: 400 }
+      )
+    }
+    const supabase = createSupabaseServer()
+    const rows = data.map((d: WeeklyData) => weeklyDataToRow(d))
+    const { error: upsertErr } = await supabase.from('kpi_weekly_data').upsert(rows, { onConflict: 'period' })
+    if (upsertErr) {
+      return NextResponse.json({ success: false, error: upsertErr.message, synced: 0 }, { status: 500 })
+    }
+    return NextResponse.json({ success: true, message: `${rows.length} registros gravados no Supabase.`, synced: rows.length })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erro ao gravar dados'
+    return NextResponse.json({ success: false, error: message, synced: 0 }, { status: 500 })
   }
 }

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { WeeklyData } from '@/lib/types'
 import * as XLSX from 'xlsx'
 
-// URL do Google Sheets (formato CSV)
-const GOOGLE_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQk309WH9kRymm3yLfzMluGJLRgAjMtWiil22Du0UGwdS55YOafE0C-EVCNiKKkw/pub?gid=1893200293&single=true&output=csv'
+// URL do Google Sheets (formato CSV). Pode sobrescrever com env GOOGLE_SHEETS_URL.
+const DEFAULT_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQk309WH9kRymm3yLfzMluGJLRgAjMtWiil22Du0UGwdS55YOafE0C-EVCNiKKkw/pub?gid=1893200293&single=true&output=csv'
+const GOOGLE_SHEETS_URL = process.env.GOOGLE_SHEETS_URL || DEFAULT_SHEETS_URL
 
 // Função para normalizar nomes de colunas
 const normalizeKey = (key: string) => 
@@ -32,8 +33,8 @@ const isValidPeriod = (value: string): boolean => {
   
   const normalized = value.trim().toLowerCase()
   
-  // Deve ter entre 8 e 20 caracteres (formato típico: "18/08 a 24/08")
-  if (normalized.length < 8 || normalized.length > 20) return false
+  // Deve ter entre 8 e 25 caracteres (formato: "18/08 a 24/08" ou "05/01 A 11/01")
+  if (normalized.length < 8 || normalized.length > 25) return false
   
   // Lista expandida de padrões inválidos
   const invalidPatterns = [
@@ -112,14 +113,13 @@ const parseNumber = (value: any, isPercentage: boolean = false): number | undefi
     const originalCleaned = value.trim()
     const hasComma = originalCleaned.includes(',')
     const hasDot = originalCleaned.includes('.')
-    
-    const cleaned = originalCleaned
-      .replace(/\./g, '') // Remove pontos (separadores de milhar)
-      .replace(/,/g, '.') // Substitui vírgula por ponto (decimal)
-      .replace(/[^\d.-]/g, '') // Remove tudo exceto dígitos, ponto e sinal negativo
-    
+    // Primeiro isolar dígitos, ponto e vírgula (ex: "R$ 114.668,50" -> "114.668,50")
+    let cleaned = originalCleaned.replace(/[^\d.,\-]/g, '')
+    // Formato BR: milhar = . decimal = , (ex: 114.668,50 = 114668.50)
+    if (cleaned.includes(',')) {
+      cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.')
+    }
     if (cleaned === '' || cleaned === '-') return undefined
-    
     let parsed = parseFloat(cleaned)
     if (isNaN(parsed)) return undefined
     
