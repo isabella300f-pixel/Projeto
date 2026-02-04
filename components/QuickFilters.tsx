@@ -14,47 +14,46 @@ export default function QuickFilters({ onFilterApply, currentFilters }: QuickFil
       label: 'Acima da Meta PA',
       icon: <TrendingUp className="w-4 h-4" />,
       filter: { performancePA: 'above' as const },
-      color: 'bg-green-50 hover:bg-green-100 border-green-200 text-green-700',
+      color: 'bg-green-500/20 hover:bg-green-500/30 border-green-500/50 text-green-300',
       isActive: currentFilters.performancePA === 'above',
     },
     {
       label: 'Abaixo da Meta PA',
       icon: <TrendingDown className="w-4 h-4" />,
       filter: { performancePA: 'below' as const },
-      color: 'bg-red-50 hover:bg-red-100 border-red-200 text-red-700',
+      color: 'bg-red-500/20 hover:bg-red-500/30 border-red-500/50 text-red-300',
       isActive: currentFilters.performancePA === 'below',
     },
     {
       label: 'Acima da Meta N',
       icon: <Target className="w-4 h-4" />,
       filter: { performanceN: 'above' as const },
-      color: 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700',
+      color: 'bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/50 text-blue-300',
       isActive: currentFilters.performanceN === 'above',
     },
     {
       label: 'Abaixo da Meta N',
       icon: <Target className="w-4 h-4" />,
       filter: { performanceN: 'below' as const },
-      color: 'bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700',
+      color: 'bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/50 text-orange-300',
       isActive: currentFilters.performanceN === 'below',
     },
     {
       label: 'Últimos 30 dias',
       icon: <Calendar className="w-4 h-4" />,
       filter: { period: 'last30days' as any, month: 'all' },
-      color: 'bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700',
+      color: 'bg-purple-500/20 hover:bg-purple-500/30 border-purple-500/50 text-purple-300',
       isActive: currentFilters.period === 'last30days',
     },
   ]
 
   const handleClick = (filter: Partial<FilterState>) => {
-    // Manter outros filtros e aplicar apenas o novo
     onFilterApply({ ...currentFilters, ...filter })
   }
 
   return (
     <div className="flex flex-wrap gap-2 mb-6">
-      <span className="flex items-center gap-1 text-sm font-medium text-gray-600 px-2">
+      <span className="flex items-center gap-1 text-sm font-medium text-gray-400 px-2">
         <Zap className="w-4 h-4" />
         Filtros Rápidos:
       </span>
@@ -64,7 +63,7 @@ export default function QuickFilters({ onFilterApply, currentFilters }: QuickFil
           onClick={() => handleClick(quickFilter.filter)}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
             quickFilter.isActive
-              ? `${quickFilter.color} ring-2 ring-offset-2`
+              ? `${quickFilter.color} ring-2 ring-offset-2 ring-offset-gray-900`
               : quickFilter.color
           }`}
         >
@@ -75,4 +74,3 @@ export default function QuickFilters({ onFilterApply, currentFilters }: QuickFil
     </div>
   )
 }
-

@@ -21,26 +21,30 @@ export default function BarChart({
   secondName,
   secondColor = '#10b981',
 }: BarChartProps) {
+  const gridStroke = '#4b5563'
+  const tickStyle = { fontSize: 12, fill: '#9ca3af' }
   return (
     <ResponsiveContainer width="100%" height={300}>
       <RechartsBarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="period" 
+        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+        <XAxis
+          dataKey="period"
           angle={-45}
           textAnchor="end"
           height={80}
-          tick={{ fontSize: 12 }}
+          tick={tickStyle}
         />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip 
-          contentStyle={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            border: '1px solid #ccc',
-            borderRadius: '8px'
+        <YAxis tick={tickStyle} />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'rgb(31, 41, 55)',
+            border: '1px solid rgb(75, 85, 99)',
+            borderRadius: '8px',
+            color: '#f3f4f6',
           }}
+          labelStyle={{ color: '#9ca3af' }}
         />
-        <Legend />
+        <Legend wrapperStyle={{ color: '#9ca3af' }} />
         <Bar dataKey={dataKey} name={name} fill={color} />
         {secondDataKey && secondName && (
           <Bar dataKey={secondDataKey} name={secondName} fill={secondColor} />

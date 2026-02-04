@@ -3,28 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 243, 244, 246;
+  --background-rgb: 17, 24, 39;
+  --card-bg: 31, 41, 55;
+  --border-color: 55, 65, 81;
+  --accent: 59, 130, 246;
 }
-
-/* Desabilitar modo escuro automático para garantir visibilidade */
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-} */
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
 }
 
 @layer utilities {
@@ -33,60 +21,66 @@ body {
   }
 }
 
-/* Scrollbar personalizado */
+/* Scrollbar tema escuro */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(31, 41, 55);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: rgb(75, 85, 99);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: rgb(107, 114, 128);
 }
 
-/* Estilos para selects e inputs - garantindo visibilidade */
+/* Selects e inputs - tema escuro */
 select {
-  color: #111827 !important;
-  background-color: #ffffff !important;
+  color: rgb(243, 244, 246) !important;
+  background-color: rgb(55, 65, 81) !important;
+  border-color: rgb(75, 85, 99);
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
 
 select:focus {
-  color: #111827 !important;
-  background-color: #ffffff !important;
   outline: none;
+  border-color: rgb(59, 130, 246);
+  ring: 2px;
+  ring-color: rgb(59, 130, 246);
 }
 
 select option {
-  color: #111827 !important;
-  background-color: #ffffff !important;
-  padding: 8px !important;
+  color: rgb(243, 244, 246);
+  background-color: rgb(31, 41, 55);
+  padding: 8px;
 }
 
-select option:checked {
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
-}
-
-select option:hover {
-  background-color: #dbeafe !important;
-  color: #111827 !important;
-}
-
-/* Inputs numéricos */
+input[type="text"],
+input[type="search"],
 input[type="number"] {
-  color: #111827 !important;
-  background-color: #ffffff !important;
+  color: rgb(243, 244, 246);
+  background-color: rgb(55, 65, 81);
+  border-color: rgb(75, 85, 99);
+}
+
+input::placeholder {
+  color: rgb(156, 163, 175);
+}
+
+input:focus {
+  outline: none;
+  border-color: rgb(59, 130, 246);
+}
+
+input[type="number"] {
   -moz-appearance: textfield;
 }
 
@@ -95,25 +89,3 @@ input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
-input[type="number"]::placeholder {
-  color: #9ca3af !important;
-  opacity: 1;
-}
-
-input[type="number"]:focus {
-  color: #111827 !important;
-  background-color: #ffffff !important;
-  outline: none;
-}
-
-/* Garantir que texto não fique invisível */
-body, html {
-  color-scheme: light only;
-}
-
-/* Forçar modo claro para todos os elementos */
-* {
-  color-scheme: light only;
-}
-
