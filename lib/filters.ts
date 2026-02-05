@@ -195,8 +195,8 @@ function isWithinLast30Days(period: string): boolean {
   return periodDate >= thirtyDaysAgo && periodDate <= today
 }
 
-// Normaliza percentual para escala 0–100 (aceita 0–1 ou 0–100 vindos da planilha/Supabase)
-function percentTo100(value: number | undefined): number {
+// Normaliza percentual para escala 0–100 (aceita 0–1 ou 0–100 vindos da planilha/Supabase). Exportado para uso na UI.
+export function percentTo100(value: number | undefined): number {
   if (value === undefined || value === null) return 0
   if (value > 2 && value <= 10000) return value // já está em 0–100
   if (value >= 0 && value <= 2) return value * 100 // escala 0–1
