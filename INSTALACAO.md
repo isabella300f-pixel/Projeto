@@ -1,81 +1,59 @@
-# Guia de Instalação - KPI Dashboard
+# Instalação e deploy
 
-## Pré-requisitos
+## Desenvolvimento local
 
-- Node.js 18+ instalado
-- npm ou yarn instalado
-
-## Passo a Passo
-
-### 1. Instalar Dependências
-
-No terminal, na pasta do projeto, execute:
+**Pré-requisitos:** Node.js 18+, npm.
 
 ```bash
 npm install
-```
-
-Isso instalará todas as dependências necessárias:
-- Next.js (framework React)
-- React
-- Recharts (gráficos)
-- Tailwind CSS (estilização)
-- TypeScript
-- E outras dependências de desenvolvimento
-
-### 2. Executar o Projeto em Modo de Desenvolvimento
-
-```bash
 npm run dev
 ```
 
-O dashboard estará disponível em: **http://localhost:3000**
+Abre [http://localhost:3000](http://localhost:3000).
 
-### 3. Construir para Produção
+Para o dashboard carregar dados localmente, é preciso configurar as variáveis de ambiente (veja seção Variáveis de ambiente).
 
-Para criar uma versão otimizada para produção:
+## Build para produção
 
 ```bash
 npm run build
 npm start
 ```
 
-## Estrutura de Dados
+## Deploy (Vercel + Supabase)
 
-Os dados estão localizados em `lib/data.ts`. Para atualizar os dados:
+1. **Supabase**  
+   - Crie um projeto no [Supabase](https://supabase.com).  
+   - No SQL Editor, execute o conteúdo do arquivo **`supabase-schema.sql`** do projeto (cria a tabela `kpi_weekly_data`).
 
-1. Abra o arquivo `lib/data.ts`
-2. Atualize o array `weeklyData` com os novos valores
-3. Mantenha a estrutura `WeeklyData` conforme definida no arquivo
+2. **Vercel**  
+   - Conecte o repositório ao [Vercel](https://vercel.com) e faça o deploy.  
+   - Em **Settings → Environment Variables** configure (apenas os **nomes** abaixo; os valores você obtém no Supabase e, se usar, na planilha):
+     - `NEXT_PUBLIC_SUPABASE_URL` – URL do projeto Supabase
+     - `SUPABASE_SERVICE_ROLE_KEY` – chave **service_role** do Supabase (Settings → API)
+     - `GOOGLE_SHEETS_URL` – (opcional) URL pública da planilha em formato CSV (`.../pub?output=csv`)
 
-## Atualizando Dados da Planilha do Google Sheets
+3. **Planilha (opcional)**  
+   - Se a tabela `kpi_weekly_data` estiver vazia, a API tenta buscar da planilha (quando `GOOGLE_SHEETS_URL` está definida).  
+   - A planilha deve estar publicada (“Qualquer pessoa com o link” pode ver) e a URL deve ser a de exportação CSV, não a de visualização (pubhtml).
 
-Atualmente os dados estão hardcoded. Para integrar com a planilha do Google Sheets:
+4. **Sync manual (opcional)**  
+   - `POST /api/sync-sheets` lê a planilha e grava/atualiza no Supabase. Pode ser chamado manualmente ou por um cron.
 
-1. Configure a API do Google Sheets
-2. Crie uma função para buscar dados automaticamente
-3. Atualize `lib/data.ts` para buscar dados dinamicamente
+## Variáveis de ambiente
 
-Ou você pode exportar os dados da planilha como CSV/JSON e importá-los no código.
+- **Local:** crie `.env.local` na raiz (não commitar).  
+- **Vercel:** use Settings → Environment Variables.
 
-## Personalização
+Nomes usados pelo projeto:
 
-- **Cores**: Edite `tailwind.config.js` para personalizar as cores do tema
-- **Gráficos**: Modifique os componentes em `components/` para alterar estilos e tipos de gráficos
-- **Layout**: Edite `app/page.tsx` para reorganizar os componentes
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_SHEETS_URL` (opcional)
 
-## Problemas Comuns
+Nunca commite chaves ou URLs reais. Use os valores no Supabase (API) e, se aplicável, na URL pública da planilha.
 
-### Erro ao instalar dependências
-- Certifique-se de estar usando Node.js 18+
-- Tente limpar o cache: `npm cache clean --force`
-- Delete `node_modules` e `package-lock.json` e tente novamente
+## Problemas comuns
 
-### Porta 3000 já em uso
-- Altere a porta: `PORT=3001 npm run dev`
-- Ou configure no `package.json`: `"dev": "next dev -p 3001"`
-
-## Suporte
-
-Para dúvidas ou problemas, consulte a documentação do Next.js: https://nextjs.org/docs
-
+- **Porta 3000 em uso:** `PORT=3001 npm run dev` ou altere no script `dev` do `package.json`.
+- **Erro ao instalar:** Node 18+, `npm cache clean --force`, remova `node_modules` e `package-lock.json` e rode `npm install` de novo.
