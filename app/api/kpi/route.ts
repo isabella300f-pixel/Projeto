@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase'
 import { rowToWeeklyData, weeklyDataToRow } from '@/lib/supabase-mappers'
 import { WeeklyData } from '@/lib/types'
+import { fetchGoogleSheetsData } from '@/app/api/google-sheets/route'
 
 /**
  * GET /api/kpi — Fonte única de dados para o dashboard.
@@ -54,28 +55,21 @@ export async function GET() {
     let list: WeeklyData[] = (rows || []).map(rowToWeeklyData)
     let meta: { source?: string; message?: string } = {}
 
-    // Se o Supabase estiver vazio: buscar do Google Sheets, popular o Supabase e retornar
+    // Se o Supabase estiver vazio: buscar do Google Sheets diretamente (sem fetch à própria API, evita 401 por proteção Vercel)
     if (list.length === 0) {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       try {
-        const res = await fetch(`${baseUrl}/api/google-sheets`, {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' },
-        })
-        const json = await res.json().catch(() => ({}))
-        if (res.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const rowsToUpsert = json.data.map((d: WeeklyData) => weeklyDataToRow(d))
+        const sheetData = await fetchGoogleSheetsData()
+        if (sheetData && sheetData.length > 0) {
+          const rowsToUpsert = sheetData.map((d: WeeklyData) => weeklyDataToRow(d))
           const { error: upsertError } = await supabase.from('kpi_weekly_data').upsert(rowsToUpsert, { onConflict: 'period' })
           if (upsertError) {
             meta = { source: 'google_sheets', message: `Planilha carregada mas falha ao gravar no Supabase: ${upsertError.message}` }
           } else {
-            list = json.data
+            list = sheetData
             meta = { source: 'google_sheets', message: `${list.length} registros da planilha gravados no Supabase.` }
           }
         } else {
-          meta = { source: 'google_sheets', message: json.error || (res.ok ? 'Planilha vazia ou formato inválido.' : `Erro HTTP ${res.status}`) }
+          meta = { source: 'google_sheets', message: 'Planilha vazia ou formato inválido.' }
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)

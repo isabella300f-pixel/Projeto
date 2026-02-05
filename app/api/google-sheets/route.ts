@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { WeeklyData } from '@/lib/types'
 import * as XLSX from 'xlsx'
 
-// URL do Google Sheets (formato CSV). Pode sobrescrever com env GOOGLE_SHEETS_URL.
-const DEFAULT_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQk309WH9kRymm3yLfzMluGJLRgAjMtWiil22Du0UGwdS55YOafE0C-EVCNiKKkw/pub?gid=1893200293&single=true&output=csv'
+// URL do Google Sheets: deve ser exportação CSV (pub?output=csv), não a de visualização (pubhtml).
+// Mesmo documento: https://.../pubhtml → para o app use: .../pub?output=csv (ou com &gid=ID_ABA)
+const DEFAULT_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQk309WH9kRymm3yLfzMluGJLRgAjMtWiil22Du0UGwdS55YOafE0C-EVCNiKKkw/pub?output=csv'
 const GOOGLE_SHEETS_URL = process.env.GOOGLE_SHEETS_URL || DEFAULT_SHEETS_URL
 
 // Função para normalizar nomes de colunas
@@ -235,8 +236,8 @@ const getTextValue = (rowMap: any, variations: string[]): string | undefined => 
   return undefined
 }
 
-// Função para buscar dados do Google Sheets
-async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
+// Função para buscar dados do Google Sheets (exportada para uso direto na rota KPI, evitando fetch à própria API e 401 por proteção Vercel)
+export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
   try {
     console.log('🔄 [Google Sheets] Buscando dados...')
     console.log('📋 [Google Sheets] URL:', GOOGLE_SHEETS_URL)
@@ -249,8 +250,9 @@ async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       signal: controller.signal,
       cache: 'no-store',
       headers: {
-        'Accept': 'text/csv',
-        'User-Agent': 'Mozilla/5.0'
+        'Accept': 'text/csv, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
       }
     })
     
