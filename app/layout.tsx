@@ -5,8 +5,9 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'KPI Dashboard - Legathon',
-  description: 'Dashboard de Indicadores e KPIs',
+  title: 'KPI Dash - Legatum',
+  description: 'Dashboard de Indicadores e KPIs - Legatum',
+  icons: { icon: '/favicon.svg' },
 }
 
 export default function RootLayout({

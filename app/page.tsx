@@ -1,7 +1,9 @@
 'use client'
 
+// Garantia: todos os gráficos e a aplicação populam EXCLUSIVAMENTE com dados da base (Supabase).
+// Fonte única: GET /api/kpi (Supabase ou, se vazio, Google Sheets → upsert no Supabase). Sem dados de exemplo/fallback.
 import { useState, useMemo, useEffect } from 'react'
-import { weeklyData as fallbackData, formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
+import { formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
 import { filterData, getFilterStats } from '@/lib/filters'
 import { FilterState, WeeklyData } from '@/lib/types'
 import KPICard from '@/components/KPICard'
@@ -13,7 +15,7 @@ import QuickFilters from '@/components/QuickFilters'
 import { DollarSign, Target, TrendingUp, CheckCircle, Search, Filter as FilterIcon, AlertCircle } from 'lucide-react'
 
 export default function Dashboard() {
-  const [weeklyDataState, setWeeklyDataState] = useState<WeeklyData[]>(fallbackData)
+  const [weeklyDataState, setWeeklyDataState] = useState<WeeklyData[]>([])
   const [loading, setLoading] = useState(true)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [filters, setFilters] = useState<FilterState>({
@@ -46,13 +48,13 @@ export default function Dashboard() {
           setWeeklyDataState(result.data)
           setLastUpdate(new Date())
         } else if (!result.data || result.data.length === 0) {
-          setWeeklyDataState(fallbackData)
+          setWeeklyDataState([])
         }
       } else {
-        setWeeklyDataState(fallbackData)
+        setWeeklyDataState([])
       }
     } catch {
-      setWeeklyDataState(fallbackData)
+      setWeeklyDataState([])
     } finally {
       setLoading(false)
     }
@@ -336,11 +338,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Header - estilo Dashboard Executivo */}
+      {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Dashboard Executivo</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">KPI Dash - Legatum</h1>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowSearch(!showSearch)}
@@ -358,34 +360,6 @@ export default function Dashboard() {
                 isOpen={isFilterPanelOpen}
                 onToggle={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
               />
-              <button
-                onClick={async () => {
-                  setLoading(true)
-                  setApiMessage(null)
-                  try {
-                    const res = await fetch('/api/kpi', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ data: fallbackData }),
-                    })
-                    const json = await res.json().catch(() => ({}))
-                    if (json.success) {
-                      setApiMessage({ type: 'info', text: json.message || `${json.synced} registros gravados.` })
-                      await loadKpiData()
-                    } else {
-                      setApiMessage({ type: 'error', text: json.error || 'Erro ao popular.' })
-                    }
-                  } catch (e) {
-                    setApiMessage({ type: 'error', text: e instanceof Error ? e.message : 'Erro ao popular.' })
-                  } finally {
-                    setLoading(false)
-                  }
-                }}
-                disabled={loading}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-gray-200 font-medium transition-colors disabled:opacity-50 text-sm"
-              >
-                Popular Supabase (exemplo)
-              </button>
               <button
                 onClick={() => { setLoading(true); loadKpiData() }}
                 disabled={loading}
@@ -458,6 +432,17 @@ export default function Dashboard() {
                 Limpar Filtros
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Estado vazio: sem dados na base — nenhum gráfico ou card usa fallback */}
+        {!loading && weeklyDataState.length === 0 && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6 mb-8 text-center">
+            <p className="text-lg font-medium text-amber-200 mb-2">Nenhum dado na base de dados</p>
+            <p className="text-sm text-amber-300 mb-4">
+              Todos os gráficos e indicadores vêm apenas do Supabase. Atualize a planilha no Google Sheets e clique em &quot;Atualizar dados&quot; ou use a sincronização (POST /api/sync-sheets).
+            </p>
+            <p className="text-xs text-gray-400">Não há dados de exemplo; a aplicação só exibe o que está na base.</p>
           </div>
         )}
 

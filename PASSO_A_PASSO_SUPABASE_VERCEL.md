@@ -26,39 +26,23 @@ Isso instala `@supabase/supabase-js` já adicionado no `package.json`.
 
 ---
 
-## 3. Popular a tabela (primeira vez)
+## 3. Popular a tabela (só com dados da planilha)
 
-Você pode popular de três formas:
+**Toda a população do Supabase vem da planilha do Google Sheets.** Não há dados de exemplo.
 
-### Opção A: Botão "Popular Supabase (exemplo)" no dashboard
+### Como popular
 
-1. Abra o dashboard (local ou Vercel).
-2. No header, clique em **Popular Supabase (exemplo)**.
-3. Isso grava os 15 períodos de exemplo (fallback) na tabela. Em seguida, clique em **Atualizar dados** para recarregar.
+1. **Publique a planilha** no Google Sheets: Arquivo → Compartilhar → “Qualquer pessoa com o link” (pelo menos “Ver”) e use a aba que tem os indicadores nas linhas e os períodos nas colunas.
+2. **Configure a URL da planilha** em **`app/api/google-sheets/route.ts`** (variável `GOOGLE_SHEETS_URL`) ou defina a variável **`GOOGLE_SHEETS_URL`** no Vercel (Settings → Environment Variables) com a URL pública em CSV da planilha.
+3. Quando a tabela **kpi_weekly_data** estiver vazia, ao **abrir o dashboard** ou clicar em **Atualizar dados**, a API:
+   - Busca os dados da planilha (GET /api/google-sheets),
+   - Grava/atualiza no Supabase (upsert por período),
+   - Devolve os dados para o dashboard.
+4. **Alternativa (sync manual):** chame **POST** `https://seu-app.vercel.app/api/sync-sheets` (ou `/api/sync-sheets` em local). Isso lê o Google Sheets e faz upsert na tabela **kpi_weekly_data**.
 
-### Opção B: Sincronizar a partir do Google Sheets
+Se a planilha não carregar (ex.: Erro HTTP 401 por proteção do Vercel, URL errada ou planilha não publicada), a mensagem abaixo do header mostrará o erro e a tabela permanecerá vazia até a planilha ser acessível.
 
-1. Deixe a planilha do Google Sheets publicada (como está hoje) e a URL em **`app/api/google-sheets/route.ts`** (variável `GOOGLE_SHEETS_URL`).
-2. No seu projeto, crie **`.env.local`** com as variáveis do Supabase (veja passo 4).
-3. Rode o app: `npm run dev`.
-4. Chame a API de sync (no navegador ou Postman/Insomnia):
-
-   **POST**  
-   `http://localhost:3000/api/sync-sheets`
-
-   Isso lê o Google Sheets e grava/atualiza todos os períodos na tabela **kpi_weekly_data** do Supabase.
-
-### Opção C: POST /api/kpi com JSON (seed manual)
-
-Envie **POST** para `/api/kpi` com body:
-
-```json
-{ "data": [ { "period": "18/08 a 24/08", "paSemanal": 114668.5, "paAcumuladoMes": 114668.5, ... }, ... ] }
-```
-
-Cada objeto deve seguir o formato **WeeklyData** (period + todos os campos numéricos da planilha). A API faz upsert por `period`.
-
-Depois disso, ao abrir ou atualizar a página do dashboard, os dados virão do Supabase (e os gráficos atualizam automaticamente).
+**Garantia:** Todos os gráficos e toda a aplicação populam **apenas** com dados atualizados da base (Supabase). Não há dados de exemplo ou fallback: cards, indicadores, tabela e gráficos vêm exclusivamente do `GET /api/kpi` (Supabase ou, se vazio, Google Sheets → upsert no Supabase).
 
 ---
 

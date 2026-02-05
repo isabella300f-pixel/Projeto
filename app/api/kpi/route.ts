@@ -3,6 +3,12 @@ import { createSupabaseServer } from '@/lib/supabase'
 import { rowToWeeklyData, weeklyDataToRow } from '@/lib/supabase-mappers'
 import { WeeklyData } from '@/lib/types'
 
+/**
+ * GET /api/kpi — Fonte única de dados para o dashboard.
+ * Retorna apenas dados do Supabase (kpi_weekly_data). Se a tabela estiver vazia,
+ * busca da planilha Google Sheets e faz upsert no Supabase. Não há dados de exemplo/fallback.
+ */
+
 /** Ordena períodos cronologicamente (DD/MM a DD/MM) */
 function parsePeriodToDate(period: string): Date | null {
   const match = period.match(/(\d{1,2})\/(\d{1,2})/)
