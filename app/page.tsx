@@ -338,12 +338,13 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Header */}
+      {/* Header compacto: título, ações, status e filtros rápidos */}
       <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">KPI Dash - Legatum</h1>
-            <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          {/* Linha 1: Título + Ações */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-white shrink-0">KPI Dash - Legatum</h1>
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setShowSearch(!showSearch)}
                 className={`p-2 rounded-lg transition-colors ${
@@ -363,29 +364,55 @@ export default function Dashboard() {
               <button
                 onClick={() => { setLoading(true); loadKpiData() }}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading && <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 Atualizar dados
               </button>
             </div>
           </div>
-          <p className="text-sm text-gray-400 mb-1">
-            Dados do Supabase ({weeklyDataState.length} registros). Alterou a planilha? Clique em Atualizar dados.
-          </p>
-          <p className="text-sm text-gray-400">
-            Registros filtrados: {filteredData.length} de {weeklyDataState.length} total | Período: {periodLabel}
-            {lastUpdate && (
-              <span className="ml-2 text-green-400">• Atualizado: {lastUpdate.toLocaleTimeString('pt-BR')}</span>
+          {/* Linha 2: Status + Filtros rápidos na mesma faixa */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <span className="text-gray-400">
+              Supabase: <strong className="text-gray-300">{weeklyDataState.length}</strong> registros
+              {lastUpdate && <span className="ml-1 text-green-400">• {lastUpdate.toLocaleTimeString('pt-BR')}</span>}
+            </span>
+            <span className="text-gray-500">|</span>
+            <span className="text-gray-400">
+              Filtrados: <strong className="text-gray-300">{filteredData.length}</strong> de {weeklyDataState.length}
+              {periodLabel !== '—' && <span> • Período: {periodLabel}</span>}
+            </span>
+            {hasActiveFilters && (
+              <>
+                <span className="text-gray-500">|</span>
+                <button
+                  onClick={() => {
+                    setFilters({
+                      period: 'all',
+                      month: 'all',
+                      performancePA: 'all',
+                      performanceN: 'all',
+                      searchQuery: '',
+                    })
+                  }}
+                  className="text-blue-400 hover:text-blue-300 font-medium"
+                >
+                  Limpar Filtros
+                </button>
+              </>
             )}
-          </p>
+          </div>
+          {/* Filtros rápidos integrados ao header */}
+          <div className="mt-3 pt-3 border-t border-gray-600">
+            <QuickFilters onFilterApply={handleQuickFilter} currentFilters={filters} />
+          </div>
           {apiMessage && (
             <div className={`mt-2 px-3 py-2 rounded text-sm ${apiMessage.type === 'info' ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
               {apiMessage.text}
             </div>
           )}
           {showSearch && (
-            <div className="mt-4">
+            <div className="mt-3">
               <SearchBar
                 onSearch={handleSearch}
                 placeholder="Buscar por período, valor, mês, performance (ex: 'acima da meta', 'agosto', '150000')..."
@@ -395,7 +422,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {isFilterPanelOpen && (
           <FilterPanel
             filters={filters}
@@ -404,35 +431,6 @@ export default function Dashboard() {
             isOpen={isFilterPanelOpen}
             onToggle={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
           />
-        )}
-
-        <QuickFilters onFilterApply={handleQuickFilter} currentFilters={filters} />
-
-        {hasActiveFilters && (
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FilterIcon className="w-5 h-5 text-blue-400" />
-                <p className="text-sm font-medium text-blue-200">
-                  Mostrando {filteredData.length} de {weeklyDataState.length} períodos
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setFilters({
-                    period: 'all',
-                    month: 'all',
-                    performancePA: 'all',
-                    performanceN: 'all',
-                    searchQuery: '',
-                  })
-                }}
-                className="text-sm text-blue-400 hover:text-blue-300 font-medium"
-              >
-                Limpar Filtros
-              </button>
-            </div>
-          </div>
         )}
 
         {/* Estado vazio: sem dados na base — nenhum gráfico ou card usa fallback */}
@@ -970,18 +968,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Mensagem quando não há resultados */}
-        {filteredData.length === 0 && hasActiveFilters && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-8 text-center mb-8">
-            <p className="text-lg font-medium text-yellow-200 mb-2">
-              Nenhum resultado encontrado com os filtros aplicados
-            </p>
-            <p className="text-sm text-yellow-300">
-              Tente ajustar os filtros ou limpar para ver todos os dados
-            </p>
-          </div>
-        )}
-
         {/* GRÁFICOS - TODOS OS INDICADORES VISUALIZADOS */}
         {chartData.length > 0 && (
           <>
@@ -1455,15 +1441,14 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Tabela de Dados - Layout Ultra Compacto */}
+        {/* Tabela Dados Detalhados: mesma lógica da planilha (uma linha por período, colunas por indicador) */}
         <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-gray-600 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-gray-600 flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-xl font-bold text-white">Dados Detalhados</h2>
-            {hasActiveFilters && (
-              <span className="text-sm text-gray-400">
-                {filteredData.length} resultado(s)
-              </span>
-            )}
+            <span className="text-sm text-gray-400">
+              {filteredData.length} de {weeklyDataState.length} período(s)
+              {hasActiveFilters && ' (com filtros)'}
+            </span>
           </div>
           <div className="overflow-x-auto">
             {filteredData.length > 0 ? (
@@ -1540,8 +1525,15 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="p-8 text-center text-gray-400">
-                Nenhum dado encontrado com os filtros aplicados
+              <div className="p-8 text-center">
+                {weeklyDataState.length === 0 ? (
+                  <p className="text-gray-400">Nenhum dado na base. Use &quot;Atualizar dados&quot; para carregar da planilha.</p>
+                ) : (
+                  <>
+                    <p className="text-amber-200 font-medium mb-1">Nenhum período corresponde aos filtros aplicados.</p>
+                    <p className="text-sm text-gray-400">Use &quot;Limpar Filtros&quot; no cabeçalho para ver todos os {weeklyDataState.length} períodos.</p>
+                  </>
+                )}
               </div>
             )}
           </div>

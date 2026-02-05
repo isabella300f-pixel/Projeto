@@ -52,8 +52,8 @@ export default function QuickFilters({ onFilterApply, currentFilters }: QuickFil
   }
 
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
-      <span className="flex items-center gap-1 text-sm font-medium text-gray-400 px-2">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="flex items-center gap-1 text-sm font-medium text-gray-400">
         <Zap className="w-4 h-4" />
         Filtros Rápidos:
       </span>

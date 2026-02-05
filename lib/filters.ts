@@ -56,20 +56,23 @@ export function matchesSearch(data: WeeklyData, query: string): boolean {
     if (Math.abs(data.oIsRealizadas - numericQuery) < 0.5) return true
   }
   
+  // Normalizar percentuais para 0–100 (matchesSearch é chamada antes de percentTo100 existir no fluxo; usar lógica equivalente)
+  const pPA = (data.percentualMetaPASemana ?? 0) > 2 ? (data.percentualMetaPASemana ?? 0) : (data.percentualMetaPASemana ?? 0) * 100
+  const pN = (data.percentualMetaNSemana ?? 0) > 2 ? (data.percentualMetaNSemana ?? 0) : (data.percentualMetaNSemana ?? 0) * 100
   // Buscar por palavras-chave inteligentes
   const keywords: { [key: string]: boolean } = {
-    'meta': data.percentualMetaPASemana >= 100 || data.percentualMetaNSemana >= 100,
-    'acima da meta': data.percentualMetaPASemana > 100 || data.percentualMetaNSemana > 100,
-    'acima': data.percentualMetaPASemana > 100 || data.percentualMetaNSemana > 100,
-    'abaixo da meta': data.percentualMetaPASemana < 100 || data.percentualMetaNSemana < 100,
-    'abaixo': data.percentualMetaPASemana < 100 || data.percentualMetaNSemana < 100,
+    'meta': pPA >= 100 || pN >= 100,
+    'acima da meta': pPA > 100 || pN > 100,
+    'acima': pPA > 100 || pN > 100,
+    'abaixo da meta': pPA < 100 || pN < 100,
+    'abaixo': pPA < 100 || pN < 100,
     'alto': data.paSemanal > 150000,
     'alto pa': data.paSemanal > 150000,
     'baixo': data.paSemanal < 80000,
     'baixo pa': data.paSemanal < 80000,
-    'excelente': data.percentualMetaPASemana > 150 && data.percentualMetaNSemana > 150,
-    'bom': data.percentualMetaPASemana >= 100 && data.percentualMetaNSemana >= 100,
-    'ruim': data.percentualMetaPASemana < 80 || data.percentualMetaNSemana < 80,
+    'excelente': pPA > 150 && pN > 150,
+    'bom': pPA >= 100 && pN >= 100,
+    'ruim': pPA < 80 || pN < 80,
   }
   
   // Verificar palavras-chave (também busca parcial)
@@ -192,6 +195,14 @@ function isWithinLast30Days(period: string): boolean {
   return periodDate >= thirtyDaysAgo && periodDate <= today
 }
 
+// Normaliza percentual para escala 0–100 (aceita 0–1 ou 0–100 vindos da planilha/Supabase)
+function percentTo100(value: number | undefined): number {
+  if (value === undefined || value === null) return 0
+  if (value > 2 && value <= 10000) return value // já está em 0–100
+  if (value >= 0 && value <= 2) return value * 100 // escala 0–1
+  return value
+}
+
 // Função principal de filtragem
 export function filterData(data: WeeklyData[], filters: FilterState): WeeklyData[] {
   let filtered = [...data]
@@ -227,25 +238,31 @@ export function filterData(data: WeeklyData[], filters: FilterState): WeeklyData
     filtered = filtered.filter(d => d.nSemana <= filters.nMax!)
   }
   
-  // Filtro por performance PA
+  // Filtro por performance PA (usa percentual normalizado 0–100)
   if (filters.performancePA && filters.performancePA !== 'all') {
     if (filters.performancePA === 'above') {
-      filtered = filtered.filter(d => d.percentualMetaPASemana > 100)
+      filtered = filtered.filter(d => percentTo100(d.percentualMetaPASemana) > 100)
     } else if (filters.performancePA === 'below') {
-      filtered = filtered.filter(d => d.percentualMetaPASemana < 100)
+      filtered = filtered.filter(d => percentTo100(d.percentualMetaPASemana) < 100)
     } else if (filters.performancePA === 'exact') {
-      filtered = filtered.filter(d => d.percentualMetaPASemana >= 95 && d.percentualMetaPASemana <= 105)
+      filtered = filtered.filter(d => {
+        const p = percentTo100(d.percentualMetaPASemana)
+        return p >= 95 && p <= 105
+      })
     }
   }
   
-  // Filtro por performance N
+  // Filtro por performance N (usa percentual normalizado 0–100)
   if (filters.performanceN && filters.performanceN !== 'all') {
     if (filters.performanceN === 'above') {
-      filtered = filtered.filter(d => d.percentualMetaNSemana > 100)
+      filtered = filtered.filter(d => percentTo100(d.percentualMetaNSemana) > 100)
     } else if (filters.performanceN === 'below') {
-      filtered = filtered.filter(d => d.percentualMetaNSemana < 100)
+      filtered = filtered.filter(d => percentTo100(d.percentualMetaNSemana) < 100)
     } else if (filters.performanceN === 'exact') {
-      filtered = filtered.filter(d => d.percentualMetaNSemana >= 95 && d.percentualMetaNSemana <= 105)
+      filtered = filtered.filter(d => {
+        const p = percentTo100(d.percentualMetaNSemana)
+        return p >= 95 && p <= 105
+      })
     }
   }
   
@@ -272,8 +289,8 @@ export function getFilterStats(data: WeeklyData[]) {
   
   const avgPA = data.reduce((sum, d) => sum + d.paSemanal, 0) / data.length
   const avgN = data.reduce((sum, d) => sum + d.nSemana, 0) / data.length
-  const avgPerformancePA = data.reduce((sum, d) => sum + d.percentualMetaPASemana, 0) / data.length
-  const avgPerformanceN = data.reduce((sum, d) => sum + d.percentualMetaNSemana, 0) / data.length
+  const avgPerformancePA = data.reduce((sum, d) => sum + percentTo100(d.percentualMetaPASemana), 0) / data.length
+  const avgPerformanceN = data.reduce((sum, d) => sum + percentTo100(d.percentualMetaNSemana), 0) / data.length
   const totalPA = data.reduce((sum, d) => sum + d.paSemanal, 0)
   
   return {
