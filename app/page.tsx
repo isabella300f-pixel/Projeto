@@ -355,9 +355,7 @@ export default function Dashboard() {
       metaRevisitasAgendadas: d.metaRevisitasAgendadas || 0,
       revisitasAgendadas: d.revisitasAgendadas || 0,
       revisitasRealizadas: d.revisitasRealizadas || 0,
-      // Produtividade
-      volumeTarefasTrello: d.volumeTarefasTrello || 0,
-      videosTreinamentoGravados: d.videosTreinamentoGravados || 0,
+      // Produtividade (Trello e Vídeos removidos)
       deliveryApolices: d.deliveryApolices || 0,
       totalReunioes: d.totalReunioes || 0,
       // Calculados
@@ -781,21 +779,13 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Seção 9: Indicadores de Produtividade (4 indicadores) */}
+            {/* Seção 9: Indicadores de Produtividade */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-lime-600" />
-                Produtividade - 4 Indicadores
+                Produtividade
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-3 bg-lime-500/10 rounded-lg border border-lime-500/30">
-                  <p className="text-xs text-gray-400 mb-1">Volume de Tarefas Trello</p>
-                  <p className="text-base font-bold text-white">{currentData.volumeTarefasTrello ?? 0}</p>
-                </div>
-                <div className="p-3 bg-lime-500/20 rounded-lg border border-lime-500/40">
-                  <p className="text-xs text-gray-400 mb-1">Vídeos de Treinamento Gravados</p>
-                  <p className="text-base font-bold text-white">{currentData.videosTreinamentoGravados ?? 0}</p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-lime-500/25 rounded-lg border border-lime-500/50">
                   <p className="text-xs text-gray-400 mb-1">Delivery Apólices</p>
                   <p className="text-base font-bold text-white">{currentData.deliveryApolices ?? 0}</p>
@@ -990,20 +980,8 @@ export default function Dashboard() {
             )}
 
             {/* Indicadores de Produtividade */}
-            {(currentData.volumeTarefasTrello !== undefined || currentData.videosTreinamentoGravados !== undefined || currentData.deliveryApolices !== undefined || currentData.totalReunioes !== undefined) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-600">
-                {currentData.volumeTarefasTrello !== undefined && (
-                  <div className="p-4 bg-lime-50 rounded-lg">
-                    <p className="text-sm text-gray-400">Tarefas Trello</p>
-                    <p className="text-lg font-bold text-white">{currentData.volumeTarefasTrello}</p>
-                  </div>
-                )}
-                {currentData.videosTreinamentoGravados !== undefined && (
-                  <div className="p-4 bg-lime-100 rounded-lg">
-                    <p className="text-sm text-gray-400">Vídeos Treinamento</p>
-                    <p className="text-lg font-bold text-white">{currentData.videosTreinamentoGravados}</p>
-                  </div>
-                )}
+            {(currentData.deliveryApolices !== undefined || currentData.totalReunioes !== undefined) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-600">
                 {currentData.deliveryApolices !== undefined && (
                   <div className="p-4 bg-lime-200 rounded-lg">
                     <p className="text-sm text-gray-400">Delivery Apólices</p>
@@ -1180,8 +1158,8 @@ export default function Dashboard() {
                       name="OIs Realizadas"
                       metaDataKey="metaOIsAgendadas"
                       metaName="Meta OIs"
-                      color="#a855f7"
-                      metaColor="#94a3b8"
+                      color="#c084fc"
+                      metaColor="#64748b"
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1403,39 +1381,13 @@ export default function Dashboard() {
             )}
 
             {/* Seção 9: Indicadores de Produtividade */}
-            {chartData.some(d => d.volumeTarefasTrello > 0 || d.videosTreinamentoGravados > 0 || d.deliveryApolices > 0 || d.totalReunioes > 0) && (
+            {chartData.some(d => d.deliveryApolices > 0 || d.totalReunioes > 0) && (
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
                   <TrendingUp className="w-6 h-6 text-lime-600" />
                   Indicadores de Produtividade
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Volume de Tarefas Trello</h3>
-                    {chartData.length > 0 ? (
-                      <BarChart
-                        data={chartData}
-                        dataKey="volumeTarefasTrello"
-                        name="Tarefas Trello"
-                        color="#84cc16"
-                      />
-                    ) : (
-                      <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
-                    )}
-                  </div>
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Vídeos de Treinamento Gravados</h3>
-                    {chartData.length > 0 ? (
-                      <BarChart
-                        data={chartData}
-                        dataKey="videosTreinamentoGravados"
-                        name="Vídeos Gravados"
-                        color="#a3e635"
-                      />
-                    ) : (
-                      <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
-                    )}
-                  </div>
                   <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-white mb-4">Delivery Apólices</h3>
                     {chartData.length > 0 ? (

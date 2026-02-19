@@ -58,7 +58,7 @@ export default function BarChartWithMetaLine({
           labelStyle={{ color: '#9ca3af' }}
         />
         <Legend wrapperStyle={{ color: '#9ca3af' }} />
-        <Bar dataKey={dataKey} name={name} fill={color} />
+        {/* Meta em linha pontilhada por baixo para não cobrir as colunas */}
         <Line
           type="monotone"
           dataKey={metaDataKey}
@@ -69,6 +69,8 @@ export default function BarChartWithMetaLine({
           dot={{ r: 3 }}
           activeDot={{ r: 5 }}
         />
+        {/* Colunas (valor realizado) por cima, bem visíveis */}
+        <Bar dataKey={dataKey} name={name} fill={color} barSize={28} radius={[4, 4, 0, 0]} />
       </ComposedChart>
     </ResponsiveContainer>
   )
