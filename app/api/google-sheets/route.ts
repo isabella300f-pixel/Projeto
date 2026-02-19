@@ -426,6 +426,9 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       'ois realizadas na semana': 'oIsRealizadas',
       'ois realizadas': 'oIsRealizadas',
       'ois realiz': 'oIsRealizadas',
+      'ols realizadas na semana': 'oIsRealizadas',
+      'ols realizadas': 'oIsRealizadas',
+      'ols realiz': 'oIsRealizadas',
       'oportunidades inovacao realizadas': 'oIsRealizadas',
       // RECS
       'meta recs': 'metaRECS',

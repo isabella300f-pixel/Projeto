@@ -250,6 +250,37 @@ export default function Dashboard() {
     return validValues.reduce((sum, d) => sum + d.nSemana, 0) / validValues.length
   }, [weeklyDataState])
 
+  // Dados agregados por mês para PA Acumulado no Mês e N Acumulado no Mês (uma barra/ponto por mês)
+  const monthlyChartData = useMemo(() => {
+    if (weeklyDataState.length === 0) return []
+    const sorted = [...weeklyDataState].sort((a, b) => {
+      const dateA = parsePeriodToDate(a.period)
+      const dateB = parsePeriodToDate(b.period)
+      if (!dateA || !dateB) return 0
+      return dateA.getTime() - dateB.getTime()
+    })
+    const byMonth = new Map<string, { year: number; month: number; paAcumuladoMes: number; nAcumuladoMes: number }>()
+    for (const d of sorted) {
+      const date = parsePeriodToDate(d.period)
+      if (!date) continue
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      byMonth.set(key, {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        paAcumuladoMes: d.paAcumuladoMes ?? 0,
+        nAcumuladoMes: d.nAcumuladoMes ?? 0,
+      })
+    }
+    const monthNames = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    return Array.from(byMonth.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, v]) => ({
+        period: `${monthNames[v.month]}/${String(v.year).slice(-2)}`,
+        paAcumuladoMes: v.paAcumuladoMes,
+        nAcumuladoMes: v.nAcumuladoMes,
+      }))
+  }, [weeklyDataState])
+
   // Preparar dados para gráficos
   // IMPORTANTE: Usar weeklyDataState (todos os dados) em vez de filteredData para garantir que todos os períodos apareçam
   // Ordenar por período para garantir ordem cronológica correta
@@ -1017,10 +1048,10 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">PA Acumulado no Mês</h3>
-                  {chartData.length > 0 ? (
+                  <h3 className="text-lg font-semibold text-white mb-4">PA Acumulado no Mês (por mês)</h3>
+                  {monthlyChartData.length > 0 ? (
                     <LineChart
-                      data={chartData}
+                      data={monthlyChartData}
                       dataKey="paAcumuladoMes"
                       name="PA Acumulado Mês"
                       color="#06b6d4"
@@ -1095,10 +1126,10 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">N Acumulado no Mês</h3>
-                  {chartData.length > 0 ? (
+                  <h3 className="text-lg font-semibold text-white mb-4">N Acumulado no Mês (por mês)</h3>
+                  {monthlyChartData.length > 0 ? (
                     <LineChart
-                      data={chartData}
+                      data={monthlyChartData}
                       dataKey="nAcumuladoMes"
                       name="N Acumulado Mês"
                       color="#14b8a6"
@@ -1164,10 +1195,10 @@ export default function Dashboard() {
                         data={chartData}
                         dataKey="metaRECS"
                         name="Meta RECS"
-                        color="#10b981"
+                        color="#3b82f6"
                         secondDataKey="novasRECS"
                         secondName="Novas RECS"
-                        secondColor="#34d399"
+                        secondColor="#f59e0b"
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
