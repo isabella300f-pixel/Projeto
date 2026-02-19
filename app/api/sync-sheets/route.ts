@@ -1,34 +1,19 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase'
 import { weeklyDataToRow } from '@/lib/supabase-mappers'
+import { fetchGoogleSheetsData } from '@/app/api/google-sheets/route'
+import { WeeklyData } from '@/lib/types'
 
 /**
  * POST /api/sync-sheets
- * Busca dados do Google Sheets (via /api/google-sheets) e grava/atualiza no Supabase.
- * Use após atualizar a planilha para refletir no dashboard.
+ * Busca dados do Google Sheets (função direta, sem fetch à própria API) e grava/atualiza no Supabase.
+ * Evita 502 e problemas de chamada interna na Vercel.
  */
 export async function POST() {
   try {
-    const baseUrl =
-      process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const sheetData = await fetchGoogleSheetsData()
 
-    const res = await fetch(`${baseUrl}/api/google-sheets`, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      return NextResponse.json(
-        { success: false, error: err.error || 'Falha ao buscar Google Sheets', synced: 0 },
-        { status: 502 }
-      )
-    }
-
-    const json = await res.json()
-    if (!json.success || !Array.isArray(json.data) || json.data.length === 0) {
+    if (!sheetData || sheetData.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'Nenhum dado no Google Sheets para sincronizar',
@@ -37,7 +22,7 @@ export async function POST() {
     }
 
     const supabase = createSupabaseServer()
-    const rows = json.data.map((d: Record<string, unknown>) => weeklyDataToRow(d as any))
+    const rows = sheetData.map((d: WeeklyData) => weeklyDataToRow(d))
 
     const { data, error } = await supabase
       .from('kpi_weekly_data')
