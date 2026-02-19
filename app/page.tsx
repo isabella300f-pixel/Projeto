@@ -1180,6 +1180,8 @@ export default function Dashboard() {
                       dataKey="percentualOIsRealizadas"
                       name="% OIs Realizadas"
                       color="#a855f7"
+                      yAxisDomain={[0, 100]}
+                      formatTooltipValue={(v) => `${Number(v).toFixed(1)}%`}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>

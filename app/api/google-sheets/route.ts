@@ -422,6 +422,8 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       'meta oportunidades inovacao': 'metaOIsAgendadas',
       'ois agendadas': 'oIsAgendadas',
       'ois agend': 'oIsAgendadas',
+      'oi agendadas': 'oIsAgendadas',
+      'oi agend': 'oIsAgendadas',
       'oportunidades inovacao agendadas': 'oIsAgendadas',
       'ois realizadas na semana': 'oIsRealizadas',
       'ois realizadas': 'oIsRealizadas',
@@ -432,9 +434,7 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       'ols realizadas': 'oIsRealizadas',
       'ols realiz': 'oIsRealizadas',
       'oportunidades inovacao realizadas': 'oIsRealizadas',
-      '% ois realizadas': 'percentualOIsRealizadas',
-      '% ois realizadas na semana': 'percentualOIsRealizadas',
-      '% ois realiz': 'percentualOIsRealizadas',
+      // % OIs: não mapear da planilha; sempre calcular a partir de realizadas/meta
       // RECS
       'meta recs': 'metaRECS',
       'meta rec': 'metaRECS',
@@ -524,8 +524,12 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         
         if (!indicadorNormalized) continue
         
-        // Buscar o valor para este período
-        const value = row[periodCol.originalKey]
+        // Buscar o valor para este período (fallback: chave normalizada se original não existir)
+        let value = row[periodCol.originalKey]
+        if (value === undefined || value === null) {
+          const key = Object.keys(row).find(k => normalizeKey(k) === periodCol.normalizedKey)
+          if (key) value = row[key]
+        }
         
         // Ignorar valores vazios, hífens, ou strings vazias
         if (value === null || value === undefined || value === '' || value === '-' || String(value).trim() === '-') {
@@ -710,15 +714,12 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         listaAtrasosRaiza: periodData.listaAtrasosRaiza ?? '',
         ticketMedio: periodData.ticketMedio ?? 0,
         conversaoOIs: periodData.conversaoOIs ?? 0,
-        percentualOIsRealizadas: periodData.percentualOIsRealizadas ?? 0
+        percentualOIsRealizadas: 0
       }
-      
-      // Calcular % OIs Realizadas se não veio da planilha: realizadas / meta (ou realizadas / agendadas)
-      if (!weeklyData.percentualOIsRealizadas || weeklyData.percentualOIsRealizadas === 0) {
-        const den = weeklyData.metaOIsAgendadas > 0 ? weeklyData.metaOIsAgendadas : weeklyData.oIsAgendadas
-        if (den > 0 && weeklyData.oIsRealizadas >= 0) {
-          weeklyData.percentualOIsRealizadas = (weeklyData.oIsRealizadas / den) * 100
-        }
+      // Sempre calcular % OIs (nunca usar valor da planilha para não gravar quantidade como %)
+      const den = weeklyData.metaOIsAgendadas > 0 ? weeklyData.metaOIsAgendadas : weeklyData.oIsAgendadas
+      if (den > 0 && weeklyData.oIsRealizadas >= 0) {
+        weeklyData.percentualOIsRealizadas = Math.round((weeklyData.oIsRealizadas / den) * 1000) / 10
       }
       
       if (!weeklyData.ticketMedio || weeklyData.ticketMedio === 0) {

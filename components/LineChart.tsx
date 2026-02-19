@@ -10,6 +10,10 @@ interface LineChartProps {
   secondDataKey?: string
   secondName?: string
   secondColor?: string
+  /** Ex.: [0, 100] para percentuais */
+  yAxisDomain?: [number, number]
+  /** Ex.: (v) => `${v}%` */
+  formatTooltipValue?: (value: number) => string
 }
 
 export default function LineChart({
@@ -20,6 +24,8 @@ export default function LineChart({
   secondDataKey,
   secondName,
   secondColor = '#10b981',
+  yAxisDomain,
+  formatTooltipValue,
 }: LineChartProps) {
   const gridStroke = '#4b5563'
   const tickStyle = { fontSize: 12, fill: '#9ca3af' }
@@ -34,7 +40,7 @@ export default function LineChart({
           height={80}
           tick={tickStyle}
         />
-        <YAxis tick={tickStyle} />
+        <YAxis tick={tickStyle} domain={yAxisDomain} />
         <Tooltip
           contentStyle={{
             backgroundColor: 'rgb(31, 41, 55)',
@@ -43,6 +49,7 @@ export default function LineChart({
             color: '#f3f4f6',
           }}
           labelStyle={{ color: '#9ca3af' }}
+          formatter={formatTooltipValue ? (value: number) => [formatTooltipValue(Number(value)), name] : undefined}
         />
         <Legend wrapperStyle={{ color: '#9ca3af' }} />
         <Line 

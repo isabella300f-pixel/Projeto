@@ -53,13 +53,11 @@ export async function GET() {
     }
 
     let list: WeeklyData[] = (rows || []).map(rowToWeeklyData)
-    // Recalcular % OIs Realizadas quando zerado (ex.: dados antigos no Supabase)
+    // Sempre recalcular % OIs a partir de realizadas/meta (evitar exibir quantidade como %)
     list = list.map((d) => {
-      if ((!d.percentualOIsRealizadas || d.percentualOIsRealizadas === 0) && d.oIsRealizadas >= 0) {
-        const den = (d.metaOIsAgendadas && d.metaOIsAgendadas > 0) ? d.metaOIsAgendadas : d.oIsAgendadas
-        if (den && den > 0) {
-          return { ...d, percentualOIsRealizadas: (d.oIsRealizadas / den) * 100 }
-        }
+      const den = (d.metaOIsAgendadas && d.metaOIsAgendadas > 0) ? d.metaOIsAgendadas : d.oIsAgendadas
+      if (den && den > 0 && d.oIsRealizadas >= 0) {
+        return { ...d, percentualOIsRealizadas: Math.round((d.oIsRealizadas / den) * 1000) / 10 }
       }
       return d
     })
