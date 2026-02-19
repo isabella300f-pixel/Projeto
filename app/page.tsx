@@ -9,6 +9,7 @@ import { FilterState, WeeklyData } from '@/lib/types'
 import KPICard from '@/components/KPICard'
 import LineChart from '@/components/LineChart'
 import BarChart from '@/components/BarChart'
+import BarChartWithMetaLine from '@/components/BarChartWithMetaLine'
 import SearchBar from '@/components/SearchBar'
 import FilterPanel from '@/components/FilterPanel'
 import QuickFilters from '@/components/QuickFilters'
@@ -1043,14 +1044,14 @@ export default function Dashboard() {
                 <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-white mb-4">PA Semanal vs Meta</h3>
                   {chartData.length > 0 ? (
-                    <BarChart
+                    <BarChartWithMetaLine
                       data={chartData}
                       dataKey="paSemanal"
                       name="PA Semanal"
+                      metaDataKey="metaPASemanal"
+                      metaName="Meta"
                       color="#0ea5e9"
-                      secondDataKey="metaPASemanal"
-                      secondName="Meta"
-                      secondColor="#10b981"
+                      metaColor="#94a3b8"
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1108,14 +1109,14 @@ export default function Dashboard() {
                 <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-white mb-4">N da Semana vs Meta</h3>
                   {chartData.length > 0 ? (
-                    <BarChart
+                    <BarChartWithMetaLine
                       data={chartData}
                       dataKey="nSemana"
                       name="N Semanal"
+                      metaDataKey="metaNSemanal"
+                      metaName="Meta"
                       color="#10b981"
-                      secondDataKey="metaNSemanal"
-                      secondName="Meta"
-                      secondColor="#059669"
+                      metaColor="#94a3b8"
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1171,16 +1172,16 @@ export default function Dashboard() {
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">OIs Agendadas vs Realizadas</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4">OIs Realizadas vs Meta</h3>
                   {chartData.length > 0 ? (
-                    <BarChart
+                    <BarChartWithMetaLine
                       data={chartData}
-                      dataKey="oIsAgendadas"
-                      name="OIs Agendadas"
-                      color="#6366f1"
-                      secondDataKey="oIsRealizadas"
-                      secondName="OIs Realizadas"
-                      secondColor="#14b8a6"
+                      dataKey="oIsRealizadas"
+                      name="OIs Realizadas"
+                      metaDataKey="metaOIsAgendadas"
+                      metaName="Meta OIs"
+                      color="#a855f7"
+                      metaColor="#94a3b8"
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1211,16 +1212,16 @@ export default function Dashboard() {
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Meta RECS vs Novas RECS</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">Novas RECS vs Meta</h3>
                     {chartData.length > 0 ? (
-                      <BarChart
+                      <BarChartWithMetaLine
                         data={chartData}
-                        dataKey="metaRECS"
-                        name="Meta RECS"
-                        color="#3b82f6"
-                        secondDataKey="novasRECS"
-                        secondName="Novas RECS"
-                        secondColor="#f59e0b"
+                        dataKey="novasRECS"
+                        name="Novas RECS"
+                        metaDataKey="metaRECS"
+                        metaName="Meta RECS"
+                        color="#f59e0b"
+                        metaColor="#94a3b8"
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1254,14 +1255,14 @@ export default function Dashboard() {
                   <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-white mb-4">PCs Realizados vs Meta</h3>
                     {chartData.length > 0 ? (
-                      <BarChart
+                      <BarChartWithMetaLine
                         data={chartData}
                         dataKey="pcsRealizados"
                         name="PCs Realizados"
+                        metaDataKey="metaPCsC2Agendados"
+                        metaName="Meta PCs/C2"
                         color="#8b5cf6"
-                        secondDataKey="metaPCsC2Agendados"
-                        secondName="Meta PCs/C2"
-                        secondColor="#a78bfa"
+                        metaColor="#94a3b8"
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1369,16 +1370,16 @@ export default function Dashboard() {
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">Revisitas Agendadas vs Realizadas</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">Revisitas Realizadas vs Meta</h3>
                     {chartData.length > 0 ? (
-                      <BarChart
+                      <BarChartWithMetaLine
                         data={chartData}
-                        dataKey="revisitasAgendadas"
-                        name="Revisitas Agendadas"
-                        color="#0ea5e9"
-                        secondDataKey="revisitasRealizadas"
-                        secondName="Revisitas Realizadas"
-                        secondColor="#38bdf8"
+                        dataKey="revisitasRealizadas"
+                        name="Revisitas Realizadas"
+                        metaDataKey="metaRevisitasAgendadas"
+                        metaName="Meta Revisitas"
+                        color="#38bdf8"
+                        metaColor="#94a3b8"
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
