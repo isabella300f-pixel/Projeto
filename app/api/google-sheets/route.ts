@@ -426,6 +426,8 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       'ois realizadas na semana': 'oIsRealizadas',
       'ois realizadas': 'oIsRealizadas',
       'ois realiz': 'oIsRealizadas',
+      'oi realizadas na semana': 'oIsRealizadas',
+      'oi realizadas': 'oIsRealizadas',
       'ols realizadas na semana': 'oIsRealizadas',
       'ols realizadas': 'oIsRealizadas',
       'ols realiz': 'oIsRealizadas',

@@ -1152,15 +1152,22 @@ export default function Dashboard() {
                 <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-white mb-4">OIs Realizadas vs Meta</h3>
                   {chartData.length > 0 ? (
-                    <BarChartWithMetaLine
-                      data={chartData}
-                      dataKey="oIsRealizadas"
-                      name="OIs Realizadas"
-                      metaDataKey="metaOIsAgendadas"
-                      metaName="Meta OIs"
-                      color="#c084fc"
-                      metaColor="#64748b"
-                    />
+                    <>
+                      <BarChartWithMetaLine
+                        data={chartData}
+                        dataKey="oIsRealizadas"
+                        name="OIs Realizadas"
+                        metaDataKey="metaOIsAgendadas"
+                        metaName="Meta OIs"
+                        color="#c084fc"
+                        metaColor="#64748b"
+                      />
+                      {chartData.every(d => (d.oIsRealizadas ?? 0) === 0) && (
+                        <p className="mt-3 text-amber-400 text-sm text-center">
+                          OIs realizadas zeradas. Verifique na planilha a linha &quot;OIs realizadas na semana&quot; e clique em <strong>Atualizar dados</strong> para sincronizar.
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
