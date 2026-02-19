@@ -430,6 +430,9 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       'ols realizadas': 'oIsRealizadas',
       'ols realiz': 'oIsRealizadas',
       'oportunidades inovacao realizadas': 'oIsRealizadas',
+      '% ois realizadas': 'percentualOIsRealizadas',
+      '% ois realizadas na semana': 'percentualOIsRealizadas',
+      '% ois realiz': 'percentualOIsRealizadas',
       // RECS
       'meta recs': 'metaRECS',
       'meta rec': 'metaRECS',
@@ -718,10 +721,11 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         percentualOIsRealizadas: periodData.percentualOIsRealizadas ?? 0
       }
       
-      // Calcular campos derivados apenas se não foram fornecidos
+      // Calcular % OIs Realizadas se não veio da planilha: realizadas / meta (ou realizadas / agendadas)
       if (!weeklyData.percentualOIsRealizadas || weeklyData.percentualOIsRealizadas === 0) {
-        if (weeklyData.oIsAgendadas > 0 && weeklyData.oIsRealizadas >= 0) {
-          weeklyData.percentualOIsRealizadas = (weeklyData.oIsRealizadas / weeklyData.oIsAgendadas) * 100
+        const den = weeklyData.metaOIsAgendadas > 0 ? weeklyData.metaOIsAgendadas : weeklyData.oIsAgendadas
+        if (den > 0 && weeklyData.oIsRealizadas >= 0) {
+          weeklyData.percentualOIsRealizadas = (weeklyData.oIsRealizadas / den) * 100
         }
       }
       

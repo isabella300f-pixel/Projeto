@@ -67,7 +67,16 @@ export function rowToWeeklyData(row: KpiWeeklyDataRow): WeeklyData {
     metaOIsAgendadas: Number(row.meta_ois_agendadas ?? 8),
     oIsAgendadas: Number(row.ois_agendadas ?? 0),
     oIsRealizadas: Number(row.ois_realizadas ?? 0),
-    percentualOIsRealizadas: Number(row.percentual_ois_realizadas ?? 0),
+    percentualOIsRealizadas: (() => {
+      const stored = Number(row.percentual_ois_realizadas ?? 0)
+      if (stored > 0) return stored
+      const realizadas = Number(row.ois_realizadas ?? 0)
+      const meta = Number(row.meta_ois_agendadas ?? 8)
+      const agendadas = Number(row.ois_agendadas ?? 0)
+      const denominador = meta > 0 ? meta : agendadas
+      if (denominador > 0 && realizadas >= 0) return (realizadas / denominador) * 100
+      return 0
+    })(),
     metaRECS: row.meta_recs !== undefined ? Number(row.meta_recs) : undefined,
     novasRECS: row.novas_recs !== undefined ? Number(row.novas_recs) : undefined,
     metaPCsC2Agendados: row.meta_pcs_c2_agendados !== undefined ? Number(row.meta_pcs_c2_agendados) : undefined,

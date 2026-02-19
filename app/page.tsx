@@ -60,6 +60,27 @@ export default function Dashboard() {
     }
   }
 
+  /** Atualiza: sincroniza planilha → Supabase e recarrega os dados (inclui novas colunas/semanas). */
+  async function refreshData() {
+    setApiMessage(null)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/sync-sheets', { method: 'POST', cache: 'no-store' })
+      const json = await res.json().catch(() => ({}))
+      if (json.success && json.synced > 0) {
+        setApiMessage({ type: 'info', text: `${json.synced} períodos sincronizados da planilha.` })
+      } else if (json.success) {
+        setApiMessage({ type: 'info', text: json.message || 'Sincronização concluída.' })
+      } else {
+        setApiMessage({ type: 'error', text: json.error || 'Falha ao sincronizar da planilha.' })
+      }
+      await loadKpiData()
+    } catch {
+      setApiMessage({ type: 'error', text: 'Erro ao atualizar dados.' })
+      await loadKpiData()
+    }
+  }
+
   // Carregar dados do Supabase (atualiza ao abrir/atualizar a página)
   useEffect(() => {
     loadKpiData()
@@ -402,9 +423,10 @@ export default function Dashboard() {
                 onToggle={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
               />
               <button
-                onClick={() => { setLoading(true); loadKpiData() }}
+                onClick={refreshData}
                 disabled={loading}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Sincroniza a planilha com a base e recarrega os dados (inclui novas colunas/semanas)"
               >
                 {loading && <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 Atualizar dados
@@ -478,7 +500,7 @@ export default function Dashboard() {
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6 mb-8 text-center">
             <p className="text-lg font-medium text-amber-200 mb-2">Nenhum dado na base de dados</p>
             <p className="text-sm text-amber-300 mb-4">
-              Todos os gráficos e indicadores vêm apenas do Supabase. Atualize a planilha no Google Sheets e clique em &quot;Atualizar dados&quot; ou use a sincronização (POST /api/sync-sheets).
+              Atualize a planilha no Google Sheets e clique em <strong>&quot;Atualizar dados&quot;</strong> para sincronizar a planilha com a base e recarregar os gráficos (inclui novas colunas/semanas).
             </p>
             <p className="text-xs text-gray-400">Não há dados de exemplo; a aplicação só exibe o que está na base.</p>
           </div>

@@ -53,6 +53,16 @@ export async function GET() {
     }
 
     let list: WeeklyData[] = (rows || []).map(rowToWeeklyData)
+    // Recalcular % OIs Realizadas quando zerado (ex.: dados antigos no Supabase)
+    list = list.map((d) => {
+      if ((!d.percentualOIsRealizadas || d.percentualOIsRealizadas === 0) && d.oIsRealizadas >= 0) {
+        const den = (d.metaOIsAgendadas && d.metaOIsAgendadas > 0) ? d.metaOIsAgendadas : d.oIsAgendadas
+        if (den && den > 0) {
+          return { ...d, percentualOIsRealizadas: (d.oIsRealizadas / den) * 100 }
+        }
+      }
+      return d
+    })
     let meta: { source?: string; message?: string } = {}
 
     // Se o Supabase estiver vazio: buscar do Google Sheets diretamente (sem fetch à própria API, evita 401 por proteção Vercel)
