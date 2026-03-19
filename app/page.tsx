@@ -42,8 +42,10 @@ export default function Dashboard() {
 
       const result = await response.json().catch(() => ({}))
       const meta = result._meta as { source?: string; message?: string } | undefined
-      if (meta?.message) {
-        setApiMessage(meta.source === 'google_sheets' && meta.message.includes('gravados') ? { type: 'info', text: meta.message } : { type: 'error', text: meta.message })
+      if (meta?.message && meta.source === 'google_sheets' && meta.message.includes('gravados')) {
+        setApiMessage({ type: 'info', text: meta.message })
+      } else {
+        setApiMessage(null)
       }
 
       if (response.ok) {
@@ -109,6 +111,16 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     return getFilterStats(filteredData)
   }, [filteredData])
+
+  const hasActiveFilters = filters.period !== 'all' ||
+    filters.paMin != null || filters.paMax != null ||
+    filters.nMin != null || filters.nMax != null ||
+    filters.performancePA !== 'all' ||
+    filters.performanceN !== 'all' ||
+    filters.month !== 'all' ||
+    (filters.searchQuery != null && filters.searchQuery.length > 0)
+
+  const showingFilteredData = hasActiveFilters && filteredData.length > 0
   
   // Função auxiliar para converter período em data completa (considerando ano)
   const parsePeriodToDate = (period: string): Date | null => {
@@ -247,6 +259,10 @@ export default function Dashboard() {
   
   const totalPAAno = useMemo(() => {
     if (weeklyDataState.length === 0) return 0
+    // Com filtros ativos e dados: soma PA dos dados filtrados
+    if (showingFilteredData) {
+      return filteredData.reduce((sum, d) => sum + (d.paSemanal || 0), 0)
+    }
     if (cycleData.length === 0) {
       // Sem dados no ciclo atual: usar último registro (compatibilidade com dados antigos)
       const sorted = [...weeklyDataState].sort((a, b) => {
@@ -259,10 +275,14 @@ export default function Dashboard() {
       return lastWithData?.paAcumuladoAno || sorted[sorted.length - 1]?.paAcumuladoAno || 0
     }
     return cycleData.reduce((sum, d) => sum + (d.paSemanal || 0), 0)
-  }, [weeklyDataState, cycleData])
+  }, [weeklyDataState, cycleData, filteredData, showingFilteredData])
   
   const totalNAno = useMemo(() => {
     if (weeklyDataState.length === 0) return 0
+    // Com filtros ativos e dados: soma N dos dados filtrados
+    if (showingFilteredData) {
+      return filteredData.reduce((sum, d) => sum + (d.nSemana || 0), 0)
+    }
     if (cycleData.length === 0) {
       const sorted = [...weeklyDataState].sort((a, b) => {
         const dateA = parsePeriodToDate(a.period)
@@ -274,7 +294,7 @@ export default function Dashboard() {
       return lastWithData?.nAcumuladoAno || sorted[sorted.length - 1]?.nAcumuladoAno || 0
     }
     return cycleData.reduce((sum, d) => sum + (d.nSemana || 0), 0)
-  }, [weeklyDataState, cycleData])
+  }, [weeklyDataState, cycleData, filteredData, showingFilteredData])
 
   // Meta anual inferida dos dados (para cálculo do % no ciclo)
   const { metaPAAno, metaNAno } = useMemo(() => {
@@ -306,18 +326,20 @@ export default function Dashboard() {
   }, [totalNAno, metaNAno])
   
   const mediaPASemanal = useMemo(() => {
-    if (weeklyDataState.length === 0) return 0
-    const validValues = weeklyDataState.filter(d => d.paSemanal > 0)
+    const dataSource = showingFilteredData ? filteredData : weeklyDataState
+    if (dataSource.length === 0) return 0
+    const validValues = dataSource.filter(d => d.paSemanal > 0)
     if (validValues.length === 0) return 0
     return validValues.reduce((sum, d) => sum + d.paSemanal, 0) / validValues.length
-  }, [weeklyDataState])
+  }, [weeklyDataState, filteredData, showingFilteredData])
   
   const mediaNSemanal = useMemo(() => {
-    if (weeklyDataState.length === 0) return 0
-    const validValues = weeklyDataState.filter(d => d.nSemana > 0)
+    const dataSource = showingFilteredData ? filteredData : weeklyDataState
+    if (dataSource.length === 0) return 0
+    const validValues = dataSource.filter(d => d.nSemana > 0)
     if (validValues.length === 0) return 0
     return validValues.reduce((sum, d) => sum + d.nSemana, 0) / validValues.length
-  }, [weeklyDataState])
+  }, [weeklyDataState, filteredData, showingFilteredData])
 
   // Dados agregados por mês para PA Acumulado no Mês e N Acumulado no Mês (uma barra/ponto por mês)
   const monthlyChartData = useMemo(() => {
@@ -423,14 +445,6 @@ export default function Dashboard() {
   const handleQuickFilter = (filter: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...filter }))
   }
-
-  const hasActiveFilters = filters.period !== 'all' || 
-    filters.paMin || filters.paMax || 
-    filters.nMin || filters.nMax ||
-    filters.performancePA !== 'all' || 
-    filters.performanceN !== 'all' ||
-    filters.month !== 'all' ||
-    (filters.searchQuery && filters.searchQuery.length > 0)
 
   const periodLabel = currentData ? currentData.period : '—'
 
@@ -577,30 +591,30 @@ export default function Dashboard() {
         <h2 className="text-xl font-bold text-white mb-4">Métricas de Performance (funil de conversão)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <KPICard
-            title="PA Acumulado no Ciclo"
+            title={showingFilteredData ? 'PA Acumulado (Filtrado)' : 'PA Acumulado no Ciclo'}
             value={formatCurrency(totalPAAno)}
-            subtitle={`${formatPercent(percentualMetaPAAnoCiclo)} da meta (ciclo fev–fev)`}
+            subtitle={showingFilteredData ? `${formatPercent(percentualMetaPAAnoCiclo)} da meta • ${filteredData.length} período(s)` : `${formatPercent(percentualMetaPAAnoCiclo)} da meta (ciclo fev–fev)`}
             color="blue"
             icon={<DollarSign className="w-8 h-8 text-blue-400" />}
           />
           <KPICard
-            title="N Acumulado no Ciclo"
+            title={showingFilteredData ? 'N Acumulado (Filtrado)' : 'N Acumulado no Ciclo'}
             value={totalNAno}
-            subtitle={`${formatPercent(percentualMetaNAnoCiclo)} da meta (ciclo fev–fev)`}
+            subtitle={showingFilteredData ? `${formatPercent(percentualMetaNAnoCiclo)} da meta • ${filteredData.length} período(s)` : `${formatPercent(percentualMetaNAnoCiclo)} da meta (ciclo fev–fev)`}
             color="green"
             icon={<Target className="w-8 h-8 text-green-400" />}
           />
           <KPICard
-            title="Média PA Semanal"
+            title={showingFilteredData ? 'Média PA Semanal (Filtrado)' : 'Média PA Semanal'}
             value={formatCurrency(mediaPASemanal)}
-            subtitle={`Meta: ${formatCurrency(82000)}`}
+            subtitle={`Meta: ${formatCurrency(82000)}${showingFilteredData ? ` • ${filteredData.length} período(s)` : ''}`}
             color="purple"
             icon={<TrendingUp className="w-8 h-8 text-purple-400" />}
           />
           <KPICard
-            title="Média N Semanal"
+            title={showingFilteredData ? 'Média N Semanal (Filtrado)' : 'Média N Semanal'}
             value={mediaNSemanal.toFixed(1)}
-            subtitle="Meta: 5"
+            subtitle={`Meta: 5${showingFilteredData ? ` • ${filteredData.length} período(s)` : ''}`}
             color="orange"
             icon={<CheckCircle className="w-8 h-8 text-orange-400" />}
           />
