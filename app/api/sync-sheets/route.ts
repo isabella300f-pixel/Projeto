@@ -29,11 +29,14 @@ export async function POST() {
       .upsert(rows, { onConflict: 'period' })
 
     if (error) {
-      console.error('❌ [sync-sheets] Supabase upsert:', error)
-      return NextResponse.json(
-        { success: false, error: error.message, synced: 0 },
-        { status: 500 }
-      )
+      console.warn('⚠️ [sync-sheets] Supabase upsert falhou (pode ser limite):', error.message)
+      // Retorna sucesso com dados da planilha para o dashboard exibir (dupla checagem: preferência Supabase, fallback Sheets)
+      return NextResponse.json({
+        success: true,
+        message: `Dados da planilha carregados (Supabase não gravou – ex.: limite). Use os dados exibidos.`,
+        synced: 0,
+        data: sheetData,
+      })
     }
 
     return NextResponse.json({
