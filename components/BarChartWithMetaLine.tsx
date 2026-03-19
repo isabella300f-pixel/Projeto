@@ -37,20 +37,23 @@ export default function BarChartWithMetaLine({
   tickFormatter,
 }: BarChartWithMetaLineProps) {
   const gridStroke = '#4b5563'
-  const tickStyle = { fontSize: 12, fill: '#9ca3af' }
+  const tickStyle = { fontSize: 11, fill: '#9ca3af' }
+  const tickCount = (data as unknown[])?.length || 0
+  const interval = tickCount > 15 ? Math.max(1, Math.floor(tickCount / 12)) : 0
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={data}>
+    <ResponsiveContainer width="100%" height={380}>
+      <ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 100 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
         <XAxis
           dataKey="period"
           angle={-45}
           textAnchor="end"
-          height={80}
+          height={100}
+          interval={interval}
           tick={tickStyle}
           tickFormatter={tickFormatter}
         />
-        <YAxis tick={tickStyle} />
+        <YAxis tick={tickStyle} width={40} />
         <Tooltip
           contentStyle={{
             backgroundColor: 'rgb(31, 41, 55)',
@@ -60,7 +63,7 @@ export default function BarChartWithMetaLine({
           }}
           labelStyle={{ color: '#9ca3af' }}
         />
-        <Legend wrapperStyle={{ color: '#9ca3af' }} />
+        <Legend wrapperStyle={{ color: '#9ca3af' }} verticalAlign="top" />
         {/* Meta em linha pontilhada por baixo para não cobrir as colunas */}
         <Line
           type="monotone"

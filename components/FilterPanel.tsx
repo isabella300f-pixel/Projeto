@@ -126,7 +126,7 @@ export default function FilterPanel({
     )
   }
 
-  const inputClass = 'w-full px-4 py-2.5 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-100 text-sm font-medium'
+  const inputClass = 'w-full min-w-0 px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-100 text-base font-medium'
 
   return (
     <>
@@ -136,7 +136,7 @@ export default function FilterPanel({
         onClick={onToggle}
         aria-hidden="true"
       />
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 shadow-2xl border-l border-gray-700 z-50 overflow-y-auto p-6">
+      <div className="fixed top-0 right-0 h-full w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl bg-gray-800 shadow-2xl border-l border-gray-700 z-50 overflow-y-auto p-6 sm:p-8">
       <div className="flex items-center justify-between mb-6 border-b border-gray-600 pb-4">
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-blue-400" />
@@ -161,19 +161,20 @@ export default function FilterPanel({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Multi-select Período */}
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600 relative" ref={periodRef}>
-          <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue-400" />
+        <div className="bg-gray-700/50 rounded-lg p-4 sm:p-5 border border-gray-600 relative" ref={periodRef}>
+          <label className="block text-sm sm:text-base font-bold text-gray-300 mb-3 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
             <span>Período Específico</span>
           </label>
+          <p className="text-xs text-gray-400 mb-2">Selecione múltiplas semanas</p>
           <button
             type="button"
             onClick={() => setPeriodDropdownOpen(!periodDropdownOpen)}
-            className={`${inputClass} flex items-center justify-between text-left`}
+            className={`${inputClass} flex items-center justify-between text-left min-h-[44px]`}
           >
-            <span>
+            <span className="truncate">
               {localFilters.period === 'last30days'
                 ? 'Últimos 30 dias'
                 : selectedPeriods.length === 0
@@ -184,29 +185,30 @@ export default function FilterPanel({
             </span>
           </button>
           {periodDropdownOpen && (
-            <div className="absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
-              <div className="p-2 border-b border-gray-600">
+            <div className="absolute z-20 mt-1 w-full min-w-[280px] max-h-72 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
+              <div className="p-2 border-b border-gray-600 sticky top-0 bg-gray-700">
                 <button
                   type="button"
                   onClick={() => { updateFilter('period', 'all'); setPeriodDropdownOpen(false) }}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-600 text-sm font-medium text-gray-200"
+                  className="w-full text-left px-4 py-2.5 rounded hover:bg-gray-600 text-sm font-medium text-gray-200"
                 >
-                  Todos os Períodos
+                  Limpar — Todos os Períodos
                 </button>
               </div>
-              <div className="p-2 max-h-48 overflow-y-auto">
+              <div className="p-2 max-h-56 overflow-y-auto">
                 {periods.map(period => (
                   <label
                     key={period}
-                    className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-600 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded hover:bg-gray-600 cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={selectedPeriods.includes(period)}
                       onChange={() => togglePeriod(period)}
-                      className="rounded border-gray-500 bg-gray-600 text-blue-500 focus:ring-blue-500"
+                      className="w-4 h-4 rounded border-gray-500 bg-gray-600 text-blue-500 focus:ring-blue-500 shrink-0"
                     />
-                    <span className="text-sm text-gray-200">{period}</span>
+                    <span className="text-sm text-gray-200 break-words">{period}</span>
                   </label>
                 ))}
               </div>
@@ -215,17 +217,18 @@ export default function FilterPanel({
         </div>
 
         {/* Multi-select Mês */}
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600 relative" ref={monthRef}>
-          <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue-400" />
+        <div className="bg-gray-700/50 rounded-lg p-4 sm:p-5 border border-gray-600 relative" ref={monthRef}>
+          <label className="block text-sm sm:text-base font-bold text-gray-300 mb-3 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
             <span>Mês</span>
           </label>
+          <p className="text-xs text-gray-400 mb-2">Selecione múltiplos meses</p>
           <button
             type="button"
             onClick={() => setMonthDropdownOpen(!monthDropdownOpen)}
-            className={`${inputClass} flex items-center justify-between text-left`}
+            className={`${inputClass} flex items-center justify-between text-left min-h-[44px]`}
           >
-            <span>
+            <span className="truncate">
               {selectedMonths.length === 0
                 ? 'Todos os Meses'
                 : selectedMonths.length === 1
@@ -234,27 +237,28 @@ export default function FilterPanel({
             </span>
           </button>
           {monthDropdownOpen && (
-            <div className="absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
-              <div className="p-2 border-b border-gray-600">
+            <div className="absolute z-20 mt-1 w-full min-w-[200px] max-h-72 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
+              <div className="p-2 border-b border-gray-600 sticky top-0 bg-gray-700">
                 <button
                   type="button"
                   onClick={() => { updateFilter('month', 'all'); setMonthDropdownOpen(false) }}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-600 text-sm font-medium text-gray-200"
+                  className="w-full text-left px-4 py-2.5 rounded hover:bg-gray-600 text-sm font-medium text-gray-200"
                 >
-                  Todos os Meses
+                  Limpar — Todos os Meses
                 </button>
               </div>
               <div className="p-2">
                 {months.map(month => (
                   <label
                     key={month}
-                    className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-600 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded hover:bg-gray-600 cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={selectedMonths.includes(month)}
                       onChange={() => toggleMonth(month)}
-                      className="rounded border-gray-500 bg-gray-600 text-blue-500 focus:ring-blue-500"
+                      className="w-4 h-4 rounded border-gray-500 bg-gray-600 text-blue-500 focus:ring-blue-500 shrink-0"
                     />
                     <span className="text-sm text-gray-200">{month}</span>
                   </label>
@@ -264,8 +268,8 @@ export default function FilterPanel({
           )}
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-          <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+        <div className="bg-gray-700/50 rounded-lg p-4 sm:p-5 border border-gray-600">
+          <label className="block text-sm sm:text-base font-bold text-gray-300 mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-green-400" />
             <span>Performance PA</span>
           </label>
@@ -281,8 +285,8 @@ export default function FilterPanel({
           </select>
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-          <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+        <div className="bg-gray-700/50 rounded-lg p-4 sm:p-5 border border-gray-600">
+          <label className="block text-sm sm:text-base font-bold text-gray-300 mb-3 flex items-center gap-2">
             <Target className="w-4 h-4 text-purple-400" />
             <span>Performance N</span>
           </label>
@@ -298,8 +302,8 @@ export default function FilterPanel({
           </select>
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-          <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+        <div className="bg-gray-700/50 rounded-lg p-4 sm:p-5 border border-gray-600">
+          <label className="block text-sm sm:text-base font-bold text-gray-300 mb-3 flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-orange-400" />
             <span>PA Semanal (Faixa)</span>
           </label>
@@ -321,8 +325,8 @@ export default function FilterPanel({
           </div>
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-          <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+        <div className="bg-gray-700/50 rounded-lg p-4 sm:p-5 border border-gray-600">
+          <label className="block text-sm sm:text-base font-bold text-gray-300 mb-3 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-pink-400" />
             <span>N Semanal (Faixa)</span>
           </label>
@@ -350,12 +354,12 @@ export default function FilterPanel({
           <p className="text-sm font-bold text-gray-300 mb-3">Filtros Ativos:</p>
           <div className="flex flex-wrap gap-2">
             {selectedPeriods.length > 0 && (
-              <span className="px-3 py-1.5 bg-blue-500/20 text-blue-300 text-sm font-semibold rounded-full border border-blue-500/50">
+              <span className="px-3 py-2 bg-blue-500/20 text-blue-300 text-sm font-semibold rounded-full border border-blue-500/50" title={selectedPeriods.length === 1 ? selectedPeriods[0] : undefined}>
                 Período: {selectedPeriods.length === 1 ? selectedPeriods[0] : `${selectedPeriods.length} selecionados`}
               </span>
             )}
             {selectedMonths.length > 0 && (
-              <span className="px-3 py-1.5 bg-blue-500/20 text-blue-300 text-sm font-semibold rounded-full border border-blue-500/50">
+              <span className="px-3 py-2 bg-blue-500/20 text-blue-300 text-sm font-semibold rounded-full border border-blue-500/50">
                 Mês: {selectedMonths.length === 1 ? selectedMonths[0] : `${selectedMonths.length} selecionados`}
               </span>
             )}

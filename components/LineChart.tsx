@@ -30,20 +30,23 @@ export default function LineChart({
   tickFormatter,
 }: LineChartProps) {
   const gridStroke = '#4b5563'
-  const tickStyle = { fontSize: 12, fill: '#9ca3af' }
+  const tickStyle = { fontSize: 11, fill: '#9ca3af' }
+  const tickCount = data?.length || 0
+  const interval = tickCount > 15 ? Math.max(1, Math.floor(tickCount / 12)) : 0
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <RechartsLineChart data={data}>
+    <ResponsiveContainer width="100%" height={380}>
+      <RechartsLineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 100 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
         <XAxis
           dataKey="period"
           angle={-45}
           textAnchor="end"
-          height={80}
+          height={100}
+          interval={interval}
           tick={tickStyle}
           tickFormatter={tickFormatter}
         />
-        <YAxis tick={tickStyle} domain={yAxisDomain} />
+        <YAxis tick={tickStyle} domain={yAxisDomain} width={40} />
         <Tooltip
           contentStyle={{
             backgroundColor: 'rgb(31, 41, 55)',
@@ -54,7 +57,7 @@ export default function LineChart({
           labelStyle={{ color: '#9ca3af' }}
           formatter={formatTooltipValue ? (value: number) => [formatTooltipValue(Number(value)), name] : undefined}
         />
-        <Legend wrapperStyle={{ color: '#9ca3af' }} />
+        <Legend wrapperStyle={{ color: '#9ca3af' }} verticalAlign="top" />
         <Line 
           type="monotone" 
           dataKey={dataKey} 

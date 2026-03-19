@@ -577,7 +577,7 @@ export default function Dashboard() {
 
         {/* TODOS OS 34 INDICADORES - SEMPRE VISÍVEIS */}
         {currentData && (
-          <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 mb-8">
+          <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible mb-8">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
               <Target className="w-6 h-6 text-indigo-400" />
               Todos os Indicadores - Período Mais Recente: {currentData.period}
@@ -848,7 +848,7 @@ export default function Dashboard() {
 
         {/* Indicadores do Período Selecionado */}
         {currentData && filters.period !== 'all' && (
-          <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 mb-8">
+          <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible mb-8">
             <h2 className="text-xl font-bold text-white mb-4">
               Indicadores do Período: {Array.isArray(filters.period)
                 ? filters.period.length === 1
@@ -1041,7 +1041,7 @@ export default function Dashboard() {
                 Indicadores de PA (Prêmio Anual)
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">PA Semanal vs Meta</h3>
                   {chartData.length > 0 ? (
                     <BarChartWithMetaLine
@@ -1058,7 +1058,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">% Meta PA Realizada (Semana)</h3>
                   {chartData.length > 0 ? (
                     <LineChart
@@ -1072,7 +1072,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">PA Acumulado no Mês (por mês)</h3>
                   {monthlyChartData.length > 0 ? (
                     <LineChart
@@ -1086,7 +1086,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">PA Emitido na Semana</h3>
                   {chartData.length > 0 ? (
                     <BarChart
@@ -1110,7 +1110,7 @@ export default function Dashboard() {
                 Indicadores de N (Número de Apólices)
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">N da Semana vs Meta</h3>
                   {chartData.length > 0 ? (
                     <BarChartWithMetaLine
@@ -1127,7 +1127,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">% Meta N Realizada</h3>
                   {chartData.length > 0 ? (
                     <LineChart
@@ -1141,7 +1141,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">Apólices Emitidas</h3>
                   {chartData.length > 0 ? (
                     <BarChart
@@ -1155,7 +1155,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">N Acumulado no Mês (por mês)</h3>
                   {monthlyChartData.length > 0 ? (
                     <LineChart
@@ -1179,7 +1179,7 @@ export default function Dashboard() {
                 Indicadores de OIs (Oportunidades de Inovação)
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">OIs Realizadas vs Meta</h3>
                   {chartData.length > 0 ? (
                     <>
@@ -1203,7 +1203,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">% OIs Realizadas</h3>
                   {chartData.length > 0 ? (
                     <LineChart
@@ -1230,7 +1230,7 @@ export default function Dashboard() {
                   Indicadores de RECS
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Novas RECS vs Meta</h3>
                     {chartData.length > 0 ? (
                       <BarChartWithMetaLine
@@ -1247,7 +1247,7 @@ export default function Dashboard() {
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Novas RECS</h3>
                     {chartData.length > 0 ? (
                       <LineChart
@@ -1273,7 +1273,7 @@ export default function Dashboard() {
                   Indicadores de PCs/C2
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">PCs Realizados vs Meta</h3>
                     {chartData.length > 0 ? (
                       <BarChartWithMetaLine
@@ -1290,7 +1290,7 @@ export default function Dashboard() {
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">C2 Realizados</h3>
                     {chartData.length > 0 ? (
                       <BarChart
@@ -1316,7 +1316,7 @@ export default function Dashboard() {
                   Indicadores de Atrasos
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Apólices em Atraso</h3>
                     {chartData.length > 0 ? (
                       <BarChart
@@ -1330,7 +1330,7 @@ export default function Dashboard() {
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Prêmio em Atraso (R$)</h3>
                     {chartData.length > 0 ? (
                       <BarChart
@@ -1356,7 +1356,7 @@ export default function Dashboard() {
                   Taxa de Inadimplência
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Taxa de Inadimplência (%) Geral</h3>
                     {chartData.length > 0 ? (
                       <LineChart
@@ -1370,7 +1370,7 @@ export default function Dashboard() {
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Taxa de Inadimplência (%) Assistente</h3>
                     {chartData.length > 0 ? (
                       <LineChart
@@ -1396,7 +1396,7 @@ export default function Dashboard() {
                   Indicadores de Revisitas
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Revisitas Realizadas vs Meta</h3>
                     {chartData.length > 0 ? (
                       <BarChartWithMetaLine
@@ -1413,7 +1413,7 @@ export default function Dashboard() {
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Revisitas Realizadas</h3>
                     {chartData.length > 0 ? (
                       <LineChart
@@ -1439,7 +1439,7 @@ export default function Dashboard() {
                   Indicadores de Produtividade
                 </h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Delivery Apólices</h3>
                     {chartData.length > 0 ? (
                       <BarChart
@@ -1453,7 +1453,7 @@ export default function Dashboard() {
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                     )}
                   </div>
-                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                  <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                     <h3 className="text-lg font-semibold text-white mb-4">Total de Reuniões Realizadas</h3>
                     {chartData.length > 0 ? (
                       <BarChart
@@ -1478,7 +1478,7 @@ export default function Dashboard() {
                 Indicadores Adicionais
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">Ticket Médio</h3>
                   {chartData.length > 0 ? (
                     <LineChart
@@ -1492,7 +1492,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
                   )}
                 </div>
-                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 overflow-visible">
                   <h3 className="text-lg font-semibold text-white mb-4">% Meta PA Realizada do Ano</h3>
                   {chartData.length > 0 ? (
                     <LineChart
