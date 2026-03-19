@@ -20,6 +20,7 @@ interface BarChartWithMetaLineProps {
   metaName: string
   color?: string
   metaColor?: string
+  tickFormatter?: (value: string) => string
 }
 
 /**
@@ -33,6 +34,7 @@ export default function BarChartWithMetaLine({
   metaName,
   color = '#0ea5e9',
   metaColor = '#94a3b8',
+  tickFormatter,
 }: BarChartWithMetaLineProps) {
   const gridStroke = '#4b5563'
   const tickStyle = { fontSize: 12, fill: '#9ca3af' }
@@ -46,6 +48,7 @@ export default function BarChartWithMetaLine({
           textAnchor="end"
           height={80}
           tick={tickStyle}
+          tickFormatter={tickFormatter}
         />
         <YAxis tick={tickStyle} />
         <Tooltip

@@ -3,6 +3,7 @@ import { createSupabaseServer } from '@/lib/supabase'
 import { rowToWeeklyData, weeklyDataToRow } from '@/lib/supabase-mappers'
 import { WeeklyData } from '@/lib/types'
 import { fetchGoogleSheetsData } from '@/app/api/google-sheets/route'
+import { parsePeriodToDate } from '@/lib/filters'
 
 /**
  * GET /api/kpi — Preferência Supabase, fallback Google Sheets.
@@ -10,23 +11,6 @@ import { fetchGoogleSheetsData } from '@/app/api/google-sheets/route'
  * 2) Se Supabase falhar (erro, limite gratuito, etc.) OU retornar vazio, busca da planilha e retorna esses dados.
  * 3) Só tenta gravar no Supabase quando a leitura foi ok e veio vazia; se o upsert falhar, ainda devolve os dados da planilha.
  */
-
-/** Ordena períodos cronologicamente (DD/MM a DD/MM) */
-function parsePeriodToDate(period: string): Date | null {
-  const match = period.match(/(\d{1,2})\/(\d{1,2})/)
-  if (!match) return null
-  const day = parseInt(match[1])
-  const month = parseInt(match[2]) - 1
-  const today = new Date()
-  const currentYear = today.getFullYear()
-  const currentMonth = today.getMonth()
-  let year = currentYear
-  if (month === 11 && currentMonth <= 1) year = currentYear - 1
-  else if (month === 0 && currentMonth === 11) year = currentYear + 1
-  else if (month > currentMonth) year = currentYear - 1
-  else if (month < currentMonth) year = currentYear
-  return new Date(year, month, day)
-}
 
 function sortByPeriod(list: WeeklyData[]) {
   list.sort((a, b) => {

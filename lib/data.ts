@@ -1,5 +1,6 @@
 // Estrutura de dados baseada na planilha do Google Sheets
 import { WeeklyData } from './types'
+import { parsePeriodToDate } from './filters'
 
 export const weeklyData: WeeklyData[] = [
   {
@@ -304,17 +305,28 @@ export const weeklyData: WeeklyData[] = [
   },
 ];
 
-// Função para formatar valores monetários
+// Função para formatar valores monetários (trata NaN/undefined)
 export function formatCurrency(value: number): string {
+  if (value == null || value !== value /* NaN */ || !Number.isFinite(value)) return '-'
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(value);
 }
 
-// Função para formatar percentuais
+// Função para formatar percentuais (trata NaN/undefined)
 export function formatPercent(value: number): string {
+  if (value == null || value !== value /* NaN */ || !Number.isFinite(value)) return '-'
   return `${value.toFixed(2)}%`;
+}
+
+// Formata período para exibição compacta no eixo X dos gráficos
+export function formatPeriodForDisplay(period: string): string {
+  if (!period || typeof period !== 'string') return ''
+  const m = period.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/)
+  if (!m) return period
+  const [, d, mo, y] = m
+  return y ? `${d}/${mo}/${String(y).slice(-2)}` : `${d}/${mo}`
 }
 
 // Função para obter dados de um período específico
@@ -322,9 +334,14 @@ export function getDataByPeriod(period: string): WeeklyData | undefined {
   return weeklyData.find(d => d.period === period);
 }
 
-// Função para obter todos os períodos
+// Função para obter todos os períodos (ordenados cronologicamente)
 export function getAllPeriods(data?: WeeklyData[]): string[] {
   const dataToUse = data || weeklyData
-  return dataToUse.map(d => d.period);
+  const periods = dataToUse.map(d => d.period)
+  return [...periods].sort((a, b) => {
+    const da = parsePeriodToDate(a)?.getTime() ?? 0
+    const db = parsePeriodToDate(b)?.getTime() ?? 0
+    return da - db
+  })
 }
 

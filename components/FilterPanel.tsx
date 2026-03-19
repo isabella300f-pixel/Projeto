@@ -1,7 +1,7 @@
 'use client'
 
 import { Filter, X, Calendar, TrendingUp, DollarSign, Target, BarChart3 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FilterState } from '@/lib/types'
 
 export type { FilterState }
@@ -14,6 +14,19 @@ interface FilterPanelProps {
   onToggle: () => void
 }
 
+// Retorna array de valores selecionados (normalizado)
+function getSelectedPeriods(f: FilterState): string[] {
+  if (f.period === 'all' || !f.period) return []
+  if (Array.isArray(f.period)) return f.period
+  return [f.period]
+}
+
+function getSelectedMonths(f: FilterState): string[] {
+  if (f.month === 'all' || !f.month) return []
+  if (Array.isArray(f.month)) return f.month
+  return [f.month]
+}
+
 export default function FilterPanel({
   filters,
   onFilterChange,
@@ -22,10 +35,24 @@ export default function FilterPanel({
   onToggle
 }: FilterPanelProps) {
   const [localFilters, setLocalFilters] = useState<FilterState>(filters)
+  const [periodDropdownOpen, setPeriodDropdownOpen] = useState(false)
+  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false)
+  const periodRef = useRef<HTMLDivElement>(null)
+  const monthRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setLocalFilters(filters)
   }, [filters])
+
+  // Fechar dropdowns ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (periodRef.current && !periodRef.current.contains(e.target as Node)) setPeriodDropdownOpen(false)
+      if (monthRef.current && !monthRef.current.contains(e.target as Node)) setMonthDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho',
@@ -36,6 +63,22 @@ export default function FilterPanel({
     const newFilters = { ...localFilters, [key]: value }
     setLocalFilters(newFilters)
     onFilterChange(newFilters)
+  }
+
+  const togglePeriod = (period: string) => {
+    const current = getSelectedPeriods(localFilters)
+    const next = current.includes(period)
+      ? current.filter(p => p !== period)
+      : [...current, period]
+    updateFilter('period', next.length === 0 ? 'all' : next)
+  }
+
+  const toggleMonth = (month: string) => {
+    const current = getSelectedMonths(localFilters)
+    const next = current.includes(month)
+      ? current.filter(m => m !== month)
+      : [...current, month]
+    updateFilter('month', next.length === 0 ? 'all' : next)
   }
 
   const clearFilters = () => {
@@ -50,12 +93,16 @@ export default function FilterPanel({
     onFilterChange(clearedFilters)
   }
 
-  const hasActiveFilters = filters.period !== 'all' ||
+  const selectedPeriods = getSelectedPeriods(filters)
+  const selectedMonths = getSelectedMonths(filters)
+  const hasPeriodFilter = filters.period !== 'all' && (!Array.isArray(filters.period) || filters.period.length > 0)
+  const hasMonthFilter = filters.month !== 'all' && (!Array.isArray(filters.month) || filters.month.length > 0)
+  const hasActiveFilters = hasPeriodFilter ||
     filters.paMin || filters.paMax ||
     filters.nMin || filters.nMax ||
     filters.performancePA !== 'all' ||
     filters.performanceN !== 'all' ||
-    filters.month !== 'all' ||
+    hasMonthFilter ||
     filters.searchQuery
 
   if (!isOpen) {
@@ -115,38 +162,106 @@ export default function FilterPanel({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+        {/* Multi-select Período */}
+        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600 relative" ref={periodRef}>
           <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-400" />
             <span>Período Específico</span>
           </label>
-          <select
-            value={localFilters.period}
-            onChange={(e) => updateFilter('period', e.target.value)}
-            className={inputClass}
+          <button
+            type="button"
+            onClick={() => setPeriodDropdownOpen(!periodDropdownOpen)}
+            className={`${inputClass} flex items-center justify-between text-left`}
           >
-            <option value="all">Todos os Períodos</option>
-            {periods.map(period => (
-              <option key={period} value={period}>{period}</option>
-            ))}
-          </select>
+            <span>
+              {localFilters.period === 'last30days'
+                ? 'Últimos 30 dias'
+                : selectedPeriods.length === 0
+                  ? 'Todos os Períodos'
+                  : selectedPeriods.length === 1
+                    ? selectedPeriods[0]
+                    : `${selectedPeriods.length} períodos selecionados`}
+            </span>
+          </button>
+          {periodDropdownOpen && (
+            <div className="absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
+              <div className="p-2 border-b border-gray-600">
+                <button
+                  type="button"
+                  onClick={() => { updateFilter('period', 'all'); setPeriodDropdownOpen(false) }}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-600 text-sm font-medium text-gray-200"
+                >
+                  Todos os Períodos
+                </button>
+              </div>
+              <div className="p-2 max-h-48 overflow-y-auto">
+                {periods.map(period => (
+                  <label
+                    key={period}
+                    className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-600 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPeriods.includes(period)}
+                      onChange={() => togglePeriod(period)}
+                      className="rounded border-gray-500 bg-gray-600 text-blue-500 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-200">{period}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+        {/* Multi-select Mês */}
+        <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600 relative" ref={monthRef}>
           <label className="block text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-400" />
             <span>Mês</span>
           </label>
-          <select
-            value={localFilters.month || 'all'}
-            onChange={(e) => updateFilter('month', e.target.value)}
-            className={inputClass}
+          <button
+            type="button"
+            onClick={() => setMonthDropdownOpen(!monthDropdownOpen)}
+            className={`${inputClass} flex items-center justify-between text-left`}
           >
-            <option value="all">Todos os Meses</option>
-            {months.map(month => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
+            <span>
+              {selectedMonths.length === 0
+                ? 'Todos os Meses'
+                : selectedMonths.length === 1
+                  ? selectedMonths[0]
+                  : `${selectedMonths.length} meses selecionados`}
+            </span>
+          </button>
+          {monthDropdownOpen && (
+            <div className="absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
+              <div className="p-2 border-b border-gray-600">
+                <button
+                  type="button"
+                  onClick={() => { updateFilter('month', 'all'); setMonthDropdownOpen(false) }}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-600 text-sm font-medium text-gray-200"
+                >
+                  Todos os Meses
+                </button>
+              </div>
+              <div className="p-2">
+                {months.map(month => (
+                  <label
+                    key={month}
+                    className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-600 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMonths.includes(month)}
+                      onChange={() => toggleMonth(month)}
+                      className="rounded border-gray-500 bg-gray-600 text-blue-500 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-200">{month}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
@@ -234,14 +349,14 @@ export default function FilterPanel({
         <div className="mt-6 pt-6 border-t border-gray-600">
           <p className="text-sm font-bold text-gray-300 mb-3">Filtros Ativos:</p>
           <div className="flex flex-wrap gap-2">
-            {filters.period !== 'all' && (
+            {selectedPeriods.length > 0 && (
               <span className="px-3 py-1.5 bg-blue-500/20 text-blue-300 text-sm font-semibold rounded-full border border-blue-500/50">
-                Período: {filters.period}
+                Período: {selectedPeriods.length === 1 ? selectedPeriods[0] : `${selectedPeriods.length} selecionados`}
               </span>
             )}
-            {filters.month && filters.month !== 'all' && (
+            {selectedMonths.length > 0 && (
               <span className="px-3 py-1.5 bg-blue-500/20 text-blue-300 text-sm font-semibold rounded-full border border-blue-500/50">
-                Mês: {filters.month}
+                Mês: {selectedMonths.length === 1 ? selectedMonths[0] : `${selectedMonths.length} selecionados`}
               </span>
             )}
             {filters.performancePA && filters.performancePA !== 'all' && (

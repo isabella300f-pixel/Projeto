@@ -105,53 +105,31 @@ export function matchesSearch(data: WeeklyData, query: string): boolean {
   return false
 }
 
-// Função para converter período em data (melhorada para lidar com anos)
-function parsePeriodToDate(period: string): Date | null {
-  // Formato: "DD/MM a DD/MM" ou "DD/MM"
+// Função para converter período em data (extrai ano quando presente: DD/MM/YYYY)
+export function parsePeriodToDate(period: string): Date | null {
+  // Primeiro: tentar extrair ano do formato DD/MM/YYYY
+  const matchWithYear = period.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/)
+  if (matchWithYear) {
+    const day = parseInt(matchWithYear[1])
+    const month = parseInt(matchWithYear[2]) - 1
+    const year = parseInt(matchWithYear[3])
+    return new Date(year, month, day)
+  }
+  
+  // Fallback: formato DD/MM sem ano - inferir ano pelo contexto
   const match = period.match(/(\d{1,2})\/(\d{1,2})/)
   if (!match) return null
   
   const day = parseInt(match[1])
-  const month = parseInt(match[2]) - 1 // JavaScript months are 0-indexed
+  const month = parseInt(match[2]) - 1
   const today = new Date()
   const currentYear = today.getFullYear()
   const currentMonth = today.getMonth()
   
-  // Determinar ano baseado no mês do período (melhorado para dezembro/janeiro)
   let year = currentYear
-  
-  // Se o mês do período é dezembro (11)
-  if (month === 11) {
-    // Se estamos em janeiro/fevereiro, dezembro é do ano anterior
-    if (currentMonth <= 1) {
-      year = currentYear - 1
-    } else {
-      // Caso contrário, é do ano atual
-      year = currentYear
-    }
-  }
-  // Se o mês do período é janeiro (0)
-  else if (month === 0) {
-    // Se estamos em dezembro, janeiro é do próximo ano
-    if (currentMonth === 11) {
-      year = currentYear + 1
-    } else {
-      // Caso contrário, é do ano atual
-      year = currentYear
-    }
-  }
-  // Se o mês do período é maior que o mês atual, é do ano anterior
-  else if (month > currentMonth) {
-    year = currentYear - 1
-  }
-  // Se o mês do período é menor que o mês atual, é do ano atual
-  else if (month < currentMonth) {
-    year = currentYear
-  }
-  // Se estamos no mesmo mês, é do ano atual
-  else {
-    year = currentYear
-  }
+  if (month === 11 && currentMonth <= 1) year = currentYear - 1
+  else if (month === 0 && currentMonth === 11) year = currentYear + 1
+  else if (month > currentMonth) year = currentYear - 1
   
   return new Date(year, month, day)
 }
@@ -207,19 +185,26 @@ export function percentTo100(value: number | undefined): number {
 export function filterData(data: WeeklyData[], filters: FilterState): WeeklyData[] {
   let filtered = [...data]
   
-  // Filtro por período específico
+  // Filtro por período específico (suporta múltiplos períodos)
   if (filters.period && filters.period !== 'all') {
     if (filters.period === 'last30days') {
-      // Filtro especial para últimos 30 dias
       filtered = filtered.filter(d => isWithinLast30Days(d.period))
-    } else {
+    } else if (Array.isArray(filters.period) && filters.period.length > 0) {
+      const periodSet = new Set(filters.period)
+      filtered = filtered.filter(d => periodSet.has(d.period))
+    } else if (typeof filters.period === 'string') {
       filtered = filtered.filter(d => d.period === filters.period)
     }
   }
   
-  // Filtro por mês
+  // Filtro por mês (suporta múltiplos meses)
   if (filters.month && filters.month !== 'all') {
-    filtered = filtered.filter(d => getMonthFromPeriod(d.period) === filters.month)
+    if (Array.isArray(filters.month) && filters.month.length > 0) {
+      const monthSet = new Set(filters.month)
+      filtered = filtered.filter(d => monthSet.has(getMonthFromPeriod(d.period)))
+    } else if (typeof filters.month === 'string') {
+      filtered = filtered.filter(d => getMonthFromPeriod(d.period) === filters.month)
+    }
   }
   
   // Filtro por faixa de PA

@@ -14,6 +14,7 @@ interface LineChartProps {
   yAxisDomain?: [number, number]
   /** Ex.: (v) => `${v}%` */
   formatTooltipValue?: (value: number) => string
+  tickFormatter?: (value: string) => string
 }
 
 export default function LineChart({
@@ -26,6 +27,7 @@ export default function LineChart({
   secondColor = '#10b981',
   yAxisDomain,
   formatTooltipValue,
+  tickFormatter,
 }: LineChartProps) {
   const gridStroke = '#4b5563'
   const tickStyle = { fontSize: 12, fill: '#9ca3af' }
@@ -39,6 +41,7 @@ export default function LineChart({
           textAnchor="end"
           height={80}
           tick={tickStyle}
+          tickFormatter={tickFormatter}
         />
         <YAxis tick={tickStyle} domain={yAxisDomain} />
         <Tooltip

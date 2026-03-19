@@ -10,6 +10,7 @@ interface BarChartProps {
   secondDataKey?: string
   secondName?: string
   secondColor?: string
+  tickFormatter?: (value: string) => string
 }
 
 export default function BarChart({
@@ -20,6 +21,7 @@ export default function BarChart({
   secondDataKey,
   secondName,
   secondColor = '#10b981',
+  tickFormatter,
 }: BarChartProps) {
   const gridStroke = '#4b5563'
   const tickStyle = { fontSize: 12, fill: '#9ca3af' }
@@ -33,6 +35,7 @@ export default function BarChart({
           textAnchor="end"
           height={80}
           tick={tickStyle}
+          tickFormatter={tickFormatter}
         />
         <YAxis tick={tickStyle} />
         <Tooltip

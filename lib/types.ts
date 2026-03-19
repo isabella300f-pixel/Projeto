@@ -1,12 +1,14 @@
 export interface FilterState {
-  period: string | 'all'
+  /** 'all' = todos, 'last30days' = últimos 30 dias, string[] = períodos selecionados */
+  period: string | 'all' | 'last30days' | string[]
   paMin?: number
   paMax?: number
   nMin?: number
   nMax?: number
   performancePA?: 'all' | 'above' | 'below' | 'exact'
   performanceN?: 'all' | 'above' | 'below' | 'exact'
-  month?: string | 'all'
+  /** 'all' = todos, string[] = meses selecionados */
+  month?: string | 'all' | string[]
   searchQuery?: string
 }
 

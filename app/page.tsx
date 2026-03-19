@@ -3,8 +3,8 @@
 // Garantia: todos os gráficos e a aplicação populam EXCLUSIVAMENTE com dados da base (Supabase).
 // Fonte única: GET /api/kpi (Supabase ou, se vazio, Google Sheets → upsert no Supabase). Sem dados de exemplo/fallback.
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
-import { filterData, getFilterStats, percentTo100 } from '@/lib/filters'
+import { formatCurrency, formatPercent, getAllPeriods, formatPeriodForDisplay } from '@/lib/data'
+import { filterData, getFilterStats, percentTo100, parsePeriodToDate } from '@/lib/filters'
 import { filterByCurrentCycle } from '@/lib/cycle'
 import { FilterState, WeeklyData } from '@/lib/types'
 import KPICard from '@/components/KPICard'
@@ -112,52 +112,18 @@ export default function Dashboard() {
     return getFilterStats(filteredData)
   }, [filteredData])
 
-  const hasActiveFilters = filters.period !== 'all' ||
+  const hasPeriodFilter = filters.period !== 'all' && (!Array.isArray(filters.period) || filters.period.length > 0)
+  const hasMonthFilter = filters.month !== 'all' && (!Array.isArray(filters.month) || filters.month.length > 0)
+  const hasActiveFilters = hasPeriodFilter ||
     filters.paMin != null || filters.paMax != null ||
     filters.nMin != null || filters.nMax != null ||
     filters.performancePA !== 'all' ||
     filters.performanceN !== 'all' ||
-    filters.month !== 'all' ||
+    hasMonthFilter ||
     (filters.searchQuery != null && filters.searchQuery.length > 0)
 
   const showingFilteredData = hasActiveFilters && filteredData.length > 0
   
-  // Função auxiliar para converter período em data completa (considerando ano)
-  const parsePeriodToDate = (period: string): Date | null => {
-    const match = period.match(/(\d{1,2})\/(\d{1,2})/)
-    if (!match) return null
-    
-    const day = parseInt(match[1])
-    const month = parseInt(match[2]) - 1 // JavaScript months are 0-indexed
-    const today = new Date()
-    const currentYear = today.getFullYear()
-    const currentMonth = today.getMonth()
-    
-    let year = currentYear
-    
-    // Se o mês do período é dezembro (11) e estamos em janeiro/fevereiro, é do ano anterior
-    if (month === 11 && currentMonth <= 1) {
-      year = currentYear - 1
-    }
-    // Se o mês do período é janeiro (0) e estamos em dezembro, é do próximo ano
-    else if (month === 0 && currentMonth === 11) {
-      year = currentYear + 1
-    }
-    // Se o mês do período é maior que o mês atual, é do ano anterior
-    else if (month > currentMonth) {
-      year = currentYear - 1
-    }
-    // Se o mês do período é menor que o mês atual, é do ano atual
-    else if (month < currentMonth) {
-      year = currentYear
-    }
-    // Se estamos no mesmo mês, é do ano atual
-    else {
-      year = currentYear
-    }
-    
-    return new Date(year, month, day)
-  }
 
   // Dados atuais para cards principais (usar dados totais ou filtrados)
   // IMPORTANTE: Buscar o período mais recente com dados válidos (não zerados)
@@ -883,7 +849,13 @@ export default function Dashboard() {
         {/* Indicadores do Período Selecionado */}
         {currentData && filters.period !== 'all' && (
           <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-4">Indicadores do Período: {filters.period}</h2>
+            <h2 className="text-xl font-bold text-white mb-4">
+              Indicadores do Período: {Array.isArray(filters.period)
+                ? filters.period.length === 1
+                  ? filters.period[0]
+                  : `${filters.period.length} períodos selecionados`
+                : filters.period}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-400">PA Semanal</p>
@@ -1080,6 +1052,7 @@ export default function Dashboard() {
                       metaName="Meta"
                       color="#0ea5e9"
                       metaColor="#94a3b8"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1093,6 +1066,7 @@ export default function Dashboard() {
                       dataKey="percentualMeta"
                       name="% Meta PA"
                       color="#8b5cf6"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1106,6 +1080,7 @@ export default function Dashboard() {
                       dataKey="paAcumuladoMes"
                       name="PA Acumulado Mês"
                       color="#06b6d4"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1119,6 +1094,7 @@ export default function Dashboard() {
                       dataKey="paEmitido"
                       name="PA Emitido"
                       color="#f59e0b"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1145,6 +1121,7 @@ export default function Dashboard() {
                       metaName="Meta"
                       color="#10b981"
                       metaColor="#94a3b8"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1158,6 +1135,7 @@ export default function Dashboard() {
                       dataKey="percentualMetaN"
                       name="% Meta N"
                       color="#22c55e"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1171,6 +1149,7 @@ export default function Dashboard() {
                       dataKey="apolicesEmitidas"
                       name="Apólices Emitidas"
                       color="#06b6d4"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1184,6 +1163,7 @@ export default function Dashboard() {
                       dataKey="nAcumuladoMes"
                       name="N Acumulado Mês"
                       color="#14b8a6"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1211,6 +1191,7 @@ export default function Dashboard() {
                         metaName="Meta OIs"
                         color="#c084fc"
                         metaColor="#64748b"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                       {chartData.every(d => (d.oIsRealizadas ?? 0) === 0) && (
                         <p className="mt-3 text-amber-400 text-sm text-center">
@@ -1231,7 +1212,8 @@ export default function Dashboard() {
                       name="% OIs Realizadas"
                       color="#a855f7"
                       yAxisDomain={[0, 100]}
-                      formatTooltipValue={(v) => `${Number(v).toFixed(1)}%`}
+                      formatTooltipValue={(v) => (v == null || Number.isNaN(Number(v)) ? '-' : `${Number(v).toFixed(1)}%`)}
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1259,6 +1241,7 @@ export default function Dashboard() {
                         metaName="Meta RECS"
                         color="#f59e0b"
                         metaColor="#94a3b8"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1272,6 +1255,7 @@ export default function Dashboard() {
                         dataKey="novasRECS"
                         name="Novas RECS"
                         color="#34d399"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1300,6 +1284,7 @@ export default function Dashboard() {
                         metaName="Meta PCs/C2"
                         color="#8b5cf6"
                         metaColor="#94a3b8"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1313,6 +1298,7 @@ export default function Dashboard() {
                         dataKey="c2Realizados"
                         name="C2 Realizados"
                         color="#c084fc"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1338,6 +1324,7 @@ export default function Dashboard() {
                         dataKey="apoliceEmAtraso"
                         name="Apólices em Atraso"
                         color="#ef4444"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1351,6 +1338,7 @@ export default function Dashboard() {
                         dataKey="premioEmAtraso"
                         name="Prêmio em Atraso"
                         color="#f87171"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1376,6 +1364,7 @@ export default function Dashboard() {
                         dataKey="taxaInadimplenciaGeral"
                         name="Taxa Inadimplência Geral"
                         color="#f59e0b"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1389,6 +1378,7 @@ export default function Dashboard() {
                         dataKey="taxaInadimplenciaAssistente"
                         name="Taxa Inadimplência Assistente"
                         color="#fbbf24"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1417,6 +1407,7 @@ export default function Dashboard() {
                         metaName="Meta Revisitas"
                         color="#38bdf8"
                         metaColor="#94a3b8"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1430,6 +1421,7 @@ export default function Dashboard() {
                         dataKey="revisitasRealizadas"
                         name="Revisitas Realizadas"
                         color="#38bdf8"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1455,6 +1447,7 @@ export default function Dashboard() {
                         dataKey="deliveryApolices"
                         name="Delivery Apólices"
                         color="#bef264"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1468,6 +1461,7 @@ export default function Dashboard() {
                         dataKey="totalReunioes"
                         name="Total Reuniões"
                         color="#d9f99d"
+                        tickFormatter={formatPeriodForDisplay}
                       />
                     ) : (
                       <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1492,6 +1486,7 @@ export default function Dashboard() {
                       dataKey="ticketMedio"
                       name="Ticket Médio (R$)"
                       color="#6366f1"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>
@@ -1505,6 +1500,7 @@ export default function Dashboard() {
                       dataKey="percentualMetaPAAno"
                       name="% Meta PA Ano"
                       color="#8b5cf6"
+                      tickFormatter={formatPeriodForDisplay}
                     />
                   ) : (
                     <p className="text-gray-400 text-center py-8">Sem dados para exibir</p>

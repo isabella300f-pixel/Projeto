@@ -10,10 +10,18 @@ export const CICLO_INICIO_MES = 2
 export const CICLO_INICIO_ANO = 2026
 
 /**
- * Converte período "DD/MM a DD/MM" em Date (usa a data inicial do período).
- * Considera o ano baseado no mês para transições de ano.
+ * Converte período "DD/MM a DD/MM" ou "DD/MM/YYYY a DD/MM/YYYY" em Date.
+ * Extrai ano quando presente; caso contrário infere pelo contexto.
  */
 export function parsePeriodToDate(period: string, refDate?: Date): Date | null {
+  const matchWithYear = period.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/)
+  if (matchWithYear) {
+    const day = parseInt(matchWithYear[1])
+    const month = parseInt(matchWithYear[2]) - 1
+    const year = parseInt(matchWithYear[3])
+    return new Date(year, month, day)
+  }
+
   const match = period.match(/(\d{1,2})\/(\d{1,2})/)
   if (!match) return null
 
@@ -27,7 +35,6 @@ export function parsePeriodToDate(period: string, refDate?: Date): Date | null {
   if (month === 11 && currentMonth <= 1) year = currentYear - 1
   else if (month === 0 && currentMonth === 11) year = currentYear + 1
   else if (month > currentMonth) year = currentYear - 1
-  else if (month < currentMonth) year = currentYear
 
   return new Date(year, month, day)
 }

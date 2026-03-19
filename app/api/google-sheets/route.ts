@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { WeeklyData } from '@/lib/types'
+import { parsePeriodToDate } from '@/lib/filters'
 import * as XLSX from 'xlsx'
 
 // URL do Google Sheets: deve ser exportação CSV (pub?output=csv), não a de visualização (pubhtml).
@@ -27,13 +28,9 @@ const normalizePeriod = (period: string): string => {
     .replace(/\s*[Aa]\s*/g, ' a ')
 }
 
-// Converte período para formato curto DD/MM a DD/MM (para consistência com filtros)
-const toShortPeriod = (period: string): string => {
-  const m = period.match(/(\d{1,2})\/(\d{1,2})(?:\/\d{4})?\s+[aA]\s+(\d{1,2})\/(\d{1,2})(?:\/\d{4})?/)
-  if (m) return `${m[1]}/${m[2]} a ${m[3]}/${m[4]}`
-  const m2 = period.match(/(\d{1,2})\/(\d{1,2})(?:\/\d{4})?/)
-  if (m2) return `${m2[1]}/${m2[2]}`
-  return period
+// Mantém período normalizado COM ANO quando presente (evita perda de ano na transição 2025→2026)
+const normalizePeriodKey = (period: string): string => {
+  return normalizePeriod(period)
 }
 
 // Função para validar período (MUITO MAIS RESTRITIVA)
@@ -99,9 +96,15 @@ const isValidPeriod = (value: string): boolean => {
   return true
 }
 
-// Função para converter valor para número (melhorada - trata porcentagens)
+// Função para converter valor para número (melhorada - trata porcentagens e erros da planilha)
 const parseNumber = (value: any, isPercentage: boolean = false): number | undefined => {
   if (value === null || value === undefined || value === '') return undefined
+  
+  // Tratar erros de fórmula do Excel/Sheets
+  if (typeof value === 'string') {
+    const s = value.trim().toUpperCase()
+    if (s === '#VALUE!' || s === '#DIV/0!' || s === '#N/A' || s === '#REF!' || s === '#NAME?') return undefined
+  }
   
   // Verificar se é porcentagem pelo valor original
   const originalString = typeof value === 'string' ? value : String(value)
@@ -350,7 +353,7 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       // Validar se é um período válido
       const periodValue = String(col).trim()
       if (isValidPeriod(periodValue)) {
-        const normalizedPeriod = toShortPeriod(normalizePeriod(periodValue))
+        const normalizedPeriod = normalizePeriodKey(periodValue)
         periodColumns.push({
           originalKey: col,
           normalizedKey: normalizedCol,
@@ -820,44 +823,7 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       console.error('❌ [Google Sheets] Verifique se a planilha contém uma coluna "Período" válida')
     }
     
-    // Função para converter período em data completa (considerando ano)
-    const parsePeriodToDate = (period: string): Date | null => {
-      const match = period.match(/(\d{1,2})\/(\d{1,2})/)
-      if (!match) return null
-      
-      const day = parseInt(match[1])
-      const month = parseInt(match[2]) - 1 // JavaScript months are 0-indexed
-      const today = new Date()
-      const currentYear = today.getFullYear()
-      const currentMonth = today.getMonth()
-      
-      let year = currentYear
-      
-      // Se o mês do período é dezembro (11) e estamos em janeiro/fevereiro, é do ano anterior
-      if (month === 11 && currentMonth <= 1) {
-        year = currentYear - 1
-      }
-      // Se o mês do período é janeiro (0) e estamos em dezembro, é do próximo ano
-      else if (month === 0 && currentMonth === 11) {
-        year = currentYear + 1
-      }
-      // Se o mês do período é maior que o mês atual, é do ano anterior
-      else if (month > currentMonth) {
-        year = currentYear - 1
-      }
-      // Se o mês do período é menor que o mês atual, é do ano atual
-      else if (month < currentMonth) {
-        year = currentYear
-      }
-      // Se estamos no mesmo mês, é do ano atual
-      else {
-        year = currentYear
-      }
-      
-      return new Date(year, month, day)
-    }
-    
-    // Ordenar por período (considerando ano completo)
+    // Ordenar por período (considerando ano completo - parsePeriodToDate extrai ano quando presente)
     validData.sort((a, b) => {
       const dateA = parsePeriodToDate(a.period)
       const dateB = parsePeriodToDate(b.period)
