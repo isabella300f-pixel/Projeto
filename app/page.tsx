@@ -2,7 +2,7 @@
 
 // Garantia: todos os gráficos e a aplicação populam EXCLUSIVAMENTE com dados da base (Supabase).
 // Fonte única: GET /api/kpi (Supabase ou, se vazio, Google Sheets → upsert no Supabase). Sem dados de exemplo/fallback.
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
 import { filterData, getFilterStats, percentTo100 } from '@/lib/filters'
 import { FilterState, WeeklyData } from '@/lib/types'
@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [apiMessage, setApiMessage] = useState<{ type: 'info' | 'error'; text: string } | null>(null)
+  const autoSyncTried = useRef(false)
 
   async function loadKpiData() {
     setApiMessage(null)
@@ -88,6 +89,13 @@ export default function Dashboard() {
     const interval = setInterval(loadKpiData, 30000)
     return () => clearInterval(interval)
   }, [])
+
+  // Se a base estiver vazia após o primeiro load, tentar sincronizar da planilha automaticamente (uma vez)
+  useEffect(() => {
+    if (loading || weeklyDataState.length > 0 || autoSyncTried.current) return
+    autoSyncTried.current = true
+    refreshData()
+  }, [loading, weeklyDataState.length])
   
   const periods = getAllPeriods(weeklyDataState)
   
