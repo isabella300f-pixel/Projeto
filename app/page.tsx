@@ -209,8 +209,8 @@ export default function Dashboard() {
       return dateB.getTime() - dateA.getTime()
     })
     
-    // Usar filteredData quando há filtros que afetam os períodos (período, mês, últimos 30 dias, busca)
-    const useFilteredForCurrent = filters.period !== 'all' || filters.month !== 'all' || filters.searchQuery
+    // Usar filteredData quando há qualquer filtro ativo
+    const useFilteredForCurrent = hasActiveFilters
     const dataSource = useFilteredForCurrent ? filteredData : weeklyDataState
 
     if (!useFilteredForCurrent) {
@@ -252,7 +252,7 @@ export default function Dashboard() {
       const mostRecentFiltered = sortedFiltered.find(d => hasValidData(d))
       return mostRecentFiltered || sortedFiltered[0] || null
     }
-  }, [weeklyDataState, filteredData, filters.period, filters.month, filters.searchQuery])
+  }, [weeklyDataState, filteredData, hasActiveFilters])
   
   // Calcular totais e médias — CICLO DA EMPRESA: fev a fev (a partir de fev/2026)
   const cycleData = useMemo(() => filterByCurrentCycle(weeklyDataState), [weeklyDataState])
@@ -343,8 +343,9 @@ export default function Dashboard() {
 
   // Dados agregados por mês para PA Acumulado no Mês e N Acumulado no Mês (uma barra/ponto por mês)
   const monthlyChartData = useMemo(() => {
-    if (weeklyDataState.length === 0) return []
-    const sorted = [...weeklyDataState].sort((a, b) => {
+    const dataSource = showingFilteredData ? filteredData : weeklyDataState
+    if (dataSource.length === 0) return []
+    const sorted = [...dataSource].sort((a, b) => {
       const dateA = parsePeriodToDate(a.period)
       const dateB = parsePeriodToDate(b.period)
       if (!dateA || !dateB) return 0
@@ -370,14 +371,12 @@ export default function Dashboard() {
         paAcumuladoMes: v.paAcumuladoMes,
         nAcumuladoMes: v.nAcumuladoMes,
       }))
-  }, [weeklyDataState])
+  }, [weeklyDataState, filteredData, showingFilteredData])
 
-  // Preparar dados para gráficos
-  // IMPORTANTE: Usar weeklyDataState (todos os dados) em vez de filteredData para garantir que todos os períodos apareçam
-  // Ordenar por período para garantir ordem cronológica correta
+  // Preparar dados para gráficos — usa dados filtrados quando há filtros ativos
   const chartData = useMemo(() => {
-    // Ordenar dados por período (cronologicamente)
-    const sortedForCharts = [...weeklyDataState].sort((a, b) => {
+    const dataSource = showingFilteredData ? filteredData : weeklyDataState
+    const sortedForCharts = [...dataSource].sort((a, b) => {
       const dateA = parsePeriodToDate(a.period)
       const dateB = parsePeriodToDate(b.period)
       if (!dateA || !dateB) return 0
@@ -432,7 +431,7 @@ export default function Dashboard() {
     }))
     
     return data
-  }, [weeklyDataState])
+  }, [weeklyDataState, filteredData, showingFilteredData])
 
   const handleSearch = (query: string) => {
     setFilters(prev => ({ ...prev, searchQuery: query }))
@@ -545,16 +544,6 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {isFilterPanelOpen && (
-          <FilterPanel
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            periods={periods}
-            isOpen={isFilterPanelOpen}
-            onToggle={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-          />
-        )}
-
         {/* Estado vazio: sem dados na base — nenhum gráfico ou card usa fallback */}
         {!loading && weeklyDataState.length === 0 && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6 mb-8 text-center">

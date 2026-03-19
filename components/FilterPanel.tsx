@@ -82,7 +82,14 @@ export default function FilterPanel({
   const inputClass = 'w-full px-4 py-2.5 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-gray-100 text-sm font-medium'
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 p-6 mb-6 z-50 relative">
+    <>
+      {/* Backdrop: clique fora fecha o painel e permite ver a página */}
+      <div
+        className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+        onClick={onToggle}
+        aria-hidden="true"
+      />
+      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 shadow-2xl border-l border-gray-700 z-50 overflow-y-auto p-6">
       <div className="flex items-center justify-between mb-6 border-b border-gray-600 pb-4">
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-blue-400" />
@@ -265,6 +272,7 @@ export default function FilterPanel({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
