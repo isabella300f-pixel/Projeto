@@ -1522,23 +1522,23 @@ export default function Dashboard() {
           </div>
           <div className="overflow-x-auto">
             {filteredData.length > 0 ? (
-              <table className="w-full min-w-[900px] text-sm border-collapse">
+              <table className="w-full min-w-[1100px] text-sm border-collapse">
                 <thead className="sticky top-0 z-30 bg-gray-800">
                   {/* Linha de grupos: PA | N | OIs | Outros */}
                   <tr className="bg-gray-700/80">
                     <th className="sticky left-0 z-20 w-[130px] min-w-[130px] border-r-2 border-gray-500 bg-gray-700/80 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">
                       Período
                     </th>
-                    <th colSpan={5} className="border-r border-gray-600 py-1.5 text-center text-[10px] font-semibold uppercase text-blue-300 bg-blue-500/20">
+                    <th colSpan={6} className="border-r border-gray-600 py-1.5 text-center text-[10px] font-semibold uppercase text-blue-300 bg-blue-500/20">
                       PA (Prêmio Anual)
                     </th>
-                    <th colSpan={4} className="border-r border-gray-600 py-1.5 text-center text-[10px] font-semibold uppercase text-green-300 bg-green-500/20">
+                    <th colSpan={6} className="border-r border-gray-600 py-1.5 text-center text-[10px] font-semibold uppercase text-green-300 bg-green-500/20">
                       N (Apólices)
                     </th>
-                    <th colSpan={3} className="border-r border-gray-600 py-1.5 text-center text-[10px] font-semibold uppercase text-purple-300 bg-purple-500/20">
+                    <th colSpan={4} className="border-r border-gray-600 py-1.5 text-center text-[10px] font-semibold uppercase text-purple-300 bg-purple-500/20">
                       OIs
                     </th>
-                    <th colSpan={5} className="py-1.5 text-center text-[10px] font-semibold uppercase text-gray-300 bg-gray-600/80">
+                    <th colSpan={11} className="py-1.5 text-center text-[10px] font-semibold uppercase text-gray-300 bg-gray-600/80">
                       Outros
                     </th>
                   </tr>
@@ -1547,24 +1547,33 @@ export default function Dashboard() {
                     <th className="sticky left-0 z-20 w-[130px] min-w-[130px] border-r-2 border-gray-500 bg-gray-700 px-2 py-2 text-left text-xs font-bold text-white">
                       Semana
                     </th>
-                    <th className="w-[90px] min-w-[90px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30" title="PA Semanal">PA Sem</th>
-                    <th className="w-[90px] min-w-[90px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30" title="PA Emitido">PA Emit</th>
-                    <th className="w-[75px] min-w-[75px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30">% PA Sem</th>
-                    <th className="w-[75px] min-w-[75px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30">% PA Ano</th>
-                    <th className="w-[90px] min-w-[90px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30">PA Ac Mês</th>
-                    <th className="w-[60px] min-w-[60px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">N Sem</th>
-                    <th className="w-[65px] min-w-[65px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">Apól.</th>
-                    <th className="w-[70px] min-w-[70px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">% N Sem</th>
-                    <th className="w-[70px] min-w-[70px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">% N Ano</th>
-                    <th className="w-[65px] min-w-[65px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-purple-300 bg-purple-500/30">OIs Ag</th>
-                    <th className="w-[65px] min-w-[65px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-purple-300 bg-purple-500/30">OIs Real</th>
-                    <th className="w-[60px] min-w-[60px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-purple-300 bg-purple-500/30">% OIs</th>
+                    <th className="w-[85px] min-w-[85px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30" title="PA Semanal">PA Sem</th>
+                    <th className="w-[85px] min-w-[85px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30" title="PA Emitido">PA Emit</th>
+                    <th className="w-[70px] min-w-[70px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30">% PA Sem</th>
+                    <th className="w-[70px] min-w-[70px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30">% PA Ano</th>
+                    <th className="w-[85px] min-w-[85px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30">PA Ac Mês</th>
+                    <th className="w-[85px] min-w-[85px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-blue-300 bg-blue-500/30">PA Ac Ano</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">N Sem</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30" title="Apólices emitidas">Apól.</th>
+                    <th className="w-[60px] min-w-[60px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">% N Sem</th>
+                    <th className="w-[65px] min-w-[65px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">% N Ano</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">N Ac Mês</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-green-300 bg-green-500/30">N Ac Ano</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-purple-300 bg-purple-500/30">OIs Ag</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-purple-300 bg-purple-500/30">OIs Real</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-purple-300 bg-purple-500/30">% OIs</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-purple-300 bg-purple-500/30">Meta OIs</th>
                     <th className="w-[50px] min-w-[50px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">RECS</th>
-                    <th className="w-[45px] min-w-[45px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">PCs</th>
+                    <th className="w-[50px] min-w-[50px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">PCs</th>
                     <th className="w-[45px] min-w-[45px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">C2</th>
-                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Atrasos</th>
-                    <th className="w-[65px] min-w-[65px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Inad.</th>
-                    <th className="w-[60px] min-w-[60px] px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Revis.</th>
+                    <th className="w-[50px] min-w-[50px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Apól.Atr</th>
+                    <th className="w-[75px] min-w-[75px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Prêm.Atr</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Inad.%</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Inad.Asst</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Revis.R</th>
+                    <th className="w-[55px] min-w-[55px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Revis.A</th>
+                    <th className="w-[50px] min-w-[50px] border-r border-gray-600 px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Deliv.</th>
+                    <th className="w-[50px] min-w-[50px] px-1 py-2 text-center text-[10px] font-bold text-gray-300 bg-gray-600/80">Reun.</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1581,19 +1590,28 @@ export default function Dashboard() {
                       <td className={`border-r border-gray-600/60 px-1 py-2 text-right text-xs font-semibold bg-blue-500/5 ${percentTo100(row.percentualMetaPASemana) >= 100 ? 'text-green-400' : 'text-red-400'}`}>{formatPercent(row.percentualMetaPASemana)}</td>
                       <td className={`border-r border-gray-600/60 px-1 py-2 text-right text-xs font-semibold bg-blue-500/5 ${percentTo100(row.percentualMetaPAAno) >= 100 ? 'text-green-400' : 'text-amber-400'}`}>{formatPercent(row.percentualMetaPAAno)}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-blue-500/5">{formatCurrency(row.paAcumuladoMes)}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-blue-500/5">{formatCurrency(row.paAcumuladoAno)}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs font-medium text-white bg-green-500/5">{row.nSemana}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-green-500/5">{row.apolicesEmitidas}</td>
                       <td className={`border-r border-gray-600/60 px-1 py-2 text-right text-xs font-semibold bg-green-500/5 ${percentTo100(row.percentualMetaNSemana) >= 100 ? 'text-green-400' : 'text-red-400'}`}>{formatPercent(row.percentualMetaNSemana)}</td>
                       <td className={`border-r border-gray-600/60 px-1 py-2 text-right text-xs font-semibold bg-green-500/5 ${percentTo100(row.percentualMetaNAno) >= 100 ? 'text-green-400' : 'text-amber-400'}`}>{formatPercent(row.percentualMetaNAno)}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-green-500/5">{row.nAcumuladoMes ?? '—'}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-green-500/5">{row.nAcumuladoAno ?? '—'}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-purple-500/5">{row.oIsAgendadas}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-purple-500/5">{row.oIsRealizadas}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-purple-500/5">{row.percentualOIsRealizadas != null ? formatPercent(row.percentualOIsRealizadas) : '—'}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-white bg-purple-500/5">{row.metaOIsAgendadas ?? '—'}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.novasRECS != null ? row.novasRECS : '—'}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.pcsRealizados != null ? row.pcsRealizados : '—'}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.c2Realizados != null ? row.c2Realizados : '—'}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.apoliceEmAtraso != null ? row.apoliceEmAtraso : '—'}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.premioEmAtraso != null ? formatCurrency(row.premioEmAtraso) : '—'}</td>
                       <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.taxaInadimplenciaGeral != null ? formatPercent(row.taxaInadimplenciaGeral) : '—'}</td>
-                      <td className="px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.revisitasRealizadas != null ? row.revisitasRealizadas : '—'}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.taxaInadimplenciaAssistente != null ? formatPercent(row.taxaInadimplenciaAssistente) : '—'}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.revisitasRealizadas != null ? row.revisitasRealizadas : '—'}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.revisitasAgendadas != null ? row.revisitasAgendadas : '—'}</td>
+                      <td className="border-r border-gray-600/60 px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.deliveryApolices != null ? row.deliveryApolices : '—'}</td>
+                      <td className="px-1 py-2 text-right text-xs text-gray-300 bg-gray-700/30">{row.totalReunioes != null ? row.totalReunioes : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

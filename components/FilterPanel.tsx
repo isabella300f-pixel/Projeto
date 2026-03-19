@@ -2,6 +2,7 @@
 
 import { Filter, X, Calendar, TrendingUp, DollarSign, Target, BarChart3 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { FilterState } from '@/lib/types'
 
 export type { FilterState }
@@ -39,20 +40,25 @@ export default function FilterPanel({
   const [monthDropdownOpen, setMonthDropdownOpen] = useState(false)
   const periodRef = useRef<HTMLDivElement>(null)
   const monthRef = useRef<HTMLDivElement>(null)
+  const periodBtnRef = useRef<HTMLButtonElement>(null)
+  const monthBtnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     setLocalFilters(filters)
   }, [filters])
 
-  // Fechar dropdowns ao clicar fora
+  // Fechar dropdowns ao clicar fora (portal renderiza em body, verificar também)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (periodRef.current && !periodRef.current.contains(e.target as Node)) setPeriodDropdownOpen(false)
-      if (monthRef.current && !monthRef.current.contains(e.target as Node)) setMonthDropdownOpen(false)
+      const target = e.target as HTMLElement
+      const inPeriodDropdown = target.closest?.('[data-filter-dropdown="period"]')
+      const inMonthDropdown = target.closest?.('[data-filter-dropdown="month"]')
+      if (periodDropdownOpen && !periodRef.current?.contains(target) && !inPeriodDropdown) setPeriodDropdownOpen(false)
+      if (monthDropdownOpen && !monthRef.current?.contains(target) && !inMonthDropdown) setMonthDropdownOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [periodDropdownOpen, monthDropdownOpen])
 
   const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho',
@@ -170,23 +176,32 @@ export default function FilterPanel({
           </label>
           <p className="text-xs text-gray-400 mb-2">Selecione múltiplas semanas</p>
           <button
+            ref={periodBtnRef}
             type="button"
             onClick={() => setPeriodDropdownOpen(!periodDropdownOpen)}
             className={`${inputClass} flex items-center justify-between text-left min-h-[44px]`}
           >
-            <span className="truncate">
+            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
               {localFilters.period === 'last30days'
                 ? 'Últimos 30 dias'
                 : selectedPeriods.length === 0
                   ? 'Todos os Períodos'
                   : selectedPeriods.length === 1
                     ? selectedPeriods[0]
-                    : `${selectedPeriods.length} períodos selecionados`}
+                    : `${selectedPeriods.length} períodos`}
             </span>
           </button>
-          {periodDropdownOpen && (
-            <div className="absolute z-20 mt-1 w-full min-w-[280px] max-h-72 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
-              <div className="p-2 border-b border-gray-600 sticky top-0 bg-gray-700">
+          {periodDropdownOpen && periodBtnRef.current && typeof document !== 'undefined' && createPortal(
+            <div
+              data-filter-dropdown="period"
+              className="fixed z-[100] mt-1 min-w-[280px] max-h-[50vh] overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl"
+              style={{
+                top: periodBtnRef.current.getBoundingClientRect().bottom + 4,
+                left: periodBtnRef.current.getBoundingClientRect().left,
+                width: Math.max(280, periodBtnRef.current.offsetWidth),
+              }}
+            >
+              <div className="p-2 border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
                 <button
                   type="button"
                   onClick={() => { updateFilter('period', 'all'); setPeriodDropdownOpen(false) }}
@@ -195,12 +210,12 @@ export default function FilterPanel({
                   Limpar — Todos os Períodos
                 </button>
               </div>
-              <div className="p-2 max-h-56 overflow-y-auto">
+              <div className="p-2 max-h-64 overflow-y-auto">
                 {periods.map(period => (
                   <label
                     key={period}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded hover:bg-gray-600 cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-600 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -212,7 +227,8 @@ export default function FilterPanel({
                   </label>
                 ))}
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
 
@@ -224,21 +240,30 @@ export default function FilterPanel({
           </label>
           <p className="text-xs text-gray-400 mb-2">Selecione múltiplos meses</p>
           <button
+            ref={monthBtnRef}
             type="button"
             onClick={() => setMonthDropdownOpen(!monthDropdownOpen)}
             className={`${inputClass} flex items-center justify-between text-left min-h-[44px]`}
           >
-            <span className="truncate">
+            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
               {selectedMonths.length === 0
                 ? 'Todos os Meses'
                 : selectedMonths.length === 1
                   ? selectedMonths[0]
-                  : `${selectedMonths.length} meses selecionados`}
+                  : `${selectedMonths.length} meses`}
             </span>
           </button>
-          {monthDropdownOpen && (
-            <div className="absolute z-20 mt-1 w-full min-w-[200px] max-h-72 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl">
-              <div className="p-2 border-b border-gray-600 sticky top-0 bg-gray-700">
+          {monthDropdownOpen && monthBtnRef.current && typeof document !== 'undefined' && createPortal(
+            <div
+              data-filter-dropdown="month"
+              className="fixed z-[100] mt-1 min-w-[200px] max-h-[50vh] overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg shadow-xl"
+              style={{
+                top: monthBtnRef.current.getBoundingClientRect().bottom + 4,
+                left: monthBtnRef.current.getBoundingClientRect().left,
+                width: Math.max(200, monthBtnRef.current.offsetWidth),
+              }}
+            >
+              <div className="p-2 border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
                 <button
                   type="button"
                   onClick={() => { updateFilter('month', 'all'); setMonthDropdownOpen(false) }}
@@ -252,7 +277,7 @@ export default function FilterPanel({
                   <label
                     key={month}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded hover:bg-gray-600 cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-600 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -264,7 +289,8 @@ export default function FilterPanel({
                   </label>
                 ))}
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
 

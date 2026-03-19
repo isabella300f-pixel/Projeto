@@ -34,14 +34,14 @@ export default function LineChart({
   const tickCount = data?.length || 0
   const interval = tickCount > 15 ? Math.max(1, Math.floor(tickCount / 12)) : 0
   return (
-    <ResponsiveContainer width="100%" height={380}>
-      <RechartsLineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 100 }}>
+    <ResponsiveContainer width="100%" height={300}>
+      <RechartsLineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 70 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
         <XAxis
           dataKey="period"
           angle={-45}
           textAnchor="end"
-          height={100}
+          height={70}
           interval={interval}
           tick={tickStyle}
           tickFormatter={tickFormatter}
