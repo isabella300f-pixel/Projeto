@@ -28,7 +28,8 @@ export default function FilterPanel({
   }, [filters])
 
   const months = [
-    'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro', 'Janeiro', 'Fevereiro'
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho',
+    'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ]
 
   const updateFilter = (key: keyof FilterState, value: any) => {

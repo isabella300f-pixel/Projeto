@@ -5,6 +5,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { formatCurrency, formatPercent, getAllPeriods } from '@/lib/data'
 import { filterData, getFilterStats, percentTo100 } from '@/lib/filters'
+import { filterByCurrentCycle } from '@/lib/cycle'
 import { FilterState, WeeklyData } from '@/lib/types'
 import KPICard from '@/components/KPICard'
 import LineChart from '@/components/LineChart'
@@ -196,7 +197,11 @@ export default function Dashboard() {
       return dateB.getTime() - dateA.getTime()
     })
     
-    if (filters.period === 'all') {
+    // Usar filteredData quando há filtros que afetam os períodos (período, mês, últimos 30 dias, busca)
+    const useFilteredForCurrent = filters.period !== 'all' || filters.month !== 'all' || filters.searchQuery
+    const dataSource = useFilteredForCurrent ? filteredData : weeklyDataState
+
+    if (!useFilteredForCurrent) {
       // PRIMEIRO: Tentar encontrar período mais recente com dados COMPLETOS para KPIs
       let mostRecentWithCompleteData = sortedData.find(d => hasCompleteKPIData(d))
       
@@ -221,8 +226,8 @@ export default function Dashboard() {
       
       return mostRecentWithData
     } else {
-      // Se há filtro de período, usar dados filtrados
-      const sortedFiltered = [...filteredData].sort((a, b) => {
+      // Se há filtro (período, mês, busca), usar dados filtrados
+      const sortedFiltered = [...dataSource].sort((a, b) => {
         const dateA = parsePeriodToDate(a.period)
         const dateB = parsePeriodToDate(b.period)
         
@@ -235,36 +240,70 @@ export default function Dashboard() {
       const mostRecentFiltered = sortedFiltered.find(d => hasValidData(d))
       return mostRecentFiltered || sortedFiltered[0] || null
     }
-  }, [weeklyDataState, filteredData, filters.period])
+  }, [weeklyDataState, filteredData, filters.period, filters.month, filters.searchQuery])
   
-  // Calcular totais e médias (sempre dos dados completos para os cards principais)
-  // IMPORTANTE: Usar o último período ordenado (mais recente) para valores acumulados
+  // Calcular totais e médias — CICLO DA EMPRESA: fev a fev (a partir de fev/2026)
+  const cycleData = useMemo(() => filterByCurrentCycle(weeklyDataState), [weeklyDataState])
+  
   const totalPAAno = useMemo(() => {
     if (weeklyDataState.length === 0) return 0
-    // Ordenar por período para garantir que pegamos o mais recente
-    const sorted = [...weeklyDataState].sort((a, b) => {
-      const dateA = parsePeriodToDate(a.period)
-      const dateB = parsePeriodToDate(b.period)
-      if (!dateA || !dateB) return 0
-      return dateA.getTime() - dateB.getTime()
-    })
-    // Buscar o último período com dados válidos
-    const lastWithData = [...sorted].reverse().find(d => d.paAcumuladoAno > 0)
-    return lastWithData?.paAcumuladoAno || sorted[sorted.length - 1]?.paAcumuladoAno || 0
-  }, [weeklyDataState])
+    if (cycleData.length === 0) {
+      // Sem dados no ciclo atual: usar último registro (compatibilidade com dados antigos)
+      const sorted = [...weeklyDataState].sort((a, b) => {
+        const dateA = parsePeriodToDate(a.period)
+        const dateB = parsePeriodToDate(b.period)
+        if (!dateA || !dateB) return 0
+        return dateA.getTime() - dateB.getTime()
+      })
+      const lastWithData = [...sorted].reverse().find(d => d.paAcumuladoAno > 0)
+      return lastWithData?.paAcumuladoAno || sorted[sorted.length - 1]?.paAcumuladoAno || 0
+    }
+    return cycleData.reduce((sum, d) => sum + (d.paSemanal || 0), 0)
+  }, [weeklyDataState, cycleData])
   
   const totalNAno = useMemo(() => {
     if (weeklyDataState.length === 0) return 0
+    if (cycleData.length === 0) {
+      const sorted = [...weeklyDataState].sort((a, b) => {
+        const dateA = parsePeriodToDate(a.period)
+        const dateB = parsePeriodToDate(b.period)
+        if (!dateA || !dateB) return 0
+        return dateA.getTime() - dateB.getTime()
+      })
+      const lastWithData = [...sorted].reverse().find(d => d.nAcumuladoAno > 0)
+      return lastWithData?.nAcumuladoAno || sorted[sorted.length - 1]?.nAcumuladoAno || 0
+    }
+    return cycleData.reduce((sum, d) => sum + (d.nSemana || 0), 0)
+  }, [weeklyDataState, cycleData])
+
+  // Meta anual inferida dos dados (para cálculo do % no ciclo)
+  const { metaPAAno, metaNAno } = useMemo(() => {
     const sorted = [...weeklyDataState].sort((a, b) => {
       const dateA = parsePeriodToDate(a.period)
       const dateB = parsePeriodToDate(b.period)
       if (!dateA || !dateB) return 0
       return dateA.getTime() - dateB.getTime()
     })
-    // Buscar o último período com dados válidos
-    const lastWithData = [...sorted].reverse().find(d => d.nAcumuladoAno > 0)
-    return lastWithData?.nAcumuladoAno || sorted[sorted.length - 1]?.nAcumuladoAno || 0
+    const last = [...sorted].reverse().find(d => (d.percentualMetaPAAno ?? 0) > 0)
+    const metaPA = last && last.percentualMetaPAAno
+      ? (last.paAcumuladoAno || 0) / (percentTo100(last.percentualMetaPAAno) / 100)
+      : 3500000
+    const lastN = [...sorted].reverse().find(d => (d.percentualMetaNAno ?? 0) > 0)
+    const metaN = lastN && lastN.percentualMetaNAno
+      ? (lastN.nAcumuladoAno || 0) / (percentTo100(lastN.percentualMetaNAno) / 100)
+      : 200
+    return { metaPAAno: metaPA, metaNAno: metaN }
   }, [weeklyDataState])
+
+  const percentualMetaPAAnoCiclo = useMemo(() => {
+    if (metaPAAno <= 0) return 0
+    return (totalPAAno / metaPAAno) * 100
+  }, [totalPAAno, metaPAAno])
+
+  const percentualMetaNAnoCiclo = useMemo(() => {
+    if (metaNAno <= 0) return 0
+    return (totalNAno / metaNAno) * 100
+  }, [totalNAno, metaNAno])
   
   const mediaPASemanal = useMemo(() => {
     if (weeklyDataState.length === 0) return 0
@@ -538,16 +577,16 @@ export default function Dashboard() {
         <h2 className="text-xl font-bold text-white mb-4">Métricas de Performance (funil de conversão)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <KPICard
-            title="PA Acumulado no Ano"
+            title="PA Acumulado no Ciclo"
             value={formatCurrency(totalPAAno)}
-            subtitle={currentData ? `${formatPercent(currentData.percentualMetaPAAno)} da meta` : ''}
+            subtitle={`${formatPercent(percentualMetaPAAnoCiclo)} da meta (ciclo fev–fev)`}
             color="blue"
             icon={<DollarSign className="w-8 h-8 text-blue-400" />}
           />
           <KPICard
-            title="N Acumulado no Ano"
+            title="N Acumulado no Ciclo"
             value={totalNAno}
-            subtitle={currentData ? `${formatPercent(currentData.percentualMetaNAno)} da meta` : ''}
+            subtitle={`${formatPercent(percentualMetaNAnoCiclo)} da meta (ciclo fev–fev)`}
             color="green"
             icon={<Target className="w-8 h-8 text-green-400" />}
           />
