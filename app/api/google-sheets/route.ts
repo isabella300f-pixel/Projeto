@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 
 // URL do Google Sheets: deve ser exportação CSV (pub?output=csv), não a de visualização (pubhtml).
 // Mesmo documento: https://.../pubhtml → para o app use: .../pub?output=csv (ou com &gid=ID_ABA)
-const DEFAULT_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQk309WH9kRymm3yLfzMluGJLRgAjMtWiil22Du0UGwdS55YOafE0C-EVCNiKKkw/pub?output=csv'
+const DEFAULT_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQqsDxx9BwfPITN8hF-3AgC_wCXvtVz4A6-avB1mTGDf5AwYQwxUpQNeKWXDjJ5PCBZYDTiLNVIUNa_/pub?output=csv'
 const GOOGLE_SHEETS_URL = process.env.GOOGLE_SHEETS_URL || DEFAULT_SHEETS_URL
 
 // Função para normalizar nomes de colunas
@@ -19,13 +19,21 @@ const normalizeKey = (key: string) =>
     .replace(/\s+/g, ' ')
     .trim()
 
-// Função para normalizar período
+// Função para normalizar período (suporta DD/MM/YYYY a DD/MM/YYYY e DD/MM a DD/MM)
 const normalizePeriod = (period: string): string => {
   return period
     .trim()
     .replace(/\s+/g, ' ')
     .replace(/\s*[Aa]\s*/g, ' a ')
-    .replace(/\//g, '/')
+}
+
+// Converte período para formato curto DD/MM a DD/MM (para consistência com filtros)
+const toShortPeriod = (period: string): string => {
+  const m = period.match(/(\d{1,2})\/(\d{1,2})(?:\/\d{4})?\s+[aA]\s+(\d{1,2})\/(\d{1,2})(?:\/\d{4})?/)
+  if (m) return `${m[1]}/${m[2]} a ${m[3]}/${m[4]}`
+  const m2 = period.match(/(\d{1,2})\/(\d{1,2})(?:\/\d{4})?/)
+  if (m2) return `${m2[1]}/${m2[2]}`
+  return period
 }
 
 // Função para validar período (MUITO MAIS RESTRITIVA)
@@ -34,8 +42,8 @@ const isValidPeriod = (value: string): boolean => {
   
   const normalized = value.trim().toLowerCase()
   
-  // Deve ter entre 8 e 25 caracteres (formato: "18/08 a 24/08" ou "05/01 A 11/01")
-  if (normalized.length < 8 || normalized.length > 25) return false
+  // Deve ter entre 8 e 35 caracteres (formato: "18/08 a 24/08", "18/08/2025 a 24/08/2025" ou "12/01 A 18/01")
+  if (normalized.length < 8 || normalized.length > 35) return false
   
   // Lista expandida de padrões inválidos
   const invalidPatterns = [
@@ -65,9 +73,9 @@ const isValidPeriod = (value: string): boolean => {
   }
   
   // DEVE ter pelo menos um padrão de data válido
-  // Formato esperado: "DD/MM a DD/MM" ou "DD/MM"
-  const hasDatePattern = /\d{1,2}\/\d{1,2}/.test(normalized)
-  const hasPeriodPattern = /\d{1,2}\/\d{1,2}\s+[aA]\s+\d{1,2}\/\d{1,2}/.test(normalized)
+  // Formato: "DD/MM a DD/MM", "DD/MM/YYYY a DD/MM/YYYY" ou "DD/MM"
+  const hasDatePattern = /\d{1,2}\/\d{1,2}(?:\/\d{4})?/.test(normalized)
+  const hasPeriodPattern = /\d{1,2}\/\d{1,2}(?:\/\d{4})?\s+[aA]\s+\d{1,2}\/\d{1,2}(?:\/\d{4})?/.test(normalized)
   
   // Se não tem padrão de data, rejeitar
   if (!hasDatePattern && !hasPeriodPattern) {
@@ -342,7 +350,7 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       // Validar se é um período válido
       const periodValue = String(col).trim()
       if (isValidPeriod(periodValue)) {
-        const normalizedPeriod = normalizePeriod(periodValue)
+        const normalizedPeriod = toShortPeriod(normalizePeriod(periodValue))
         periodColumns.push({
           originalKey: col,
           normalizedKey: normalizedCol,
@@ -461,6 +469,7 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
       'apolices em atraso': 'apoliceEmAtraso',
       'apolice atraso': 'apoliceEmAtraso',
       'premio em atraso de clientes r$': 'premioEmAtraso',
+      'premio em atraso de clientes r': 'premioEmAtraso',
       'premio em atraso': 'premioEmAtraso',
       'premio atraso': 'premioEmAtraso',
       'pa em atraso': 'premioEmAtraso',

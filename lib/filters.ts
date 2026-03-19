@@ -17,10 +17,10 @@ export function getMonthFromPeriod(period: string): string {
     '07': 'Julho',
   }
   
-  // Extrai o mês da data inicial do período (formato: DD/MM a DD/MM)
-  const match = period.match(/(\d{2})\/(\d{2})/)
+  // Extrai o mês da data inicial do período (formato: DD/MM a DD/MM ou DD/MM/YYYY a DD/MM/YYYY)
+  const match = period.match(/(\d{1,2})\/(\d{1,2})(?:\/\d{4})?/)
   if (match) {
-    const month = match[2]
+    const month = String(match[2]).padStart(2, '0')
     return months[month] || ''
   }
   return ''
