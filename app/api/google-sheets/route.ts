@@ -740,6 +740,14 @@ export async function fetchGoogleSheetsData(): Promise<WeeklyData[]> {
         }
       }
       
+      // Fallback: quando PA Semanal é 0 mas PA Acumulado Mês = PA Acumulado Ano (ex: primeira semana do ano),
+      // usar paAcumuladoMes como paSemanal (planilha pode ter valor em formato diferente que não foi parseado)
+      if (weeklyData.paSemanal === 0 && weeklyData.paAcumuladoMes > 0 && 
+          weeklyData.paAcumuladoMes === weeklyData.paAcumuladoAno) {
+        weeklyData.paSemanal = weeklyData.paAcumuladoMes
+        console.log(`📊 [Fallback] PA Semanal inferido de PA Acumulado (${weeklyData.paAcumuladoMes}) para período ${weeklyData.period}`)
+      }
+      
       // Validações finais de coerência
       // Se PA semanal é muito maior que PA emitido, pode haver erro
       if (weeklyData.paSemanal > 0 && weeklyData.paEmitido > 0 && weeklyData.paSemanal > weeklyData.paEmitido * 10) {
